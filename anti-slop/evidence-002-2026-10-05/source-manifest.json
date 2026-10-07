@@ -1,0 +1,122 @@
+[
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\App.css",
+    "Modified": "2026-09-25T13:30:28.6104197+07:00",
+    "SHA256": "6E25A776D3E8102DA5BACB3CB99F4A5FC662A2E01E6143140671A556D28C3D5C"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\App.tsx",
+    "Modified": "2026-10-05T19:02:13.8480637+07:00",
+    "SHA256": "A2DA7CF023D9F8F400EBE79726568540DFD72E2622D43FCBE4542E6047C9294C"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\index.css",
+    "Modified": "2026-10-05T19:02:04.3199909+07:00",
+    "SHA256": "071C17F5987A35969E3251843F0D421CFD9BC60EE9602AB4F95F5BCD1884C2BE"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\main.tsx",
+    "Modified": "2026-09-25T13:30:28.6360811+07:00",
+    "SHA256": "6E9E5807FCBD48B75A96DB5CBEF36C996262196BE42E6D4760DC86BABBE61AD2"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\GeneratorForm.tsx",
+    "Modified": "2026-10-05T19:07:29.6469943+07:00",
+    "SHA256": "6791607B71D8600C0C99CD2DA9FA4E326A69909BFD750F34CF1B92933A955DE1"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\Header.tsx",
+    "Modified": "2026-10-05T19:02:27.8970934+07:00",
+    "SHA256": "9CA050A84D48E2637DC0CB714EA0E45BF1396FB15F525B13E860D06B6644633A"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\HistoryModal.tsx",
+    "Modified": "2026-10-05T19:08:00.3490544+07:00",
+    "SHA256": "A6DE91879C917114817629F82F0C57C4809F2446DE4CF2E6E185AEF9789CD1A8"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\JobProgressCard.tsx",
+    "Modified": "2026-10-05T18:58:44.2951556+07:00",
+    "SHA256": "11213856657CA088A14419411F2B2CAF808D5A867925AA7C8BCF3F10CF453619"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\ResultsGallery.tsx",
+    "Modified": "2026-10-05T18:59:03.1517665+07:00",
+    "SHA256": "9658DC6B9626BB4A2FA2B19AF95829EE154C23B589155E8A72D2AC6E49575ED9"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\SettingsModal.tsx",
+    "Modified": "2026-10-05T19:08:05.0624087+07:00",
+    "SHA256": "DAB377A3DBCEA9BE0CB9AB43D59897BE65A0360EE30624BA425BCBBA177CA2EF"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\ui\\alert.tsx",
+    "Modified": "2026-10-05T14:58:49.9542526+07:00",
+    "SHA256": "F253568242C1C69B343F12474002FDBE229F603158171C59E21C491AB79F2E6E"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\ui\\badge.tsx",
+    "Modified": "2026-10-05T14:58:47.9253172+07:00",
+    "SHA256": "D9FB280E266119C4B62A4C518E63152DE27B094C68D3E5F8929D05BFB0C1BC6C"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\ui\\button.tsx",
+    "Modified": "2026-10-05T14:58:20.6613834+07:00",
+    "SHA256": "313353436D0FCC8E44AB470ADB614B9FD013D28626F624328EA0D66D41A6C81B"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\ui\\card.tsx",
+    "Modified": "2026-10-05T14:58:47.5303242+07:00",
+    "SHA256": "7620E0F122BB5AA0A422254909BD11D5B088BB368EB60E6BA28010C332163CC0"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\ui\\dialog.tsx",
+    "Modified": "2026-10-05T14:58:50.9590831+07:00",
+    "SHA256": "715536E56196579E1203204D6A6FA7CEB31B3C37D60431DA7BCD3BF0243175B1"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\ui\\input.tsx",
+    "Modified": "2026-10-05T14:58:47.2318391+07:00",
+    "SHA256": "DAB990DFEFA0BA78854AB6602AD074270DBA9D7D1262184D9BFBB62BD990903B"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\ui\\progress.tsx",
+    "Modified": "2026-10-05T14:58:48.2504636+07:00",
+    "SHA256": "BAE4A2C7EDED93A8DA9E3237042011743572AC42B526B1BE3054D95DC6626CC1"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\ui\\select.tsx",
+    "Modified": "2026-10-05T14:58:49.4427458+07:00",
+    "SHA256": "D3C275E0212325C0BBA459800FB155839783D33D5C91D363B5B974973AA7E9E0"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\ui\\slider.tsx",
+    "Modified": "2026-10-05T14:58:49.0897439+07:00",
+    "SHA256": "1FD32EE03DDAA382AABCCCE0BD88669AA8F91E4FE487622A68745D2ED1D5F5B9"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\ui\\sonner.tsx",
+    "Modified": "2026-10-05T14:58:50.3061891+07:00",
+    "SHA256": "0C729F9F1ADA0B0BEDD9296710CC257DC43559FA6B8CC40F010D129E8FF85FDD"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\ui\\switch.tsx",
+    "Modified": "2026-10-05T14:58:49.6710886+07:00",
+    "SHA256": "D232E2FFCFA122C59099872BCB8395EAAD36D42FA9D2E0E40382AD19994065E2"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\components\\ui\\tabs.tsx",
+    "Modified": "2026-10-05T14:58:48.6845580+07:00",
+    "SHA256": "958B817B256CFFAE986D046168B70DD0153D542B4C521EE8BBDDA349010011EF"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\lib\\api.ts",
+    "Modified": "2026-10-05T18:57:22.5142059+07:00",
+    "SHA256": "BC4691C67227797E40C7F515A36891067B2370983C7CC99B677777F31D07169A"
+  },
+  {
+    "Path": "C:\\Users\\ASUS\\web-video-clipper\\frontend\\src\\types\\index.ts",
+    "Modified": "2026-10-05T18:56:52.8329508+07:00",
+    "SHA256": "84C9BCB86EA9655925DACBBA6A63A0BAFA347FB2CFBED829676149C06D066BFD"
+  }
+]

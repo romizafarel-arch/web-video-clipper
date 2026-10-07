@@ -1,0 +1,315 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-foreground: var(--tertiary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 9999px;
+
+  --font-sans: 'Work Sans', system-ui, -apple-system, sans-serif;
+  --font-headline: 'Sora', sans-serif;
+  --font-sora: 'Sora', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+
+:root {
+  --background: #0a0a0f;
+  --foreground: #f8fafc;
+  --card: rgba(21, 21, 32, 0.65);
+  --card-foreground: #f8fafc;
+  --popover: #151520;
+  --popover-foreground: #f8fafc;
+  --primary: #8b5cf6;
+  --primary-foreground: #ffffff;
+  --secondary: #22d3ee;
+  --secondary-foreground: #0a0a0f;
+  --tertiary: #f472b6;
+  --tertiary-foreground: #ffffff;
+  --muted: #1e1e2d;
+  --muted-foreground: #94a3b8;
+  --accent: #f472b6;
+  --accent-foreground: #ffffff;
+  --destructive: #f87171;
+  --destructive-foreground: #ffffff;
+  --success: #34d399;
+  --success-foreground: #0a0a0f;
+  --warning: #fbbf24;
+  --warning-foreground: #0a0a0f;
+  --info: #22d3ee;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: #3f3f46;
+  --ring: #8b5cf6;
+  --radius: 0.75rem;
+}
+
+body {
+  background-color: #0a0a0f;
+  color: #f8fafc;
+  font-family: 'Work Sans', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Custom workbench thin scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(113, 113, 122, 0.3);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(113, 113, 122, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .glow-pulse {
+    animation: none !important;
+  }
+}
+
+/* MotionKit Glass & Glow Helpers */
+.glass-panel {
+  background: rgba(21, 21, 32, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+.glass-panel-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-panel-hover:hover {
+  background: rgba(25, 25, 38, 0.75);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), 0 0 24px rgba(139, 92, 246, 0.25);
+}
+
+.shadow-glass {
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+.shadow-focus {
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.45);
+}
+
+.glow-primary {
+  box-shadow: 0 0 24px rgba(139, 92, 246, 0.4);
+}
+
+.glow-secondary {
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.35);
+}
+
+.glow-tertiary {
+  box-shadow: 0 0 24px rgba(244, 114, 182, 0.35);
+}
+
+.font-headline {
+  font-family: 'Sora', sans-serif;
+}
+
+.font-body {
+  font-family: 'Work Sans', system-ui, -apple-system, sans-serif;
+}
+
+.font-mono-code {
+  font-family: 'Space Mono', monospace;
+}
+
+.glow-pulse {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+  }
+}
+
+/* TikTok Style Subtitles Stroke & Shadow */
+.tiktok-subtitle-stroke {
+  text-shadow:
+    -2px -2px 0 #000,
+     2px -2px 0 #000,
+    -2px  2px 0 #000,
+     2px  2px 0 #000,
+    -3px  0   0 #000,
+     3px  0   0 #000,
+     0   -3px 0 #000,
+     0    3px 0 #000,
+     0    4px 12px rgba(0, 0, 0, 0.95);
+  -webkit-text-stroke: 1.5px black;
+}
+
+/* Creator Subtitle Presets & Viral Fonts Typography */
+@font-face {
+  font-family: 'The Bold Font';
+  src: url('/fonts/TheBoldFont.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-bangers {
+  font-family: 'Bangers', cursive, sans-serif;
+}
+.font-bebas {
+  font-family: 'Bebas Neue', sans-serif;
+}
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+.font-montserrat-black {
+  font-family: 'Montserrat Black', 'Montserrat', sans-serif;
+  font-weight: 900;
+}
+.font-poppins {
+  font-family: 'Poppins', sans-serif;
+}
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+.font-anton {
+  font-family: 'Anton', sans-serif;
+}
+.font-oswald {
+  font-family: 'Oswald', sans-serif;
+}
+.font-roboto {
+  font-family: 'Roboto', sans-serif;
+}
+.font-the-bold {
+  font-family: 'The Bold Font', sans-serif;
+}
+
+/* Preset: Emerald Green Stroke */
+.stroke-emerald-glow {
+  -webkit-text-stroke: 2px #000;
+  text-shadow:
+    -3px -3px 0 #000,
+     3px -3px 0 #000,
+    -3px  3px 0 #000,
+     3px  3px 0 #000,
+     0 0 16px rgba(0, 255, 102, 0.7);
+}
+
+/* Preset: Fire Red Stroke */
+.stroke-fire-glow {
+  -webkit-text-stroke: 2px #000;
+  text-shadow:
+    -3px -3px 0 #000,
+     3px -3px 0 #000,
+    -3px  3px 0 #000,
+     3px  3px 0 #000,
+     0 0 16px rgba(255, 51, 68, 0.8);
+}
+
+/* Preset: Cyber Synthwave Glow */
+.stroke-cyber-neon {
+  -webkit-text-stroke: 1.5px #2e0854;
+  text-shadow:
+    0 0 8px #ff00ff,
+    0 0 20px #ff00ff,
+    -2px 2px 0 #2e0854;
+}
+
+/* Preset: Luxury Gold Shadow */
+.shadow-luxury-gold {
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.9),
+    0 0 18px rgba(254, 230, 138, 0.6);
+}
+
+/* Preset 1: Hormozi Stroke (4-6px heavy black stroke) */
+.stroke-hormozi {
+  -webkit-text-stroke: 2px #000;
+  text-shadow:
+    -3px -3px 0 #000,
+     3px -3px 0 #000,
+    -3px  3px 0 #000,
+     3px  3px 0 #000,
+    -4px  0   0 #000,
+     4px  0   0 #000,
+     0   -4px 0 #000,
+     0    4px 0 #000,
+     0    6px 14px rgba(0, 0, 0, 0.95);
+}
+
+/* Preset 5: MrBeast Comic Pop (bold comic double-outline + pop pink shadow) */
+.stroke-mrbeast {
+  -webkit-text-stroke: 1.8px #000;
+  text-shadow:
+    -2px -2px 0 #000,
+     2px -2px 0 #000,
+    -2px  2px 0 #000,
+     2px  2px 0 #000,
+     3px  3px 0 #FF0055,
+     4px  4px 0 #000,
+     0    6px 16px rgba(0, 0, 0, 0.9);
+}
+
+/* Preset 4: Aesthetic Cinema soft Gaussian drop shadow */
+.shadow-cinema {
+  text-shadow:
+    0 2px 14px rgba(0, 0, 0, 0.95),
+    0 4px 24px rgba(0, 0, 0, 0.75),
+    0 0 4px rgba(0, 0, 0, 0.9);
+}
+
+/* Hide scrollbar utility for mobile carousel */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

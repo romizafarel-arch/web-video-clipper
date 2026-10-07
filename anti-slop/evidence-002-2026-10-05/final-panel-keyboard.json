@@ -1,0 +1,79 @@
+[
+  {
+    "id": "llm-provider",
+    "name": "Google Gemini (Direkomendasika",
+    "outline": "rgb(16, 16, 16) none 0.8px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "tag": "SELECT"
+  },
+  {
+    "id": "",
+    "name": "Muat",
+    "outline": "rgb(16, 16, 16) none 0.8px",
+    "shadow": "none",
+    "tag": "BUTTON"
+  },
+  {
+    "id": "",
+    "name": "Tes Ping",
+    "outline": "rgb(16, 16, 16) none 0.8px",
+    "shadow": "none",
+    "tag": "BUTTON"
+  },
+  {
+    "id": "llm-model",
+    "name": "gemini-3.5-flash (Direkomendas",
+    "outline": "rgb(16, 16, 16) none 0.8px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "tag": "SELECT"
+  },
+  {
+    "id": "transcriber-provider",
+    "name": "Google Gemini (Cloud Speech Au",
+    "outline": "rgb(16, 16, 16) none 0.8px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.715 0.143 215.221) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "tag": "SELECT"
+  },
+  {
+    "id": "transcriber-model",
+    "name": "gemini-3.5-transcribe (Presisi",
+    "outline": "rgb(16, 16, 16) none 0.8px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.715 0.143 215.221) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "tag": "SELECT"
+  },
+  {
+    "id": "",
+    "name": "HD 720pDirekomendasikan",
+    "outline": "rgb(71, 66, 90) none 0.8px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.693398) 0px 0px 0px 1.3868px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "tag": "BUTTON"
+  },
+  {
+    "id": "",
+    "name": "Full HD 1080pMaksimal",
+    "outline": "rgb(122, 136, 156) none 1.6px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.173381) 0px 0px 0px 0.346763px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "tag": "BUTTON"
+  },
+  {
+    "id": "",
+    "name": "SD 480pPaling Cepat",
+    "outline": "rgb(85, 94, 107) none 1.6px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.461896) 0px 0px 0px 0.923791px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "tag": "BUTTON"
+  },
+  {
+    "id": "auto-delete-form",
+    "name": "",
+    "outline": "rgb(16, 16, 16) auto 0.8px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "tag": "INPUT"
+  },
+  {
+    "id": "",
+    "name": "ShortsStudiov3.0 ReactMotionKi",
+    "outline": "rgb(248, 250, 252) none 2.4px",
+    "shadow": "none",
+    "tag": "BODY"
+  }
+]

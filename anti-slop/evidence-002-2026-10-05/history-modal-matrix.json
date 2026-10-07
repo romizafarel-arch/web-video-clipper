@@ -1,0 +1,372 @@
+[
+  {
+    "dialog": {
+      "bottom": 855,
+      "height": 810,
+      "left": 200.40000915527344,
+      "right": 1224.4000091552734,
+      "top": 45,
+      "width": 1024,
+      "x": 200.40000915527344,
+      "y": 45
+    },
+    "header": {
+      "bottom": 122.58749771118164,
+      "height": 76.7874984741211,
+      "left": 201.1999969482422,
+      "right": 1223.6000213623047,
+      "top": 45.79999923706055,
+      "width": 1022.4000244140624,
+      "x": 201.1999969482422,
+      "y": 45.79999923706055
+    },
+    "scrollables": [
+      {
+        "h": 667,
+        "total": 2536
+      }
+    ],
+    "smallTargets": [
+      {
+        "h": 40,
+        "name": "Buka direktori output utama di File Explorer",
+        "w": 126
+      },
+      {
+        "h": 40,
+        "name": "Muat ulang data riwayat",
+        "w": 40
+      },
+      {
+        "h": 40,
+        "name": "Tutup dialog riwayat",
+        "w": 40
+      },
+      {
+        "h": 36,
+        "name": "Buka folder sesi ini di File Explorer",
+        "w": 78
+      },
+      {
+        "h": 36,
+        "name": "Hapus sesi ini dan semua videonya",
+        "w": 78
+      },
+      {
+        "h": 36,
+        "name": "Tutup sesi",
+        "w": 36
+      },
+      {
+        "h": 32,
+        "name": "Tonton video Titik Balik Jerome Polin Berhenti Peduli Haters",
+        "w": 69
+      },
+      {
+        "h": 32,
+        "name": "Unduh file video MP4 short_01.mp4",
+        "w": 32
+      }
+    ],
+    "viewport": [
+      1440,
+      900
+    ]
+  },
+  {
+    "dialog": {
+      "bottom": 729.6000137329102,
+      "height": 691.2000122070312,
+      "left": 0,
+      "right": 1008.7999877929688,
+      "top": 38.400001525878906,
+      "width": 1008.7999877929688,
+      "x": 0,
+      "y": 38.400001525878906
+    },
+    "header": {
+      "bottom": 115.98749923706056,
+      "height": 76.7874984741211,
+      "left": 0.800000011920929,
+      "right": 1008.0000122189522,
+      "top": 39.20000076293945,
+      "width": 1007.2000122070312,
+      "x": 0.800000011920929,
+      "y": 39.20000076293945
+    },
+    "scrollables": [
+      {
+        "h": 548,
+        "total": 2509
+      }
+    ],
+    "smallTargets": [
+      {
+        "h": 40,
+        "name": "Buka direktori output utama di File Explorer",
+        "w": 126
+      },
+      {
+        "h": 40,
+        "name": "Muat ulang data riwayat",
+        "w": 40
+      },
+      {
+        "h": 40,
+        "name": "Tutup dialog riwayat",
+        "w": 40
+      },
+      {
+        "h": 36,
+        "name": "Buka folder sesi ini di File Explorer",
+        "w": 78
+      },
+      {
+        "h": 36,
+        "name": "Hapus sesi ini dan semua videonya",
+        "w": 78
+      },
+      {
+        "h": 36,
+        "name": "Tutup sesi",
+        "w": 36
+      },
+      {
+        "h": 32,
+        "name": "Tonton video Titik Balik Jerome Polin Berhenti Peduli Haters",
+        "w": 69
+      },
+      {
+        "h": 32,
+        "name": "Unduh file video MP4 short_01.mp4",
+        "w": 32
+      }
+    ],
+    "viewport": [
+      1024,
+      768
+    ]
+  },
+  {
+    "dialog": {
+      "bottom": 972.8000373840332,
+      "height": 921.6000366210938,
+      "left": 0,
+      "right": 752.7999877929688,
+      "top": 51.20000076293945,
+      "width": 752.7999877929688,
+      "x": 0,
+      "y": 51.20000076293945
+    },
+    "header": {
+      "bottom": 128.7874984741211,
+      "height": 76.7874984741211,
+      "left": 0.800000011920929,
+      "right": 752.0000122189522,
+      "top": 52,
+      "width": 751.2000122070312,
+      "x": 0.800000011920929,
+      "y": 52
+    },
+    "scrollables": [
+      {
+        "h": 778,
+        "total": 2451
+      }
+    ],
+    "smallTargets": [
+      {
+        "h": 40,
+        "name": "Buka direktori output utama di File Explorer",
+        "w": 126
+      },
+      {
+        "h": 40,
+        "name": "Muat ulang data riwayat",
+        "w": 40
+      },
+      {
+        "h": 40,
+        "name": "Tutup dialog riwayat",
+        "w": 40
+      },
+      {
+        "h": 36,
+        "name": "Buka folder sesi ini di File Explorer",
+        "w": 78
+      },
+      {
+        "h": 36,
+        "name": "Hapus sesi ini dan semua videonya",
+        "w": 78
+      },
+      {
+        "h": 36,
+        "name": "Tutup sesi",
+        "w": 36
+      },
+      {
+        "h": 32,
+        "name": "Tonton video Titik Balik Jerome Polin Berhenti Peduli Haters",
+        "w": 69
+      },
+      {
+        "h": 32,
+        "name": "Unduh file video MP4 short_01.mp4",
+        "w": 32
+      }
+    ],
+    "viewport": [
+      768,
+      1024
+    ]
+  },
+  {
+    "dialog": {
+      "bottom": 801.8000373840332,
+      "height": 759.6000366210938,
+      "left": 0,
+      "right": 375.2000122070313,
+      "top": 42.20000076293945,
+      "width": 375.2000122070313,
+      "x": 0,
+      "y": 42.20000076293945
+    },
+    "header": {
+      "bottom": 179.7624969482422,
+      "height": 136.7624969482422,
+      "left": 0.800000011920929,
+      "right": 374.40000611543655,
+      "top": 43,
+      "width": 373.6000061035156,
+      "x": 0.800000011920929,
+      "y": 43
+    },
+    "scrollables": [
+      {
+        "h": 556,
+        "total": 8334
+      }
+    ],
+    "smallTargets": [
+      {
+        "h": 40,
+        "name": "Buka direktori output utama di File Explorer",
+        "w": 40
+      },
+      {
+        "h": 40,
+        "name": "Muat ulang data riwayat",
+        "w": 40
+      },
+      {
+        "h": 40,
+        "name": "Tutup dialog riwayat",
+        "w": 40
+      },
+      {
+        "h": 36,
+        "name": "Buka folder sesi ini di File Explorer",
+        "w": 78
+      },
+      {
+        "h": 36,
+        "name": "Hapus sesi ini dan semua videonya",
+        "w": 78
+      },
+      {
+        "h": 36,
+        "name": "Tutup sesi",
+        "w": 36
+      },
+      {
+        "h": 32,
+        "name": "Tonton video Titik Balik Jerome Polin Berhenti Peduli Haters",
+        "w": 69
+      },
+      {
+        "h": 32,
+        "name": "Unduh file video MP4 short_01.mp4",
+        "w": 32
+      }
+    ],
+    "viewport": [
+      390,
+      844
+    ]
+  },
+  {
+    "dialog": {
+      "bottom": 539.6000118255615,
+      "height": 511.2000122070313,
+      "left": 0,
+      "right": 304.8000183105469,
+      "top": 28.399999618530273,
+      "width": 304.8000183105469,
+      "x": 0,
+      "y": 28.399999618530273
+    },
+    "header": {
+      "bottom": 253.9375038146973,
+      "height": 224.7375030517578,
+      "left": 0.800000011920929,
+      "right": 304.0000122189522,
+      "top": 29.200000762939453,
+      "width": 303.20001220703125,
+      "x": 0.800000011920929,
+      "y": 29.200000762939453
+    },
+    "scrollables": [
+      {
+        "h": 220,
+        "total": 7000
+      }
+    ],
+    "smallTargets": [
+      {
+        "h": 40,
+        "name": "Buka direktori output utama di File Explorer",
+        "w": 40
+      },
+      {
+        "h": 40,
+        "name": "Muat ulang data riwayat",
+        "w": 40
+      },
+      {
+        "h": 40,
+        "name": "Tutup dialog riwayat",
+        "w": 40
+      },
+      {
+        "h": 36,
+        "name": "Buka folder sesi ini di File Explorer",
+        "w": 78
+      },
+      {
+        "h": 36,
+        "name": "Hapus sesi ini dan semua videonya",
+        "w": 78
+      },
+      {
+        "h": 36,
+        "name": "Tutup sesi",
+        "w": 36
+      },
+      {
+        "h": 32,
+        "name": "Tonton video Titik Balik Jerome Polin Berhenti Peduli Haters",
+        "w": 69
+      },
+      {
+        "h": 32,
+        "name": "Unduh file video MP4 short_01.mp4",
+        "w": 32
+      }
+    ],
+    "viewport": [
+      320,
+      568
+    ]
+  }
+]

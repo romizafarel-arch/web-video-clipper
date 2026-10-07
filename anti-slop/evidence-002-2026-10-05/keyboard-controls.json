@@ -1,0 +1,130 @@
+[
+  {
+    "name": "Buka Pengaturan API & Engine",
+    "outline": "rgb(169, 178, 189) none 0.8px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "tag": "BUTTON",
+    "type": "button",
+    "y": 17
+  },
+  {
+    "name": "Buka interface klasik Flask jika perlu",
+    "outline": "rgb(121, 136, 155) none 0.8px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "tag": "A",
+    "type": null,
+    "y": 17
+  },
+  {
+    "name": "Local EngineWhisper / Gemini + FFmpeg langsung di peran",
+    "outline": "rgb(202, 205, 208) auto 1.6px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.5) 0px 0px 0px 1px, oklab(0.606 0.096545 -0.230606 / 0.1) 0px 10px 15px -3px, oklab(0.606 0.096545 -0.230606 / 0.1) 0px 4px 6px -4px",
+    "tag": "BUTTON",
+    "type": "button",
+    "y": 242
+  },
+  {
+    "name": "Cloud API Engine (MuAPI)Render berbasis cloud service (",
+    "outline": "rgb(138, 140, 142) auto 1.6px",
+    "shadow": "none",
+    "tag": "BUTTON",
+    "type": "button",
+    "y": 242
+  },
+  {
+    "name": "",
+    "outline": "rgb(215, 215, 215) none 1.6px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.033529) 0px 0px 0px 0.33529px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+    "tag": "INPUT",
+    "type": "url",
+    "y": 353
+  },
+  {
+    "name": "Tempel dari Clipboard",
+    "outline": "rgb(169, 178, 189) auto 0.8px",
+    "shadow": "none",
+    "tag": "BUTTON",
+    "type": "button",
+    "y": 363
+  },
+  {
+    "name": "Podcast Multi-SpeakerAuto track pembicara aktif",
+    "outline": "rgb(203, 207, 210) auto 1.6px",
+    "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.1) 0px 10px 15px -3px, oklab(0.606 0.096545 -0.230606 / 0.1) 0px 4px 6px -4px",
+    "tag": "BUTTON",
+    "type": "button",
+    "y": 449
+  },
+  {
+    "name": "Single SpeakerFokus 1 wajah utama",
+    "outline": "rgb(201, 204, 208) auto 1.6px",
+    "shadow": "none",
+    "tag": "BUTTON",
+    "type": "button",
+    "y": 411
+  },
+  {
+    "name": "Center CropCrop statis tengah",
+    "outline": "rgb(201, 205, 208) auto 1.6px",
+    "shadow": "none",
+    "tag": "BUTTON",
+    "type": "button",
+    "y": 411
+  },
+  {
+    "name": "Gaming 2-LayerFacecam + gameplay split",
+    "outline": "rgb(201, 205, 208) auto 1.6px",
+    "shadow": "none",
+    "tag": "BUTTON",
+    "type": "button",
+    "y": 411
+  },
+  {
+    "name": "Karaoke Kinetik (Per Kata Highlight)Beat Pop (Kata Dina",
+    "outline": "rgb(16, 16, 16) none 0.8px",
+    "shadow": "none",
+    "tag": "SELECT",
+    "type": null,
+    "y": 537
+  },
+  {
+    "name": "9:16 Vertikal (TikTok / Shorts / Reels)1:1 Persegi (Fee",
+    "outline": "rgb(16, 16, 16) none 0.8px",
+    "shadow": "none",
+    "tag": "SELECT",
+    "type": null,
+    "y": 533
+  },
+  {
+    "name": "",
+    "outline": "rgb(16, 16, 16) auto 0.8px",
+    "shadow": "none",
+    "tag": "INPUT",
+    "type": "range",
+    "y": 549
+  },
+  {
+    "name": "Pengaturan Mesin AI (Provider, Model LLM & Transcriber)",
+    "outline": "rgb(219, 225, 233) auto 0.8px",
+    "shadow": "none",
+    "tag": "BUTTON",
+    "type": "button",
+    "y": 605
+  },
+  {
+    "name": "",
+    "outline": "rgb(16, 16, 16) auto 0.8px",
+    "shadow": "none",
+    "tag": "INPUT",
+    "type": "checkbox",
+    "y": 678
+  },
+  {
+    "name": "ShortsStudiov3.0 ReactMotionKit AI Video ClipperEngine ",
+    "outline": "rgb(248, 250, 252) none 2.4px",
+    "shadow": "none",
+    "tag": "BODY",
+    "type": null,
+    "y": -42
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "name": "web-video-clipper-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Set-Location backend; if (Test-Path .venv\\Scripts\\python.exe) { & .venv\\Scripts\\python.exe web_app.py } elseif (Test-Path venv\\Scripts\\python.exe) { & venv\\Scripts\\python.exe web_app.py } else { python web_app.py }\"",
+    "dev": "concurrently -n \"frontend,backend\" -c \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "build:frontend": "npm --prefix frontend run build",
+    "build": "npm run build:frontend",
+    "lint": "npm --prefix frontend run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  }
+}

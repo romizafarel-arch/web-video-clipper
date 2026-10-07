@@ -1,0 +1,80 @@
+{
+  "engine": [
+    {
+      "name": "Local EngineWhisper / Gemini + FFmpeg langsun",
+      "pressed": null,
+      "role": null
+    },
+    {
+      "name": "Cloud API Engine (MuAPI)Render berbasis cloud",
+      "pressed": null,
+      "role": null
+    }
+  ],
+  "inputs": [
+    {
+      "h": 48,
+      "id": "youtube-url",
+      "labels": 1,
+      "type": "url",
+      "w": 910
+    },
+    {
+      "h": 40,
+      "id": "subtitle-style",
+      "labels": 1,
+      "type": null,
+      "w": 293
+    },
+    {
+      "h": 40,
+      "id": "aspect-ratio",
+      "labels": 1,
+      "type": null,
+      "w": 293
+    },
+    {
+      "h": 8,
+      "id": "num-clips",
+      "labels": 1,
+      "type": "range",
+      "w": 293
+    },
+    {
+      "h": 40,
+      "id": "llm-provider",
+      "labels": 1,
+      "type": null,
+      "w": 426
+    },
+    {
+      "h": 40,
+      "id": "llm-model",
+      "labels": 1,
+      "type": null,
+      "w": 426
+    },
+    {
+      "h": 40,
+      "id": "transcriber-provider",
+      "labels": 1,
+      "type": null,
+      "w": 426
+    },
+    {
+      "h": 40,
+      "id": "transcriber-model",
+      "labels": 1,
+      "type": null,
+      "w": 426
+    },
+    {
+      "h": 16,
+      "id": "auto-delete-form",
+      "labels": 1,
+      "type": "checkbox",
+      "w": 16
+    }
+  ],
+  "panel": null
+}

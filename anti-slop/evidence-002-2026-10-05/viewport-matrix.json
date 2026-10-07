@@ -1,0 +1,362 @@
+[
+  {
+    "clientW": 1425,
+    "h": 900,
+    "headerH": 74,
+    "overflow": [],
+    "pageH": 942,
+    "pageW": 1425,
+    "smallControls": [
+      {
+        "h": 40,
+        "name": "Buka Riwayat Sesi (12 klip)",
+        "w": 115
+      },
+      {
+        "h": 40,
+        "name": "Buka Pengaturan API & Engine",
+        "w": 40
+      },
+      {
+        "h": 40,
+        "name": "Buka interface klasik Flask jika perlu",
+        "w": 78
+      },
+      {
+        "h": 36,
+        "name": "Tempel dari Clipboard",
+        "w": 76
+      },
+      {
+        "h": 40,
+        "name": "subtitle-style",
+        "w": 293
+      },
+      {
+        "h": 40,
+        "name": "aspect-ratio",
+        "w": 293
+      },
+      {
+        "h": 8,
+        "name": "num-clips",
+        "w": 293
+      },
+      {
+        "h": 40,
+        "name": "Pengaturan Mesin AI (Provider,",
+        "w": 909
+      },
+      {
+        "h": 16,
+        "name": "auto-delete-form",
+        "w": 16
+      }
+    ],
+    "w": 1440
+  },
+  {
+    "clientW": 1009,
+    "h": 768,
+    "headerH": 74,
+    "overflow": [],
+    "pageH": 942,
+    "pageW": 1009,
+    "smallControls": [
+      {
+        "h": 40,
+        "name": "Buka Riwayat Sesi (12 klip)",
+        "w": 115
+      },
+      {
+        "h": 40,
+        "name": "Buka Pengaturan API & Engine",
+        "w": 40
+      },
+      {
+        "h": 40,
+        "name": "Buka interface klasik Flask jika perlu",
+        "w": 78
+      },
+      {
+        "h": 36,
+        "name": "Tempel dari Clipboard",
+        "w": 76
+      },
+      {
+        "h": 40,
+        "name": "subtitle-style",
+        "w": 288
+      },
+      {
+        "h": 40,
+        "name": "aspect-ratio",
+        "w": 288
+      },
+      {
+        "h": 8,
+        "name": "num-clips",
+        "w": 288
+      },
+      {
+        "h": 40,
+        "name": "Pengaturan Mesin AI (Provider,",
+        "w": 894
+      },
+      {
+        "h": 16,
+        "name": "auto-delete-form",
+        "w": 16
+      }
+    ],
+    "w": 1024
+  },
+  {
+    "clientW": 768,
+    "h": 1024,
+    "headerH": 74,
+    "overflow": [],
+    "pageH": 1024,
+    "pageW": 768,
+    "smallControls": [
+      {
+        "h": 40,
+        "name": "Buka Riwayat Sesi (12 klip)",
+        "w": 115
+      },
+      {
+        "h": 40,
+        "name": "Buka Pengaturan API & Engine",
+        "w": 40
+      },
+      {
+        "h": 40,
+        "name": "Buka interface klasik Flask jika perlu",
+        "w": 78
+      },
+      {
+        "h": 36,
+        "name": "Tempel dari Clipboard",
+        "w": 76
+      },
+      {
+        "h": 40,
+        "name": "subtitle-style",
+        "w": 207
+      },
+      {
+        "h": 40,
+        "name": "aspect-ratio",
+        "w": 207
+      },
+      {
+        "h": 8,
+        "name": "num-clips",
+        "w": 207
+      },
+      {
+        "h": 40,
+        "name": "Pengaturan Mesin AI (Provider,",
+        "w": 653
+      },
+      {
+        "h": 16,
+        "name": "auto-delete-form",
+        "w": 16
+      }
+    ],
+    "w": 768
+  },
+  {
+    "clientW": 375,
+    "h": 844,
+    "headerH": 81,
+    "overflow": [
+      {
+        "right": 475,
+        "tag": "DIV",
+        "text": "Engine Siap•openaiRiwayat: 12Versi Klasik",
+        "w": 222,
+        "x": 253
+      },
+      {
+        "right": 410,
+        "tag": "BUTTON",
+        "text": "",
+        "w": 40,
+        "x": 370
+      },
+      {
+        "right": 398,
+        "tag": "svg",
+        "text": "",
+        "w": 16,
+        "x": 382
+      },
+      {
+        "right": 396,
+        "tag": "path",
+        "text": "",
+        "w": 12,
+        "x": 384
+      },
+      {
+        "right": 392,
+        "tag": "circle",
+        "text": "",
+        "w": 4,
+        "x": 388
+      },
+      {
+        "right": 475,
+        "tag": "A",
+        "text": "Versi Klasik",
+        "w": 49,
+        "x": 426
+      }
+    ],
+    "pageH": 1469,
+    "pageW": 475,
+    "smallControls": [
+      {
+        "h": 40,
+        "name": "Buka Pengaturan API & Engine",
+        "w": 40
+      },
+      {
+        "h": 40,
+        "name": "Buka interface klasik Flask jika perlu",
+        "w": 49
+      },
+      {
+        "h": 36,
+        "name": "Tempel dari Clipboard",
+        "w": 76
+      },
+      {
+        "h": 40,
+        "name": "subtitle-style",
+        "w": 294
+      },
+      {
+        "h": 40,
+        "name": "aspect-ratio",
+        "w": 294
+      },
+      {
+        "h": 8,
+        "name": "num-clips",
+        "w": 294
+      },
+      {
+        "h": 16,
+        "name": "auto-delete-form",
+        "w": 13
+      }
+    ],
+    "w": 390
+  },
+  {
+    "clientW": 305,
+    "h": 568,
+    "headerH": 81,
+    "overflow": [
+      {
+        "right": 475,
+        "tag": "DIV",
+        "text": "Engine Siap•openaiRiwayat: 12Versi Klasik",
+        "w": 222,
+        "x": 253
+      },
+      {
+        "right": 354,
+        "tag": "BUTTON",
+        "text": "Riwayat: 12",
+        "w": 101,
+        "x": 253
+      },
+      {
+        "right": 340,
+        "tag": "SPAN",
+        "text": "Riwayat: 12",
+        "w": 51,
+        "x": 289
+      },
+      {
+        "right": 410,
+        "tag": "BUTTON",
+        "text": "",
+        "w": 40,
+        "x": 370
+      },
+      {
+        "right": 398,
+        "tag": "svg",
+        "text": "",
+        "w": 16,
+        "x": 382
+      },
+      {
+        "right": 396,
+        "tag": "path",
+        "text": "",
+        "w": 12,
+        "x": 384
+      },
+      {
+        "right": 392,
+        "tag": "circle",
+        "text": "",
+        "w": 4,
+        "x": 388
+      },
+      {
+        "right": 475,
+        "tag": "A",
+        "text": "Versi Klasik",
+        "w": 49,
+        "x": 426
+      }
+    ],
+    "pageH": 1609,
+    "pageW": 475,
+    "smallControls": [
+      {
+        "h": 40,
+        "name": "Buka Pengaturan API & Engine",
+        "w": 40
+      },
+      {
+        "h": 40,
+        "name": "Buka interface klasik Flask jika perlu",
+        "w": 49
+      },
+      {
+        "h": 36,
+        "name": "Tempel dari Clipboard",
+        "w": 76
+      },
+      {
+        "h": 40,
+        "name": "subtitle-style",
+        "w": 223
+      },
+      {
+        "h": 40,
+        "name": "aspect-ratio",
+        "w": 223
+      },
+      {
+        "h": 8,
+        "name": "num-clips",
+        "w": 223
+      },
+      {
+        "h": 16,
+        "name": "auto-delete-form",
+        "w": 13
+      }
+    ],
+    "w": 320
+  }
+]

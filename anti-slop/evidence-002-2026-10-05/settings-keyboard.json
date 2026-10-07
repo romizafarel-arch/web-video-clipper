@@ -1,0 +1,74 @@
+[
+  {
+    "id": "",
+    "inside": true,
+    "name": "Dapatkan Kunci",
+    "tag": "A"
+  },
+  {
+    "id": "gemini-key",
+    "inside": true,
+    "name": "",
+    "tag": "INPUT"
+  },
+  {
+    "id": "",
+    "inside": true,
+    "name": "Dapatkan Kunci",
+    "tag": "A"
+  },
+  {
+    "id": "openai-key",
+    "inside": true,
+    "name": "",
+    "tag": "INPUT"
+  },
+  {
+    "id": "openai-base-url",
+    "inside": true,
+    "name": "",
+    "tag": "INPUT"
+  },
+  {
+    "id": "",
+    "inside": true,
+    "name": "MuAPI Portal",
+    "tag": "A"
+  },
+  {
+    "id": "muapi-key",
+    "inside": true,
+    "name": "",
+    "tag": "INPUT"
+  },
+  {
+    "id": "auto-delete-source",
+    "inside": true,
+    "name": "",
+    "tag": "INPUT"
+  },
+  {
+    "id": "",
+    "inside": true,
+    "name": "Batal",
+    "tag": "BUTTON"
+  },
+  {
+    "id": "",
+    "inside": true,
+    "name": "Simpan Perubahan",
+    "tag": "BUTTON"
+  },
+  {
+    "id": "",
+    "inside": true,
+    "name": "Tutup pengaturan",
+    "tag": "BUTTON"
+  },
+  {
+    "id": "",
+    "inside": true,
+    "name": "Dapatkan Kunci",
+    "tag": "A"
+  }
+]

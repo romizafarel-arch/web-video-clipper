@@ -1,0 +1,185 @@
+{
+  "blur": [
+    {
+      "filter": "blur(20px)",
+      "tag": "HEADER",
+      "text": "ShortsStudiov3.0 ReactMotionKit AI Video ClipperEn"
+    },
+    {
+      "filter": "blur(20px)",
+      "tag": "DIV",
+      "text": "Generate Viral ShortsEkstraksi klip vertikal otoma"
+    }
+  ],
+  "reducedMotion": false,
+  "textStyles": [
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.704 0.04 256.788)",
+      "size": "14px",
+      "text": "Ekstraksi klip vertikal otomatis dengan kurasi AI multimodal, deteksi hook "
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.869 0.022 252.894)",
+      "size": "12px",
+      "text": "Engine PemrosesanTanpa batas kuota pihak ketiga"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.704 0.04 256.788)",
+      "size": "11px",
+      "text": "Tanpa batas kuota pihak ketiga"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.704 0.04 256.788)",
+      "size": "11px",
+      "text": "Whisper / Gemini + FFmpeg langsung di perangkat komputer."
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.704 0.04 256.788)",
+      "size": "11px",
+      "text": "Render berbasis cloud service (memerlukan MuAPI Key)."
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.869 0.022 252.894)",
+      "size": "12px",
+      "text": "URL Video YouTube"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.704 0.04 256.788)",
+      "size": "10px",
+      "text": "Auto track pembicara aktif"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.704 0.04 256.788)",
+      "size": "10px",
+      "text": "Fokus 1 wajah utama"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.704 0.04 256.788)",
+      "size": "10px",
+      "text": "Crop statis tengah"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.704 0.04 256.788)",
+      "size": "10px",
+      "text": "Facecam + gameplay split"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.869 0.022 252.894)",
+      "size": "12px",
+      "text": "Gaya Subtitle"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.869 0.022 252.894)",
+      "size": "12px",
+      "text": "Rasio Aspek Video"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.869 0.022 252.894)",
+      "size": "12px",
+      "text": "Target Klip"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.554 0.046 257.417)",
+      "size": "10px",
+      "text": "1"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.554 0.046 257.417)",
+      "size": "10px",
+      "text": "2"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.554 0.046 257.417)",
+      "size": "10px",
+      "text": "3"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.554 0.046 257.417)",
+      "size": "10px",
+      "text": "4"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.554 0.046 257.417)",
+      "size": "10px",
+      "text": "5"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.704 0.04 256.788)",
+      "size": "11px",
+      "text": "GEMINI / WHISPER"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.869 0.022 252.894)",
+      "size": "12px",
+      "text": "AI Highlight & Virality Scorer (LLM Provider)"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.869 0.022 252.894)",
+      "size": "12px",
+      "text": "Model Gemini"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.702 0.183 293.541)",
+      "size": "11px",
+      "text": "Muat"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.869 0.022 252.894)",
+      "size": "12px",
+      "text": "Speech Transcriber (Audio-to-Text)"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.869 0.022 252.894)",
+      "size": "12px",
+      "text": "Model Faster-Whisper"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.811 0.111 293.571)",
+      "size": "10px",
+      "text": "Direkomendasikan"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.704 0.04 256.788)",
+      "size": "10px",
+      "text": "Maksimal"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.704 0.04 256.788)",
+      "size": "10px",
+      "text": "Paling Cepat"
+    },
+    {
+      "background": "rgba(0, 0, 0, 0)",
+      "color": "oklch(0.869 0.022 252.894)",
+      "size": "12px",
+      "text": "Hapus file master video YouTube otomatis setelah selesai (hemat disk)"
+    }
+  ]
+}

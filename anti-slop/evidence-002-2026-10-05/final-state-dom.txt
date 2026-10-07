@@ -1,0 +1,105 @@
+- region "Notifications alt+T"
+- banner:
+  - generic: ShortsStudio
+  - generic: v3.0 React
+  - paragraph: MotionKit AI Video Clipper
+  - generic: Engine Siap
+  - generic: •
+  - generic: openai
+  - button "Buka Riwayat Sesi (12 klip)":
+    - text: "Riwayat:"
+    - strong: "12"
+  - button "Buka Pengaturan API & Engine":
+  - link "Versi Klasik":
+    - /url: /
+- main:
+  - heading "Generate Viral Shorts" [level=2]:
+    - text: Generate Viral Shorts
+  - paragraph: Ekstraksi klip vertikal otomatis dengan kurasi AI multimodal, deteksi hook viral, dan smart face-tracking.
+  - text: Engine Pemrosesan
+  - generic: Tanpa batas kuota pihak ketiga
+  - button "Local Engine Whisper / Gemini + FFmpeg langsung di perangkat komputer.":
+    - generic: Local Engine
+    - generic: Whisper / Gemini + FFmpeg langsung di perangkat komputer.
+  - button "Cloud API Engine (MuAPI) Render berbasis cloud service (memerlukan MuAPI Key).":
+    - generic: Cloud API Engine (MuAPI)
+    - generic: Render berbasis cloud service (memerlukan MuAPI Key).
+  - text: URL Video YouTube
+  - textbox "URL Video YouTube":
+    - /placeholder: https://www.youtube.com/watch?v=... atau https://youtu.be/...
+  - button "Paste":
+    - text: Paste
+  - text: Mode Framing Kamera
+  - radiogroup "Mode framing kamera":
+    - radio "Podcast Multi-Speaker Auto track pembicara aktif" [checked]:
+      - generic: Podcast Multi-Speaker
+      - generic: Auto track pembicara aktif
+    - radio "Single Speaker Fokus 1 wajah utama":
+      - generic: Single Speaker
+      - generic: Fokus 1 wajah utama
+    - radio "Center Crop Crop statis tengah":
+      - generic: Center Crop
+      - generic: Crop statis tengah
+    - radio "Gaming 2-Layer Facecam + gameplay split":
+      - generic: Gaming 2-Layer
+      - generic: Facecam + gameplay split
+  - text: Gaya Subtitle
+  - combobox "Gaya Subtitle":
+    - option "Karaoke Kinetik (Per Kata Highlight)" [selected]
+    - option "Beat Pop (Kata Dinamis Melompat)"
+    - option "Teks Statis Klasik (Blok Kata)"
+    - option "Tanpa Subtitle (Nonaktif)"
+  - text: Rasio Aspek Video
+  - combobox "Rasio Aspek Video":
+    - option "9:16 Vertikal (TikTok / Shorts / Reels)" [selected]
+    - option "1:1 Persegi (Feed Instagram)"
+    - option "16:9 Lanskap (Original Widescreen)"
+  - generic: Target Klip
+  - generic: 3 Klip
+  - slider "Target Klip": "3"
+  - generic: "1"
+  - generic: "2"
+  - generic: "3"
+  - generic: "4"
+  - generic: "5"
+  - button "Pengaturan Mesin AI (Provider, Model LLM & Transcriber) GEMINI / GEMINI":
+    - generic: Pengaturan Mesin AI (Provider, Model LLM & Transcriber)
+    - generic: GEMINI / GEMINI
+  - text: AI Highlight & Virality Scorer (LLM Provider)
+  - combobox "AI Highlight & Virality Scorer (LLM Provider)":
+    - option "Google Gemini (Direkomendasikan)" [selected]
+    - option "OpenAI / APMIX"
+  - generic: Model Gemini
+  - button "Muat":
+    - generic: Muat
+  - generic: •
+  - button "Tes Ping"
+  - combobox "Model Gemini":
+    - option "gemini-3.5-flash (Direkomendasikan - Seimbang)" [selected]
+    - option "gemini-2.5-flash (Ultra Cepat)"
+    - option "gemini-2.5-pro (Analisis Mendalam)"
+  - text: Speech Transcriber (Audio-to-Text)
+  - combobox "Speech Transcriber (Audio-to-Text)":
+    - option "Google Gemini (Cloud Speech Audio)" [selected]
+    - option "Faster-Whisper (Lokal GPU / CPU)"
+  - text: Model Transkripsi Gemini
+  - combobox "Model Transkripsi Gemini":
+    - option "gemini-3.5-transcribe (Presisi & Cepat)" [selected]
+    - option "gemini-2.5-flash (Standard Audio)"
+  - generic: Kualitas Output Video
+  - button "HD 720p Direkomendasikan":
+    - generic: HD 720p
+    - generic: Direkomendasikan
+  - button "Full HD 1080p Maksimal":
+    - generic: Full HD 1080p
+    - generic: Maksimal
+  - button "SD 480p Paling Cepat":
+    - generic: SD 480p
+    - generic: Paling Cepat
+  - checkbox "Hapus file master video YouTube otomatis setelah selesai (hemat disk)" [checked]
+  - generic: Hapus file master video YouTube otomatis setelah selesai (hemat disk)
+  - generic: "Mode: LOCAL | LLM: gemini-3.5-flash"
+  - button "Generate Viral Shorts Sekarang" [disabled]:
+    - generic: Generate Viral Shorts Sekarang
+- contentinfo:
+  - paragraph: ShortsStudio MotionKit • React + shadcn/ui • AI Multimodal & Kinetic Engine

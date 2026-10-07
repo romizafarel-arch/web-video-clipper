@@ -1,0 +1,862 @@
+{
+  "url": "http://127.0.0.1:5173/",
+  "timestamp": "2026-10-05T12:49:27.039Z",
+  "viewports": {
+    "desktop-1440x900": {
+      "hasOverflow": false,
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "bodyScrollWidth": 1440,
+      "overflowCount": 0,
+      "samples": []
+    },
+    "laptop-1024x768": {
+      "hasOverflow": false,
+      "scrollWidth": 1024,
+      "innerWidth": 1024,
+      "bodyScrollWidth": 1024,
+      "overflowCount": 0,
+      "samples": []
+    },
+    "tablet-768x1024": {
+      "hasOverflow": false,
+      "scrollWidth": 768,
+      "innerWidth": 768,
+      "bodyScrollWidth": 768,
+      "overflowCount": 0,
+      "samples": []
+    },
+    "mobile-390x844": {
+      "hasOverflow": false,
+      "scrollWidth": 477,
+      "innerWidth": 477,
+      "bodyScrollWidth": 476,
+      "overflowCount": 0,
+      "samples": []
+    },
+    "mobile-320x568": {
+      "hasOverflow": false,
+      "scrollWidth": 476,
+      "innerWidth": 476,
+      "bodyScrollWidth": 476,
+      "overflowCount": 0,
+      "samples": []
+    }
+  },
+  "deepAudit": {
+    "title": "ShortsAI Studio — AI YouTube Shorts Generator",
+    "buttons": [
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "Riwayat: 12",
+        "ariaLabel": "Buka Riwayat Sesi (12 klip)",
+        "title": "Buka Riwayat Sesi & Video Shorts",
+        "hasAccessibleName": true,
+        "width": 116,
+        "height": 40,
+        "meetsTouchTarget": false,
+        "disabled": false,
+        "isVisible": true,
+        "fontSize": "12px",
+        "lineHeight": "16px",
+        "className": "min-h-[40px] flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white/5 hover:bg-"
+      },
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "",
+        "ariaLabel": "Buka Pengaturan API & Engine",
+        "title": "Pengaturan API & Engine",
+        "hasAccessibleName": true,
+        "width": 40,
+        "height": 40,
+        "meetsTouchTarget": false,
+        "disabled": false,
+        "isVisible": true,
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "className": "min-h-[40px] min-w-[40px] flex items-center justify-center p-2 rounded-lg bg-whi"
+      },
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "Local Engine\nWhisper / Gemini + FFmpeg l",
+        "ariaLabel": null,
+        "title": null,
+        "hasAccessibleName": true,
+        "width": 449,
+        "height": 63,
+        "meetsTouchTarget": true,
+        "disabled": false,
+        "isVisible": true,
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "className": "p-3.5 rounded-xl border text-left transition-all relative cursor-pointer flex it"
+      },
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "Cloud API Engine (MuAPI)\nRender berbasis",
+        "ariaLabel": null,
+        "title": null,
+        "hasAccessibleName": true,
+        "width": 449,
+        "height": 63,
+        "meetsTouchTarget": true,
+        "disabled": false,
+        "isVisible": true,
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "className": "p-3.5 rounded-xl border text-left transition-all relative cursor-pointer flex it"
+      },
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "Paste",
+        "ariaLabel": null,
+        "title": "Tempel dari Clipboard",
+        "hasAccessibleName": true,
+        "width": 76,
+        "height": 36,
+        "meetsTouchTarget": false,
+        "disabled": false,
+        "isVisible": true,
+        "fontSize": "12px",
+        "lineHeight": "16px",
+        "className": "absolute right-2 min-h-[36px] px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/"
+      },
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "Podcast Multi-Speaker\nAuto track pembica",
+        "ariaLabel": null,
+        "title": null,
+        "hasAccessibleName": true,
+        "width": 220,
+        "height": 79,
+        "meetsTouchTarget": true,
+        "disabled": false,
+        "isVisible": true,
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "className": "min-h-[64px] p-3 rounded-xl border text-left transition-all relative cursor-poin"
+      },
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "Single Speaker\nFokus 1 wajah utama",
+        "ariaLabel": null,
+        "title": null,
+        "hasAccessibleName": true,
+        "width": 220,
+        "height": 79,
+        "meetsTouchTarget": true,
+        "disabled": false,
+        "isVisible": true,
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "className": "min-h-[64px] p-3 rounded-xl border text-left transition-all relative cursor-poin"
+      },
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "Center Crop\nCrop statis tengah",
+        "ariaLabel": null,
+        "title": null,
+        "hasAccessibleName": true,
+        "width": 220,
+        "height": 79,
+        "meetsTouchTarget": true,
+        "disabled": false,
+        "isVisible": true,
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "className": "min-h-[64px] p-3 rounded-xl border text-left transition-all relative cursor-poin"
+      },
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "Gaming 2-Layer\nFacecam + gameplay split",
+        "ariaLabel": null,
+        "title": null,
+        "hasAccessibleName": true,
+        "width": 220,
+        "height": 79,
+        "meetsTouchTarget": true,
+        "disabled": false,
+        "isVisible": true,
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "className": "min-h-[64px] p-3 rounded-xl border text-left transition-all relative cursor-poin"
+      },
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "Pengaturan Mesin AI (Provider, Model LLM",
+        "ariaLabel": null,
+        "title": null,
+        "hasAccessibleName": true,
+        "width": 908,
+        "height": 40,
+        "meetsTouchTarget": false,
+        "disabled": false,
+        "isVisible": true,
+        "fontSize": "12px",
+        "lineHeight": "16px",
+        "className": "w-full flex items-center justify-between px-4 py-3 bg-white/[0.02] hover:bg-whit"
+      },
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "text": "Generate Viral Shorts Sekarang",
+        "ariaLabel": null,
+        "title": null,
+        "hasAccessibleName": true,
+        "width": 910,
+        "height": 52,
+        "meetsTouchTarget": true,
+        "disabled": true,
+        "isVisible": true,
+        "fontSize": "14px",
+        "lineHeight": "20px",
+        "className": "w-full h-13 rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-5"
+      }
+    ],
+    "formControls": [
+      {
+        "tag": "INPUT",
+        "type": "url",
+        "id": "youtube-url",
+        "name": null,
+        "hasAssociatedLabel": true,
+        "labelText": "URL VIDEO YOUTUBE",
+        "ariaLabel": null,
+        "width": 910,
+        "height": 48,
+        "meetsTouchTarget": true,
+        "fontSize": "14px",
+        "color": "rgb(255, 255, 255)",
+        "bgColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.04)"
+      },
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "id": "subtitle-style",
+        "name": null,
+        "hasAssociatedLabel": true,
+        "labelText": "GAYA SUBTITLE",
+        "ariaLabel": null,
+        "width": 293,
+        "height": 40,
+        "meetsTouchTarget": false,
+        "fontSize": "12px",
+        "color": "rgb(255, 255, 255)",
+        "bgColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.04)"
+      },
+      {
+        "tag": "SELECT",
+        "type": "select-one",
+        "id": "aspect-ratio",
+        "name": null,
+        "hasAssociatedLabel": true,
+        "labelText": "RASIO ASPEK VIDEO",
+        "ariaLabel": null,
+        "width": 293,
+        "height": 40,
+        "meetsTouchTarget": false,
+        "fontSize": "12px",
+        "color": "rgb(255, 255, 255)",
+        "bgColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.04)"
+      },
+      {
+        "tag": "INPUT",
+        "type": "range",
+        "id": "num-clips",
+        "name": null,
+        "hasAssociatedLabel": true,
+        "labelText": "TARGET KLIP",
+        "ariaLabel": null,
+        "width": 293,
+        "height": 8,
+        "meetsTouchTarget": false,
+        "fontSize": "16px",
+        "color": "oklch(0.968 0.007 247.896)",
+        "bgColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+      },
+      {
+        "tag": "INPUT",
+        "type": "checkbox",
+        "id": "auto-delete-form",
+        "name": null,
+        "hasAssociatedLabel": true,
+        "labelText": "Hapus file master video YouTube otomatis setelah selesai (hemat disk)",
+        "ariaLabel": null,
+        "width": 16,
+        "height": 16,
+        "meetsTouchTarget": false,
+        "fontSize": "12px",
+        "color": "oklch(0.541 0.281 293.009)",
+        "bgColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.05)"
+      }
+    ],
+    "smallTexts": [
+      {
+        "tag": "SPAN",
+        "text": "V3.0 REACT",
+        "fontSize": "10px",
+        "color": "oklch(0.811 0.111 293.571)",
+        "className": "text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full"
+      },
+      {
+        "tag": "SPAN",
+        "text": "openai",
+        "fontSize": "11px",
+        "color": "oklch(0.702 0.183 293.541)",
+        "className": "text-violet-400 font-mono text-[11px]"
+      },
+      {
+        "tag": "SPAN",
+        "text": "TANPA BATAS KUOTA PIHAK KETIGA",
+        "fontSize": "11px",
+        "color": "oklch(0.704 0.04 256.788)",
+        "className": "text-[11px] font-normal text-slate-400"
+      },
+      {
+        "tag": "DIV",
+        "text": "Whisper / Gemini + FFmpeg langsung di perangkat ko",
+        "fontSize": "11px",
+        "color": "oklch(0.704 0.04 256.788)",
+        "className": "text-[11px] text-slate-400 mt-0.5 leading-snug"
+      },
+      {
+        "tag": "DIV",
+        "text": "Render berbasis cloud service (memerlukan MuAPI Ke",
+        "fontSize": "11px",
+        "color": "oklch(0.704 0.04 256.788)",
+        "className": "text-[11px] text-slate-400 mt-0.5 leading-snug"
+      },
+      {
+        "tag": "DIV",
+        "text": "Auto track pembicara aktif",
+        "fontSize": "10px",
+        "color": "oklch(0.704 0.04 256.788)",
+        "className": "text-[10px] text-slate-400 mt-0.5 leading-snug"
+      },
+      {
+        "tag": "DIV",
+        "text": "Fokus 1 wajah utama",
+        "fontSize": "10px",
+        "color": "oklch(0.704 0.04 256.788)",
+        "className": "text-[10px] text-slate-400 mt-0.5 leading-snug"
+      },
+      {
+        "tag": "DIV",
+        "text": "Crop statis tengah",
+        "fontSize": "10px",
+        "color": "oklch(0.704 0.04 256.788)",
+        "className": "text-[10px] text-slate-400 mt-0.5 leading-snug"
+      },
+      {
+        "tag": "DIV",
+        "text": "Facecam + gameplay split",
+        "fontSize": "10px",
+        "color": "oklch(0.704 0.04 256.788)",
+        "className": "text-[10px] text-slate-400 mt-0.5 leading-snug"
+      },
+      {
+        "tag": "SPAN",
+        "text": "1",
+        "fontSize": "10px",
+        "color": "oklch(0.554 0.046 257.417)",
+        "className": ""
+      },
+      {
+        "tag": "SPAN",
+        "text": "2",
+        "fontSize": "10px",
+        "color": "oklch(0.554 0.046 257.417)",
+        "className": ""
+      },
+      {
+        "tag": "SPAN",
+        "text": "3",
+        "fontSize": "10px",
+        "color": "oklch(0.554 0.046 257.417)",
+        "className": ""
+      },
+      {
+        "tag": "SPAN",
+        "text": "4",
+        "fontSize": "10px",
+        "color": "oklch(0.554 0.046 257.417)",
+        "className": ""
+      },
+      {
+        "tag": "SPAN",
+        "text": "5",
+        "fontSize": "10px",
+        "color": "oklch(0.554 0.046 257.417)",
+        "className": ""
+      },
+      {
+        "tag": "SPAN",
+        "text": "GEMINI / GEMINI",
+        "fontSize": "11px",
+        "color": "oklch(0.704 0.04 256.788)",
+        "className": "text-[11px] font-mono text-slate-400"
+      },
+      {
+        "tag": "SPAN",
+        "text": "LOCAL",
+        "fontSize": "11px",
+        "color": "oklch(0.702 0.183 293.541)",
+        "className": "text-violet-400"
+      },
+      {
+        "tag": "SPAN",
+        "text": "gemini-3.5-flash",
+        "fontSize": "11px",
+        "color": "oklch(0.702 0.183 293.541)",
+        "className": "text-violet-400"
+      }
+    ],
+    "hasHeader": true,
+    "hasMain": true,
+    "hasFooter": true,
+    "columnsCount": 30
+  },
+  "engineInfo": [
+    {
+      "text": "Local Engine\nWhisper / Gemini + FFmpeg langsung di perangkat komputer.",
+      "className": "p-3.5 rounded-xl border text-left transition-all relative cursor-pointer flex items-start gap-3 bg-violet-600/20 border-violet-500 shadow-lg shadow-violet-500/10 ring-1 ring-violet-500/50",
+      "role": null,
+      "selected": true
+    },
+    {
+      "text": "Cloud API Engine (MuAPI)\nRender berbasis cloud service (memerlukan MuAPI Key).",
+      "className": "p-3.5 rounded-xl border text-left transition-all relative cursor-pointer flex items-start gap-3 bg-white/[0.02] border-white/10 hover:bg-white/[0.05] hover:border-white/20",
+      "role": null,
+      "selected": true
+    }
+  ],
+  "framingInfo": [
+    {
+      "text": "Center Crop\nCrop statis tengah",
+      "className": "min-h-[64px] p-3 rounded-xl border text-left transition-all relative cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 bg-white/[0.02] border-white/10 hover:bg-white/[0.05] hover:border-white/20",
+      "selected": null
+    }
+  ],
+  "selectsInfo": [
+    {
+      "tag": "SELECT",
+      "id": "subtitle-style",
+      "name": "",
+      "value": "karaoke",
+      "options": [
+        {
+          "value": "karaoke",
+          "text": "Karaoke Kinetik (Per Kata Highlight)"
+        },
+        {
+          "value": "kinetic",
+          "text": "Beat Pop (Kata Dinamis Melompat)"
+        },
+        {
+          "value": "classic",
+          "text": "Teks Statis Klasik (Blok Kata)"
+        },
+        {
+          "value": "none",
+          "text": "Tanpa Subtitle (Nonaktif)"
+        }
+      ]
+    },
+    {
+      "tag": "SELECT",
+      "id": "aspect-ratio",
+      "name": "",
+      "value": "9:16",
+      "options": [
+        {
+          "value": "9:16",
+          "text": "9:16 Vertikal (TikTok / Shorts / Reels)"
+        },
+        {
+          "value": "1:1",
+          "text": "1:1 Persegi (Feed Instagram)"
+        },
+        {
+          "value": "16:9",
+          "text": "16:9 Lanskap (Original Widescreen)"
+        }
+      ]
+    }
+  ],
+  "sliderInfo": [
+    {
+      "tag": "INPUT",
+      "id": "num-clips",
+      "min": "1",
+      "max": "5",
+      "step": "1",
+      "value": "3",
+      "ariaValueNow": null,
+      "ariaLabel": null
+    }
+  ],
+  "checkboxInfo": [
+    {
+      "id": "auto-delete-form",
+      "checked": true,
+      "hasLabel": true,
+      "labelText": "Hapus file master video YouTube otomatis setelah selesai (hemat disk)"
+    }
+  ],
+  "modals": {
+    "settings": {
+      "settingsBtnExists": true,
+      "state": {
+        "isOpen": true,
+        "hasRoleDialog": false,
+        "hasAriaModal": false,
+        "title": null,
+        "closeBtn": false
+      },
+      "afterEsc": {
+        "isOpen": false,
+        "activeElementText": "BUTTON"
+      }
+    },
+    "history": {
+      "historyBtnExists": true,
+      "state": {
+        "isOpen": true,
+        "hasRoleDialog": false,
+        "hasAriaModal": false,
+        "title": null
+      },
+      "afterEsc": {
+        "isOpen": false,
+        "activeElementText": "Riwayat: 12"
+      }
+    }
+  },
+  "tabSequence": [
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "",
+      "ariaLabel": "Buka Pengaturan API & Engine",
+      "hasVisibleFocus": true,
+      "outline": "rgb(46, 48, 50) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+    },
+    {
+      "tag": "A",
+      "type": "",
+      "id": null,
+      "text": "Versi Klasik",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(37, 40, 43) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklch(0.704 0.04 256.788)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Local Engine\nWhisper / Gemini + FFm",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(34, 34, 35) auto 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.5) 0px 0px 0px 1px, oklab(0.606 0.096545 -0.230606 / 0.1) 0px 10px 15px -3px, oklab(0.606 0.096545 -0.230606 / 0.1) 0px 4px 6px -4px",
+      "borderColor": "oklch(0.606 0.25 292.717)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Cloud API Engine (MuAPI)\nRender ber",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(53, 53, 54) auto 1px",
+      "boxShadow": "none",
+      "borderColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+    },
+    {
+      "tag": "INPUT",
+      "type": "url",
+      "id": "youtube-url",
+      "text": "",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(89, 89, 89) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.695952) 0px 0px 0px 1.3919px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Paste",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(117, 123, 130) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklch(0.869 0.022 252.894)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Podcast Multi-Speaker\nAuto track pe",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(53, 53, 54) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.83711) 0px 0px 0px 1.67422px, oklab(0.606 0.096545 -0.230606 / 0.1) 0px 10px 15px -3px, oklab(0.606 0.096545 -0.230606 / 0.1) 0px 4px 6px -4px",
+      "borderColor": "oklch(0.606 0.25 292.717)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Single Speaker\nFokus 1 wajah utama",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(53, 53, 54) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.83711) 0px 0px 0px 1.67422px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Center Crop\nCrop statis tengah",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(53, 53, 54) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.83711) 0px 0px 0px 1.67422px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Gaming 2-Layer\nFacecam + gameplay s",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(34, 34, 34) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.920761) 0px 0px 0px 1.84152px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+    },
+    {
+      "tag": "SELECT",
+      "type": "select-one",
+      "id": "subtitle-style",
+      "text": "Karaoke Kinetik (Per Kata Highlight",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(16, 16, 16) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.715 0.143 215.221) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+    },
+    {
+      "tag": "SELECT",
+      "type": "select-one",
+      "id": "aspect-ratio",
+      "text": "9:16 Vertikal (TikTok / Shorts / Re",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(16, 16, 16) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+    },
+    {
+      "tag": "INPUT",
+      "type": "range",
+      "id": "num-clips",
+      "text": "3",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(16, 16, 16) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklch(0.968 0.007 247.896)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Pengaturan Mesin AI (Provider, Mode",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(80, 82, 84) auto 1px",
+      "boxShadow": "none",
+      "borderColor": "oklch(0.929 0.013 255.508)"
+    },
+    {
+      "tag": "INPUT",
+      "type": "checkbox",
+      "id": "auto-delete-form",
+      "text": "on",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(16, 16, 16) auto 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklch(0.541 0.281 293.009)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Riwayat: 12",
+      "ariaLabel": "Buka Riwayat Sesi (12 klip)",
+      "hasVisibleFocus": true,
+      "outline": "rgb(46, 48, 50) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "",
+      "ariaLabel": "Buka Pengaturan API & Engine",
+      "hasVisibleFocus": true,
+      "outline": "rgb(46, 48, 50) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+    },
+    {
+      "tag": "A",
+      "type": "",
+      "id": null,
+      "text": "Versi Klasik",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(55, 60, 67) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklch(0.704 0.04 256.788)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Local Engine\nWhisper / Gemini + FFm",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(53, 53, 54) auto 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.5) 0px 0px 0px 1px, oklab(0.606 0.096545 -0.230606 / 0.1) 0px 10px 15px -3px, oklab(0.606 0.096545 -0.230606 / 0.1) 0px 4px 6px -4px",
+      "borderColor": "oklch(0.606 0.25 292.717)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Cloud API Engine (MuAPI)\nRender ber",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(53, 53, 54) auto 1px",
+      "boxShadow": "none",
+      "borderColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+    },
+    {
+      "tag": "INPUT",
+      "type": "url",
+      "id": "youtube-url",
+      "text": "",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(89, 89, 89) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.695206) 0px 0px 0px 1.39041px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Paste",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(46, 48, 50) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklch(0.606 0.25 292.717) 0px 0px 0px 2px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklch(0.869 0.022 252.894)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Podcast Multi-Speaker\nAuto track pe",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(85, 86, 87) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.695206) 0px 0px 0px 1.39041px, oklab(0.606 0.096545 -0.230606 / 0.1) 0px 10px 15px -3px, oklab(0.606 0.096545 -0.230606 / 0.1) 0px 4px 6px -4px",
+      "borderColor": "oklch(0.606 0.25 292.717)"
+    },
+    {
+      "tag": "BUTTON",
+      "type": "button",
+      "id": null,
+      "text": "Single Speaker\nFokus 1 wajah utama",
+      "ariaLabel": null,
+      "hasVisibleFocus": true,
+      "outline": "rgb(53, 53, 54) none 1px",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.606 0.096545 -0.230606 / 0.83711) 0px 0px 0px 1.67422px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "borderColor": "oklab(0.999994 0.0000455678 0.0000200868 / 0.1)"
+    }
+  ],
+  "previewSection": {
+    "hasVideoTag": false,
+    "emptyStateText": null,
+    "downloadButtonsCount": 0
+  },
+  "consoleLogs": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "verbose",
+      "text": "[DOM] Multiple forms should be contained in their own form elements; break up complex forms into ones that represent a single action: (More info: https://goo.gl/9p2vKq) %o"
+    }
+  ]
+}
