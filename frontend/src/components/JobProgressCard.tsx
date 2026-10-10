@@ -158,7 +158,7 @@ export const JobProgressCard: FC<JobProgressCardProps> = ({
                 isDone
                   ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
                   : isCurrent
-                  ? 'bg-[#8B5CF6]/15 border-[#8B5CF6] text-white ring-1 ring-[#8B5CF6]/50 shadow-[0_0_12px_rgba(139,92,246,0.25)]'
+                  ? 'bg-[#8B5CF6]/15 border-[#8B5CF6] text-white ring-1 ring-[#8B5CF6]/50 shadow-[0_0_12px_rgba(139,92,246,0.25)] step-active-pulse'
                   : 'bg-[#151520]/60 border-white/[0.06] text-zinc-500'
               }`}
             >

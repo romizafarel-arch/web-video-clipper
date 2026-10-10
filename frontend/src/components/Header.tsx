@@ -15,7 +15,7 @@ export const Header: FC<HeaderProps> = ({ config, historyCount, onOpenHistory, o
   const isConnected = Boolean(config?.has_gemini_key || config?.has_openai_key);
 
   return (
-    <header className="sticky top-0 z-40 w-full shrink-0 border-b border-white/[0.08] bg-[#0A0A0F]/90 backdrop-blur-xl px-4 sm:px-6 md:px-8 py-3 sm:py-3.5">
+    <header className="header-glow-line sticky top-0 z-40 w-full shrink-0 border-b border-white/[0.08] bg-[#0A0A0F]/85 backdrop-blur-2xl px-4 sm:px-6 md:px-8 py-3 sm:py-3.5">
       <div className="max-w-[1536px] mx-auto flex items-center justify-between gap-3 sm:gap-4">
         {/* Brand / Title Reef Clipper */}
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 shrink">

@@ -38,6 +38,7 @@ export function App() {
 
   // Studio Player Sync States
   const [selectedClip, setSelectedClip] = useState<GeneratedShort | HistoryShort | null>(null);
+  const [activeClipList, setActiveClipList] = useState<Array<GeneratedShort | HistoryShort>>([]);
   const [aspectRatio, setAspectRatio] = useState<string>('9:16');
   const [framingMode, setFramingMode] = useState<FramingMode>('podcast');
   const [subtitleStyle, setSubtitleStyle] = useState<SubtitleStyle>('karaoke');
@@ -85,6 +86,7 @@ export function App() {
             if (job.result) {
               setJobResult(job.result);
               if (job.result.shorts && job.result.shorts.length > 0) {
+                setActiveClipList(job.result.shorts);
                 setSelectedClip(job.result.shorts[0]);
                 if (job.result.shorts[0].title) {
                   setPreviewSubtitleText(job.result.shorts[0].title);
@@ -99,6 +101,7 @@ export function App() {
             if (job.result && successClips > 0) {
               setJobResult(job.result);
               if (job.result.shorts && job.result.shorts.length > 0) {
+                setActiveClipList(job.result.shorts);
                 setSelectedClip(job.result.shorts[0]);
                 if (job.result.shorts[0].title) {
                   setPreviewSubtitleText(job.result.shorts[0].title);
@@ -117,6 +120,7 @@ export function App() {
           } else if (job.status === 'cancelled' || job.status === 'canceled') {
             if (job.result?.shorts && job.result.shorts.length > 0) {
               setJobResult(job.result);
+              setActiveClipList(job.result.shorts);
               setSelectedClip(job.result.shorts[0]);
               if (job.result.shorts[0].title) {
                 setPreviewSubtitleText(job.result.shorts[0].title);
@@ -130,6 +134,7 @@ export function App() {
           } else if (job.status === 'timeout') {
             if (job.result?.shorts && job.result.shorts.length > 0) {
               setJobResult(job.result);
+              setActiveClipList(job.result.shorts);
               setSelectedClip(job.result.shorts[0]);
               if (job.result.shorts[0].title) {
                 setPreviewSubtitleText(job.result.shorts[0].title);
@@ -273,9 +278,29 @@ export function App() {
       }
     }
 
+    setActiveClipList((prev) =>
+      prev.map((c) =>
+        c.filename === updatedClip.filename ||
+        ('web_url' in c && c.web_url === updatedClip.web_url)
+          ? {
+              ...c,
+              ...updatedClip,
+              vtt_url: updatedClip.vtt_url || undefined,
+            }
+          : c
+      )
+    );
+
     fetchHistory()
       .then((h) => setHistoryCount(h.total_videos))
       .catch(() => {});
+  };
+
+  const handleSelectStudioClip = (clip: GeneratedShort | HistoryShort) => {
+    setSelectedClip(clip);
+    if (clip.title) {
+      setPreviewSubtitleText(clip.title);
+    }
   };
 
   const handleOpenStudioEditor = () => {
@@ -316,6 +341,7 @@ export function App() {
 
   return (
     <div className="min-h-dvh flex flex-col bg-[#0A0A0F] text-[#F8FAFC] selection:bg-violet-600/30 selection:text-violet-300 w-full max-w-full overflow-x-hidden font-sans">
+      <div className="ambient-bg" aria-hidden="true" />
       <Toaster position="top-right" richColors theme="dark" />
       <Header
         config={config}
@@ -375,7 +401,7 @@ export function App() {
           /* Mode 2: Studio (1 kolom luas, max-w-7xl mx-auto) */
           <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
             {/* Header Bar Studio: Tombol Balik & Judul Klip Aktif */}
-            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3 gap-3">
+            <div className="flex items-center justify-between pb-3 gap-3">
               <Button
                 type="button"
                 variant="outline"
@@ -395,10 +421,21 @@ export function App() {
                 </div>
               )}
             </div>
+            <div className="glow-divider" aria-hidden="true" />
 
             {/* Stage Pemutar Video & Monitor Subtitle */}
             <StudioVideoPlayer
               clip={selectedClip}
+              clipsList={
+                activeClipList.length > 0
+                  ? activeClipList
+                  : jobResult?.shorts && jobResult.shorts.length > 0
+                  ? jobResult.shorts
+                  : selectedClip
+                  ? [selectedClip]
+                  : []
+              }
+              onSelectClip={handleSelectStudioClip}
               aspectRatio={aspectRatio}
               subtitleStyle={subtitleStyle}
               fontFamily={fontFamily}
@@ -419,8 +456,10 @@ export function App() {
                   result={jobResult}
                   selectedClip={selectedClip}
                   onSelectClip={(clip: GeneratedShort) => {
-                    setSelectedClip(clip);
-                    if (clip.title) setPreviewSubtitleText(clip.title);
+                    handleSelectStudioClip(clip);
+                    if (jobResult.shorts && jobResult.shorts.length > 0) {
+                      setActiveClipList(jobResult.shorts);
+                    }
                   }}
                   onClipUpdated={handleClipUpdated}
                 />
@@ -430,7 +469,8 @@ export function App() {
         )}
       </main>
 
-      <footer className="border-t border-zinc-800/80 py-4 text-center text-xs text-zinc-500 w-full max-w-[1536px] mx-auto px-4 font-sans">
+      <div className="glow-divider w-full max-w-[1536px] mx-auto" aria-hidden="true" />
+      <footer className="py-4 text-center text-xs text-zinc-500 w-full max-w-[1536px] mx-auto px-4 font-sans">
         <p>Reef Clipper • Studio Pemotong Video YouTube ke Klip Pendek</p>
       </footer>
 
@@ -452,8 +492,13 @@ export function App() {
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
         onHistoryChange={(newCount) => setHistoryCount(newCount)}
-        onSelectClipForStudio={(clip) => {
+        onSelectClipForStudio={(clip, sessionClips) => {
           setSelectedClip(clip);
+          if (sessionClips && sessionClips.length > 0) {
+            setActiveClipList(sessionClips);
+          } else {
+            setActiveClipList([clip]);
+          }
           if (clip.title) setPreviewSubtitleText(clip.title);
           setViewMode('studio');
         }}

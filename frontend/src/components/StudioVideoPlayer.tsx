@@ -13,6 +13,8 @@ import {
   AlignVerticalJustifyStart,
   Scissors,
   Layers,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import type { GeneratedShort, HistoryShort, SubtitleStyle, FramingMode } from '../types';
 import { LiveSubtitleOverlay } from './LiveSubtitleOverlay';
@@ -23,6 +25,8 @@ import { getDefaultFontForPreset } from '../lib/fontFamilyLibrary';
 
 export interface StudioVideoPlayerProps {
   clip?: GeneratedShort | HistoryShort | null;
+  clipsList?: Array<GeneratedShort | HistoryShort>;
+  onSelectClip?: (clip: GeneratedShort | HistoryShort) => void;
   aspectRatio: string;
   subtitleStyle: SubtitleStyle;
   subtitleText: string;
@@ -46,6 +50,8 @@ const PRESET_HOOK_TEXTS = [
 
 export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
   clip,
+  clipsList,
+  onSelectClip,
   aspectRatio,
   subtitleStyle,
   subtitleText,
@@ -65,6 +71,32 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
   const [subtitleColor, setSubtitleColor] = useState<'yellow' | 'white'>('yellow');
   const [subtitlePosition, setSubtitlePosition] = useState<'bottom' | 'center'>('bottom');
   const [isPresetPickerOpen, setIsPresetPickerOpen] = useState<boolean>(false);
+  const [fitMode, setFitMode] = useState<'contain' | 'cover'>('contain');
+  const [showLiveOverlay, setShowLiveOverlay] = useState<boolean>(false);
+
+  const currentClipIndex = clipsList
+    ? clipsList.findIndex((c) => {
+        if (clip === c) return true;
+        if (clip?.filename && c.filename && clip.filename === c.filename) return true;
+        if (clip?.web_url && c.web_url && clip.web_url === c.web_url) return true;
+        return false;
+      })
+    : -1;
+
+  const canPrev = currentClipIndex > 0;
+  const canNext = Boolean(clipsList && currentClipIndex >= 0 && currentClipIndex < clipsList.length - 1);
+
+  const handlePrevClip = () => {
+    if (clipsList && canPrev) {
+      onSelectClip?.(clipsList[currentClipIndex - 1]);
+    }
+  };
+
+  const handleNextClip = () => {
+    if (clipsList && canNext) {
+      onSelectClip?.(clipsList[currentClipIndex + 1]);
+    }
+  };
 
   const presetDefaultFont = getDefaultFontForPreset(normalizePresetId(subtitleStyle));
   const [internalFont, setInternalFont] = useState<string>(() => fontFamily || presetDefaultFont);
@@ -229,27 +261,97 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
           </div>
         </div>
 
-        {/* Aspect Ratio Quick Switcher */}
-        <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-lg border border-zinc-800 shrink-0">
-          {(['9:16', '1:1', '16:9'] as const).map((ratio) => {
-            const isSelected = activeAspectRatio === ratio;
-            return (
+        {/* Right Stage Controls: Quick Clip Switcher & Aspect Ratio */}
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          {/* Quick Clip Switcher */}
+          {clipsList && clipsList.length > 0 && (
+            <div
+              role="group"
+              aria-label="Pilih klip video"
+              className="flex items-center gap-1 bg-zinc-900/90 p-1 rounded-lg border border-zinc-800 shrink-0"
+            >
               <button
-                key={ratio}
                 type="button"
-                onClick={() => onAspectRatioChange(ratio)}
-                aria-pressed={isSelected}
-                className={`min-h-[34px] px-3 py-1 text-xs sm:text-sm font-semibold rounded-md transition-colors cursor-pointer select-none flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
-                  isSelected
-                    ? 'bg-violet-600 text-white font-bold'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
-                }`}
-                title={`Pilih Rasio Aspek ${ratio}`}
+                onClick={handlePrevClip}
+                disabled={!canPrev}
+                aria-label="Pindah ke klip sebelumnya"
+                title="Klip Sebelumnya (←)"
+                className="min-h-[34px] w-8 rounded-md flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-zinc-400 disabled:cursor-not-allowed transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
               >
-                {ratio}
+                <ChevronLeft className="w-4 h-4" />
               </button>
-            );
-          })}
+
+              <div className="flex items-center gap-1 max-w-[170px] sm:max-w-[240px] md:max-w-xs overflow-x-auto no-scrollbar py-0.5">
+                {clipsList.map((c, idx) => {
+                  const isSelected = idx === currentClipIndex;
+                  const clipLabel = typeof c.clip_index === 'number' && c.clip_index > 0 ? `Klip ${c.clip_index}` : `Klip ${idx + 1}`;
+                  return (
+                    <button
+                      key={c.filename || c.web_url || idx}
+                      type="button"
+                      onClick={() => onSelectClip?.(c)}
+                      aria-pressed={isSelected}
+                      className={`min-h-[30px] px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer select-none shrink-0 flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                        isSelected
+                          ? 'bg-violet-600 text-white font-bold shadow-sm shadow-violet-500/30 ring-1 ring-violet-400/50'
+                          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/70'
+                      }`}
+                      title={c.title || clipLabel}
+                    >
+                      <span>{clipLabel}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleNextClip}
+                disabled={!canNext}
+                aria-label="Pindah ke klip berikutnya"
+                title="Klip Berikutnya (→)"
+                className="min-h-[34px] w-8 rounded-md flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-zinc-400 disabled:cursor-not-allowed transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          {/* Fit Mode Toggle */}
+          <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-lg border border-zinc-800 shrink-0">
+            <button
+              type="button"
+              onClick={() => setFitMode((prev) => (prev === 'contain' ? 'cover' : 'contain'))}
+              className="min-h-[34px] px-2.5 py-1 text-xs font-semibold rounded-md transition-colors cursor-pointer select-none flex items-center gap-1 text-zinc-300 hover:text-white hover:bg-zinc-800/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+              title="Ganti Mode Tampilan (Pas: utuh tanpa kepotong / Penuh: cover frame)"
+              aria-label={`Mode tampilan video: ${fitMode === 'contain' ? 'Pas (Fit)' : 'Penuh (Fill)'}`}
+            >
+              <span>{fitMode === 'contain' ? '📐 Pas' : '🔍 Penuh'}</span>
+            </button>
+          </div>
+
+          {/* Aspect Ratio Quick Switcher */}
+          <div className="flex items-center gap-1 bg-zinc-900 p-1 rounded-lg border border-zinc-800 shrink-0">
+            {(['9:16', '1:1', '16:9'] as const).map((ratio) => {
+              const isSelected = activeAspectRatio === ratio;
+              return (
+                <button
+                  key={ratio}
+                  type="button"
+                  onClick={() => onAspectRatioChange(ratio)}
+                  aria-pressed={isSelected}
+                  className={`min-h-[34px] px-3 py-1 text-xs sm:text-sm font-semibold rounded-md transition-colors cursor-pointer select-none flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                    isSelected
+                      ? 'bg-violet-600 text-white font-bold'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+                  }`}
+                  title={`Pilih Rasio Aspek ${ratio}`}
+                >
+                  {ratio}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -257,7 +359,7 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
       <div className="flex-1 min-h-[300px] sm:min-h-[380px] flex items-center justify-center p-3 sm:p-5 relative bg-[#060609] overflow-hidden">
         {/* Aspect ratio bounding box */}
         <div
-          className={`relative ${aspectClass} overflow-hidden bg-black flex items-center justify-center select-none`}
+          className={`@container [container-type:inline-size] relative ${aspectClass} overflow-hidden bg-black flex items-center justify-center select-none`}
         >
           {hasRealVideo ? (
             /* Real Video Player */
@@ -267,7 +369,9 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
               playsInline
               loop
               muted={isMuted}
-              className="w-full h-full object-contain bg-black cursor-pointer"
+              className={`w-full h-full ${
+                fitMode === 'contain' ? 'object-contain' : 'object-cover'
+              } bg-black cursor-pointer transition-all duration-200`}
               onClick={handlePlayPause}
             >
               {clip?.vtt_url && (
@@ -286,8 +390,8 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
             </div>
           )}
 
-          {/* Real-Time WYSIWYG Subtitle Overlay */}
-          {hasRealVideo && (
+          {/* Real-Time WYSIWYG Subtitle Overlay (hanya muncul saat preview overlay aktif/dibuka) */}
+          {hasRealVideo && showLiveOverlay && (
             <LiveSubtitleOverlay
               style={subtitleStyle}
               text={cleanSubtitleText}
@@ -297,6 +401,8 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
               isPlaying={isPlaying}
               position={subtitlePosition}
               customColor={subtitleColor}
+              aspectRatio={aspectRatio}
+              framingMode={clip?.framing_mode || 'podcast'}
             />
           )}
         </div>
@@ -410,10 +516,33 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
               <span className="hidden sm:inline">{subtitlePosition === 'bottom' ? 'Bawah' : 'Tengah'}</span>
             </button>
 
+            {/* Live Subtitle Overlay Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setShowLiveOverlay((prev) => !prev)}
+              className={`min-h-[38px] px-2.5 py-1.5 rounded-lg border text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                showLiveOverlay
+                  ? 'bg-violet-600/30 border-violet-500 text-violet-200'
+                  : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+              }`}
+              title="Tampilkan / Sembunyikan Overlay Subtitle Interaktif"
+              aria-label={`Overlay subtitle: ${showLiveOverlay ? 'Aktif' : 'Mati'}`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Overlay:</span>
+              <span>{showLiveOverlay ? 'Aktif' : 'Mati'}</span>
+            </button>
+
             {/* Preset Picker Toggle Button */}
             <button
               type="button"
-              onClick={() => setIsPresetPickerOpen((prev) => !prev)}
+              onClick={() => {
+                setIsPresetPickerOpen((prev) => {
+                  const next = !prev;
+                  if (next) setShowLiveOverlay(true);
+                  return next;
+                });
+              }}
               className="min-h-[38px] px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 hover:text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
               title="Buka / Tutup Pilihan Preset Subtitle"
             >

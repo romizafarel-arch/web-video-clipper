@@ -41,7 +41,7 @@ interface HistoryClipCardProps {
   clip: HistoryShort;
   session: HistorySession;
   idx: number;
-  onSelectClipForStudio?: (clip: HistoryShort) => void;
+  onSelectClipForStudio?: (clip: HistoryShort, sessionShorts?: HistoryShort[]) => void;
   onPreviewClip: (clip: HistoryShort) => void;
   onOpenEditor: (clip: HistoryShort, folderName?: string, idx?: number) => void;
   onCloseModal: () => void;
@@ -162,7 +162,7 @@ const HistoryClipCard: FC<HistoryClipCardProps> = ({
               type="button"
               onClick={() => {
                 if (onSelectClipForStudio) {
-                  onSelectClipForStudio(clip);
+                  onSelectClipForStudio(clip, session.shorts);
                   onCloseModal();
                   toast.success(`Klip "${clip.title || clip.filename}" dimuat di Player Studio`);
                 } else {
@@ -198,7 +198,7 @@ interface HistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onHistoryChange?: (totalCount: number) => void;
-  onSelectClipForStudio?: (clip: HistoryShort) => void;
+  onSelectClipForStudio?: (clip: HistoryShort, sessionShorts?: HistoryShort[]) => void;
 }
 
 export const HistoryModal: FC<HistoryModalProps> = ({
@@ -471,6 +471,18 @@ export const HistoryModal: FC<HistoryModalProps> = ({
                             <FolderOpen className="w-3.5 h-3.5 text-amber-400" />
                             <span>Folder</span>
                           </button>
+                        )}
+
+                        {session.folder_name && (session.shorts?.length || 0) > 0 && (
+                          <a
+                            href={`/api/sessions/${encodeURIComponent(session.folder_name)}/zip`}
+                            download={`${session.folder_name}_clips.zip`}
+                            className="min-h-[44px] px-3.5 py-2 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 border border-violet-500/20 text-xs text-violet-300 hover:text-violet-200 flex items-center gap-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                            title="Download semua klip sesi ini sebagai arsip ZIP"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>ZIP</span>
+                          </a>
                         )}
 
                         {!session.is_legacy && session.folder_name && (

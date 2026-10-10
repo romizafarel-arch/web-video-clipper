@@ -45,8 +45,18 @@ npm run dev
   npm run dev:backend
   ```
 
-### 3. Build Frontend untuk Produksi
+### 3. Jalankan Backend Manual via Python
+Jika ingin menjalankan backend Flask langsung di terminal tanpa runner npm:
+```bash
+cd backend
+# Windows PowerShell:
+.\.venv\Scripts\Activate.ps1
+python web_app.py
+```
+Server Flask akan aktif di `http://127.0.0.1:5050`.
+
+### 4. Build Frontend untuk Produksi
 ```bash
 npm run build
 ```
-Hasil build disimpan di `frontend/dist`. Backend Flask otomatis mendeteksi folder ini jika diakses langsung tanpa dev server.
+Hasil build disimpan di `frontend/dist`. Backend Flask otomatis menyajikan folder ini jika diakses langsung tanpa dev server Vite.

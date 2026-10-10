@@ -12,7 +12,7 @@ import {
   VolumeX,
   Mic,
 } from 'lucide-react';
-import type { SubtitleStyle, FramingMode } from '../types';
+import type { SubtitleStyle, FramingMode, SubtitleFontSizeScale } from '../types';
 import { LiveSubtitleOverlay } from './LiveSubtitleOverlay';
 import { normalizePresetId, getTextPreset } from '../lib/textPresets';
 import {
@@ -28,6 +28,7 @@ export interface SubtitleVideoPreviewProps {
   onPreviewTextChange: (text: string) => void;
   framingMode?: FramingMode;
   sampleVideoUrl?: string;
+  fontSizeScale?: SubtitleFontSizeScale | number;
 }
 
 const QUICK_HOOK_SUGGESTIONS = [
@@ -69,6 +70,7 @@ export const SubtitleVideoPreview: FC<SubtitleVideoPreviewProps> = ({
   onPreviewTextChange,
   framingMode = 'podcast',
   sampleVideoUrl,
+  fontSizeScale = 'medium',
 }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [currentTime, setCurrentTime] = useState<number>(0);
@@ -77,6 +79,7 @@ export const SubtitleVideoPreview: FC<SubtitleVideoPreviewProps> = ({
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [videoLoaded, setVideoLoaded] = useState<boolean>(false);
   const [hasVideoError, setHasVideoError] = useState<boolean>(false);
+  const [fitMode, setFitMode] = useState<'contain' | 'cover'>('contain');
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -104,6 +107,8 @@ export const SubtitleVideoPreview: FC<SubtitleVideoPreviewProps> = ({
 
   // Auto-play / update when video source changes based on aspect ratio or framing
   useEffect(() => {
+    setHasVideoError(false);
+    setVideoLoaded(false);
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
       setCurrentTime(0);
@@ -197,13 +202,13 @@ export const SubtitleVideoPreview: FC<SubtitleVideoPreviewProps> = ({
     };
   }, []);
 
-  // Responsive aspect ratio styling
+  // Responsive aspect ratio styling - cleanly proportioned and well-fitted
   const aspectClass =
     aspectRatio === '9:16'
-      ? 'w-[180px] sm:w-[210px] md:w-[230px] aspect-[9/16]'
+      ? 'aspect-[9/16] h-[340px] sm:h-[400px] md:h-[440px] max-h-[62vh] w-auto max-w-full'
       : aspectRatio === '1:1'
-      ? 'w-[200px] sm:w-[240px] md:w-[260px] aspect-square'
-      : 'w-[280px] sm:w-[360px] md:w-[420px] aspect-[16/9]';
+      ? 'aspect-square h-[280px] sm:h-[340px] md:h-[380px] max-h-[55vh] w-auto max-w-full'
+      : 'aspect-video w-full max-w-[560px] h-auto max-h-[360px]';
 
   const formatBadgeLabel =
     aspectRatio === '9:16'
@@ -312,6 +317,17 @@ export const SubtitleVideoPreview: FC<SubtitleVideoPreviewProps> = ({
 
           {/* Top Right Controls (Position Toggle + Aspect Ratio) */}
           <div className="flex items-center gap-1.5 pointer-events-auto">
+            {/* Fit Mode Toggle */}
+            <button
+              type="button"
+              onClick={() => setFitMode((prev) => (prev === 'contain' ? 'cover' : 'contain'))}
+              className="text-[11px] font-medium px-2 py-1 rounded-lg bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 transition-colors flex items-center gap-1 cursor-pointer backdrop-blur-md shadow-sm"
+              title="Ganti Mode Pas Video (Pas: utuh 100% / Penuh: cover frame)"
+              aria-label={`Mode tampilan video: ${fitMode === 'contain' ? 'Pas (Fit)' : 'Penuh (Fill)'}`}
+            >
+              <span>{fitMode === 'contain' ? '📐 Pas' : '🔍 Penuh'}</span>
+            </button>
+
             <button
               type="button"
               onClick={() =>
@@ -341,7 +357,7 @@ export const SubtitleVideoPreview: FC<SubtitleVideoPreviewProps> = ({
 
         {/* Video Canvas Box (Framed to Selected Aspect Ratio) */}
         <div
-          className={`relative ${aspectClass} rounded-xl overflow-hidden border-2 border-zinc-800/90 bg-black shadow-2xl flex items-center justify-center transition-all duration-300 cursor-pointer`}
+          className={`@container [container-type:inline-size] relative ${aspectClass} rounded-2xl overflow-hidden border-2 border-zinc-800/90 bg-black shadow-2xl flex items-center justify-center transition-all duration-300 cursor-pointer`}
           onClick={togglePlayPause}
           role="button"
           tabIndex={0}
@@ -365,7 +381,9 @@ export const SubtitleVideoPreview: FC<SubtitleVideoPreviewProps> = ({
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onError={handleVideoError}
-            className="w-full h-full object-cover select-none pointer-events-none"
+            className={`w-full h-full ${
+              fitMode === 'contain' ? 'object-contain' : 'object-cover'
+            } bg-black select-none pointer-events-none transition-all duration-200`}
           />
 
           {/* Cinematic Vignette / Contrast Layer for Subtitle Readability */}
@@ -400,6 +418,7 @@ export const SubtitleVideoPreview: FC<SubtitleVideoPreviewProps> = ({
               isPlaying={isPlaying}
               aspectRatio={aspectRatio}
               framingMode={framingMode}
+              fontSizeScale={fontSizeScale}
             />
           )}
 

@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from './ui/dialog';
-import type { EditableClip, EditClipResponse, SubtitleCue, FramingMode, SubtitleStyle } from '../types';
+import type { EditableClip, EditClipResponse, SubtitleCue, FramingMode, GamingLayout, SubtitleStyle } from '../types';
 import { editClip } from '../lib/api';
 import { parseVTT, formatTimeDisplay } from '../lib/vtt';
 import { VisualPresetPicker } from './VisualPresetPicker';
@@ -48,6 +48,7 @@ export const ClipEditorModal: FC<ClipEditorModalProps> = ({
   const [aspectRatio, setAspectRatio] = useState<string>(() => clip?.aspect_ratio || '9:16');
   const [framingMode, setFramingMode] = useState<FramingMode>(() => clip?.framing_mode || 'podcast');
   const [gamingPreset, setGamingPreset] = useState<string>(() => clip?.gaming_preset || 'auto');
+  const [gamingLayout, setGamingLayout] = useState<GamingLayout>(() => clip?.gaming_layout || 'cam_top');
   const [subtitleStyle, setSubtitleStyle] = useState<SubtitleStyle>(() =>
     clip?.subtitle_style && clip.subtitle_style !== 'none' ? clip.subtitle_style : 'karaoke'
   );
@@ -256,6 +257,7 @@ export const ClipEditorModal: FC<ClipEditorModalProps> = ({
         aspect_ratio: aspectRatio,
         framing_mode: framingMode,
         gaming_preset: framingMode === 'gaming' ? gamingPreset : undefined,
+        gaming_layout: framingMode === 'gaming' ? gamingLayout : undefined,
         subtitle_style: burnSubtitles ? subtitleStyle : 'none',
         font_family: burnSubtitles ? fontFamily : undefined,
         burn_subtitles: burnSubtitles,
@@ -340,7 +342,7 @@ export const ClipEditorModal: FC<ClipEditorModalProps> = ({
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column: Video Preview & Playback Controls (lg: 5 cols) */}
           <div className="lg:col-span-5 flex flex-col space-y-4">
-            <div className="relative w-full aspect-[9/16] max-h-[420px] sm:max-h-[460px] bg-black/90 rounded-2xl overflow-hidden border border-white/10 flex items-center justify-center shadow-lg group mx-auto">
+            <div className="@container [container-type:inline-size] relative w-full aspect-[9/16] max-h-[420px] sm:max-h-[460px] bg-black/90 rounded-2xl overflow-hidden border border-white/10 flex items-center justify-center shadow-lg group mx-auto">
               <video
                 ref={videoRef}
                 src={clip.web_url}
@@ -393,6 +395,8 @@ export const ClipEditorModal: FC<ClipEditorModalProps> = ({
                   duration={videoDuration || 15}
                   isPlaying={isPlaying}
                   position="bottom"
+                  aspectRatio="9:16"
+                  framingMode={clip.framing_mode || 'podcast'}
                 />
               )}
             </div>
@@ -660,25 +664,63 @@ export const ClipEditorModal: FC<ClipEditorModalProps> = ({
                     </select>
                   </div>
 
-                  {/* Gaming Webcam Preset Dropdown when framingMode === 'gaming' */}
+                  {/* Gaming Webcam Preset & Layout when framingMode === 'gaming' */}
                   {framingMode === 'gaming' && (
-                    <div className="space-y-1.5 sm:col-span-2">
-                      <label htmlFor="gaming-preset-select" className="text-sm font-semibold text-slate-200">
-                        Posisi Webcam / Facecam
-                      </label>
-                      <select
-                        id="gaming-preset-select"
-                        value={gamingPreset}
-                        onChange={(e: ChangeEvent<HTMLSelectElement>) => setGamingPreset(e.target.value)}
-                        className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 focus:outline-none"
-                      >
-                        <option value="auto">Auto-Detect Facecam (AI)</option>
-                        <option value="clean_2layer_bottom_right">Clean 2-Layer (Kanan Bawah)</option>
-                        <option value="clean_2layer_bottom_left">Clean 2-Layer (Kiri Bawah)</option>
-                        <option value="clean_2layer_top_right">Clean 2-Layer (Kanan Atas)</option>
-                        <option value="clean_2layer_top_left">Clean 2-Layer (Kiri Atas)</option>
-                        <option value="discord_top_cam_bottom_right">Discord 3-Layer (Squad Cam Atas + Webcam Kanan Bawah)</option>
-                      </select>
+                    <div className="space-y-3 sm:col-span-2 p-3 rounded-xl bg-white/[0.03] border border-white/10">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-slate-300">
+                          Susunan Layout 9:16
+                        </label>
+                        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Susunan Layout Gaming">
+                          <button
+                            type="button"
+                            role="radio"
+                            aria-checked={gamingLayout === 'cam_top'}
+                            onClick={() => setGamingLayout('cam_top')}
+                            className={`min-h-[44px] p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                              gamingLayout === 'cam_top'
+                                ? 'bg-fuchsia-950/50 border-fuchsia-500 text-white shadow-sm ring-1 ring-fuchsia-500/50'
+                                : 'bg-white/5 border-white/10 text-slate-300 hover:text-white hover:bg-white/10'
+                            }`}
+                          >
+                            <div className="text-xs font-bold truncate">Facecam Atas</div>
+                            <div className="text-[11px] text-fuchsia-300/90 font-medium truncate">Windah Basudara style</div>
+                          </button>
+                          <button
+                            type="button"
+                            role="radio"
+                            aria-checked={gamingLayout === 'cam_bottom'}
+                            onClick={() => setGamingLayout('cam_bottom')}
+                            className={`min-h-[44px] p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                              gamingLayout === 'cam_bottom'
+                                ? 'bg-fuchsia-950/50 border-fuchsia-500 text-white shadow-sm ring-1 ring-fuchsia-500/50'
+                                : 'bg-white/5 border-white/10 text-slate-300 hover:text-white hover:bg-white/10'
+                            }`}
+                          >
+                            <div className="text-xs font-bold truncate">Gameplay Atas</div>
+                            <div className="text-[11px] text-slate-400 font-medium truncate">Facecam Bawah (Klasik)</div>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label htmlFor="gaming-preset-select" className="text-xs font-semibold text-slate-300">
+                          Posisi Webcam di Video Sumber
+                        </label>
+                        <select
+                          id="gaming-preset-select"
+                          value={gamingPreset}
+                          onChange={(e: ChangeEvent<HTMLSelectElement>) => setGamingPreset(e.target.value)}
+                          className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 focus:outline-none"
+                        >
+                          <option value="auto">Deteksi Otomatis (AI)</option>
+                          <option value="clean_2layer_bottom_right">Clean 2-Layer (Kanan Bawah)</option>
+                          <option value="clean_2layer_bottom_left">Clean 2-Layer (Kiri Bawah)</option>
+                          <option value="clean_2layer_top_right">Clean 2-Layer (Kanan Atas)</option>
+                          <option value="clean_2layer_top_left">Clean 2-Layer (Kiri Atas)</option>
+                          <option value="discord_top_cam_bottom_right">Discord 3-Layer (Squad Atas + Webcam Kanan Bawah)</option>
+                        </select>
+                      </div>
                     </div>
                   )}
                 </div>

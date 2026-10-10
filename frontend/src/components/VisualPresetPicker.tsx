@@ -9,12 +9,13 @@ export interface VisualPresetPickerProps {
   showDisableOption?: boolean;
   className?: string;
   compact?: boolean;
+  hideHeader?: boolean;
 }
 
 type CategoryFilter = 'all' | 'viral' | 'podcast' | 'aesthetic' | 'gaming' | 'bold';
 
 const CATEGORIES: { id: CategoryFilter; label: string }[] = [
-  { id: 'all', label: 'Semua (20)' },
+  { id: 'all', label: 'Semua (26)' },
   { id: 'viral', label: '🔥 Viral Shorts' },
   { id: 'podcast', label: '🎙️ Podcast & Vox' },
   { id: 'aesthetic', label: '✨ Aesthetic' },
@@ -238,6 +239,70 @@ function renderPresetThumbnail(preset: TextPresetDefinition) {
         </div>
       );
 
+    case 'brat_lime':
+      return (
+        <div className="relative z-10 flex flex-col items-center justify-center leading-none text-center">
+          <span className="font-montserrat-black uppercase tracking-tight text-[#8ACE00] stroke-brat-lime text-sm sm:text-base">
+            {preset.sampleWords[0]}
+          </span>
+          <span className="font-montserrat-black uppercase tracking-tight text-white stroke-brat-lime text-xs sm:text-sm mt-0.5">
+            {preset.sampleWords[1]}
+          </span>
+        </div>
+      );
+
+    case 'dymo_tape':
+      return (
+        <div className="relative z-10 max-w-[95%]">
+          <div className="bg-black/95 border-y-2 border-white/40 px-2.5 py-1 shadow-lg text-center -rotate-1">
+            <span className="font-special-elite text-white text-[11px] sm:text-xs tracking-wider leading-none uppercase">
+              {preset.sampleWords[0]}
+            </span>
+          </div>
+        </div>
+      );
+
+    case 'luxury_serif':
+      return (
+        <div className="relative z-10 text-center px-1">
+          <span className="font-cinzel uppercase tracking-[0.22em] text-[#FEF2DC] shadow-luxury-serif text-xs sm:text-sm leading-none font-bold">
+            {preset.sampleWords[0]}
+          </span>
+        </div>
+      );
+
+    case 'sticker_pop':
+      return (
+        <div className="relative z-10 rotate-[-2deg] text-center">
+          <span className="font-rubik font-black uppercase text-[#FFFF00] stroke-sticker-pop text-base sm:text-lg leading-none">
+            {preset.sampleWords[0]}
+          </span>
+        </div>
+      );
+
+    case 'amber_terminal':
+      return (
+        <div className="relative z-10 max-w-[95%]">
+          <div className="bg-[#120800]/90 border border-amber-500/70 px-2 py-1 rounded shadow-md text-center">
+            <p className="font-vt323 text-[#FF9F00] text-sm sm:text-base uppercase tracking-widest leading-none shadow-amber-crt">
+              {preset.sampleWords[0]}
+            </p>
+          </div>
+        </div>
+      );
+
+    case 'capcut_glow':
+      return (
+        <div className="relative z-10 text-center px-1">
+          <span className="font-poppins font-black uppercase tracking-wide text-white glow-capcut-cyan text-xs sm:text-sm leading-none">
+            {preset.sampleWords[0]}
+          </span>
+          <span className="block font-poppins font-bold uppercase text-[#00F5D4] text-[10px] mt-0.5 tracking-wider">
+            {preset.sampleWords[1]}
+          </span>
+        </div>
+      );
+
     default:
       return (
         <span className="font-bold text-white text-xs">
@@ -253,6 +318,7 @@ export const VisualPresetPicker: FC<VisualPresetPickerProps> = ({
   showDisableOption = true,
   className = '',
   compact = false,
+  hideHeader = false,
 }) => {
   const isNone = selectedStyle === 'none';
   const activePresetId: TextPresetId = normalizePresetId(selectedStyle);
@@ -313,26 +379,28 @@ export const VisualPresetPicker: FC<VisualPresetPickerProps> = ({
   return (
     <div className={`space-y-2.5 ${className}`}>
       {/* Header bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
-        <div className="flex items-center gap-2 font-semibold text-zinc-200">
-          <Sparkles className="w-4 h-4 text-violet-400" />
-          <span>Preset Visual Subtitle (20 Gaya Unik & Swipeable)</span>
-        </div>
+      {!hideHeader && (
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm">
+          <div className="flex items-center gap-2 font-semibold text-zinc-200">
+            <Sparkles className="w-4 h-4 text-violet-400" />
+            <span>Preset Visual Subtitle (20 Gaya Unik & Swipeable)</span>
+          </div>
 
-        {showDisableOption && (
-          <button
-            type="button"
-            onClick={() => onSelectPreset(isNone ? 'hormozi' : 'none')}
-            className={`min-h-[32px] px-3 py-1 rounded-lg text-xs font-mono transition-colors cursor-pointer border ${
-              isNone
-                ? 'bg-rose-950/40 border-rose-800/80 text-rose-300 font-bold'
-                : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
-            }`}
-          >
-            {isNone ? '✕ Subtitle Nonaktif' : 'Nonaktifkan'}
-          </button>
-        )}
-      </div>
+          {showDisableOption && (
+            <button
+              type="button"
+              onClick={() => onSelectPreset(isNone ? 'hormozi' : 'none')}
+              className={`min-h-[32px] px-3 py-1 rounded-lg text-xs font-mono transition-colors cursor-pointer border ${
+                isNone
+                  ? 'bg-rose-950/40 border-rose-800/80 text-rose-300 font-bold'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700'
+              }`}
+            >
+              {isNone ? '✕ Subtitle Nonaktif' : 'Nonaktifkan'}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Category Pills Bar */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">

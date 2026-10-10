@@ -568,6 +568,168 @@ export const TEXT_PRESETS: TextPresetDefinition[] = [
       uppercase: false,
     },
   },
+
+  // 21. Brat Acid Lime (Trend Gen Z & Streetwear)
+  {
+    id: 'brat_lime',
+    name: 'Brat Acid Lime',
+    creator: 'Brat Trend / Pop',
+    tagline: 'Acid Lime Hyperpop',
+    description: 'Warna hijau acid lime neon #8ACE00 khas Brat pop-culture, all-caps tebal dengan outline hitam tipis.',
+    category: 'viral',
+    sampleWords: ['BRAT', 'SUMMER'],
+    fontClass: 'font-montserrat-black uppercase tracking-tight',
+    fontName: 'Montserrat Black',
+    assConfig: {
+      fontName: 'Montserrat',
+      bold: true,
+      italic: false,
+      primaryColour: '&H0000E68A', // Acid Lime #8AE600 (BGR)
+      secondaryColour: '&H00FFFFFF',
+      outlineColour: '&H00000000',
+      backColour: '&H90000000',
+      outline: 3.2,
+      shadow: 1.5,
+      spacing: 0,
+      borderStyle: 1,
+      uppercase: true,
+    },
+  },
+
+  // 22. Dymo Tape Docu (Johnny Harris / MagnatesMedia)
+  {
+    id: 'dymo_tape',
+    name: 'Dymo Tape Docu',
+    creator: 'Johnny Harris / Docu',
+    tagline: 'Embossed Typewriter Label',
+    description: 'Font mesin tik Dymo di atas label tape hitam tebal, cocok untuk video dokumenter rahasia & investigasi.',
+    category: 'podcast',
+    sampleWords: ['CLASSIFIED', 'DOSSIER'],
+    fontClass: 'font-special-elite uppercase tracking-wider',
+    fontName: 'Special Elite',
+    assConfig: {
+      fontName: 'Special Elite',
+      bold: true,
+      italic: false,
+      primaryColour: '&H00F0F0F0', // Clean tape white
+      secondaryColour: '&H0000E6FF',
+      outlineColour: '&H00101010',
+      backColour: '&HF50A0A0A', // Opaque black tape box
+      outline: 2.0,
+      shadow: 0,
+      spacing: 2,
+      borderStyle: 3,
+      uppercase: true,
+    },
+  },
+
+  // 23. Editorial Luxury Serif (Sam Kolder / Vogue Reels)
+  {
+    id: 'luxury_serif',
+    name: 'Editorial Serif',
+    creator: 'Sam Kolder / Vogue',
+    tagline: 'Cinematic Golden Serif',
+    description: 'Font serif sinematik elegan spasi lebar dengan warna emas mutiara & soft ambient glow.',
+    category: 'aesthetic',
+    sampleWords: ['ETERNAL', 'JOURNEY'],
+    fontClass: 'font-cinzel uppercase tracking-[0.28em]',
+    fontName: 'Cinzel',
+    assConfig: {
+      fontName: 'Cinzel',
+      bold: true,
+      italic: false,
+      primaryColour: '&H00DCF2FE', // Pearl Gold Ivory #FEF2DC (BGR)
+      secondaryColour: '&H00FFFFFF',
+      outlineColour: '&H0018181B',
+      backColour: '&H70000000',
+      outline: 1.2,
+      shadow: 2.2,
+      spacing: 4,
+      borderStyle: 1,
+      uppercase: true,
+    },
+  },
+
+  // 24. 3-Layer Sticker Pop (Finzar / Y2K Editor Cutout)
+  {
+    id: 'sticker_pop',
+    name: 'Sticker Pop',
+    creator: 'Finzar / Y2K Cutout',
+    tagline: 'Die-Cut Sticker Punch',
+    description: 'Gaya stiker cut-out dengan inner stroke putih tebal & outer drop shadow offset untuk vlog & editing seru.',
+    category: 'bold',
+    sampleWords: ['POP!', 'STICKER'],
+    fontClass: 'font-rubik font-black uppercase tracking-tight',
+    fontName: 'Rubik',
+    assConfig: {
+      fontName: 'Rubik',
+      bold: true,
+      italic: false,
+      primaryColour: '&H0000FFFF', // Yellow #FFFF00
+      secondaryColour: '&H00FF00FF',
+      outlineColour: '&H00000000',
+      backColour: '&H00201005',
+      outline: 5.5,
+      shadow: 4.0,
+      spacing: 1,
+      borderStyle: 1,
+      uppercase: true,
+    },
+  },
+
+  // 25. Bloomberg Amber Terminal (Luke Belmar / Money Twitter)
+  {
+    id: 'amber_terminal',
+    name: 'Amber Terminal',
+    creator: 'Luke Belmar / Alpha',
+    tagline: 'CRT Retro Bloomberg',
+    description: 'Monospace amber oranye #FF9F00 di atas capsule monitor retro untuk video crypto alpha & tech.',
+    category: 'gaming',
+    sampleWords: ['SYSTEM_ALPHA', 'ONLINE_24/7'],
+    fontClass: 'font-vt323 uppercase tracking-widest text-base',
+    fontName: 'VT323',
+    assConfig: {
+      fontName: 'VT323',
+      bold: true,
+      italic: false,
+      primaryColour: '&H00009FFF', // CRT Amber #FF9F00 (BGR)
+      secondaryColour: '&H00FFFFFF',
+      outlineColour: '&H00003060',
+      backColour: '&HE80A0502',
+      outline: 1.5,
+      shadow: 0,
+      spacing: 1.5,
+      borderStyle: 3,
+      uppercase: true,
+    },
+  },
+
+  // 26. CapCut Soft Glow Aura (Anime MV / Car Edits)
+  {
+    id: 'capcut_glow',
+    name: 'CapCut Glow',
+    creator: 'Anime & AMV Scene',
+    tagline: 'Cyan Aura Outer Glow',
+    description: 'Teks putih halus dengan aura glow cyan menyala diffused tanpa outline kasar, ala edit AMV & car aesthetic.',
+    category: 'aesthetic',
+    sampleWords: ['DRIFTING', 'INTO NIGHT'],
+    fontClass: 'font-poppins font-black tracking-wide',
+    fontName: 'Poppins',
+    assConfig: {
+      fontName: 'Poppins',
+      bold: true,
+      italic: false,
+      primaryColour: '&H00FFFFFF',
+      secondaryColour: '&H00F5F500', // Cyan highlight #00F5F5 (BGR)
+      outlineColour: '&H00D4F500', // Cyan aura #00F5D4 (BGR)
+      backColour: '&H60D4F500',
+      outline: 3.2,
+      shadow: 3.5,
+      spacing: 1,
+      borderStyle: 1,
+      uppercase: true,
+    },
+  },
 ];
 
 /**

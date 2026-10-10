@@ -1,4 +1,4 @@
-import { useState, type FC } from 'react';
+import { useState, useEffect, type FC } from 'react';
 import {
   Video,
   Sparkles,
@@ -17,11 +17,16 @@ import {
   Check,
   AlertTriangle,
   Settings2,
+  Edit3,
+  FileText,
+  UploadCloud,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type {
   GeneratePayload,
   FramingMode,
+  GamingLayout,
   SubtitleStyle,
   AppConfig,
   ProcessingMode,
@@ -41,6 +46,49 @@ import { Input } from './ui/input';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+export interface QuickSampleUrl {
+  id: string;
+  label: string;
+  badge: string;
+  url: string;
+  framingMode: FramingMode;
+  aspectRatio: string;
+}
+
+export const QUICK_SAMPLE_URLS: QuickSampleUrl[] = [
+  {
+    id: 'podcast',
+    label: 'Podcast Dialog',
+    badge: '🎙️ Podcast',
+    url: 'https://www.youtube.com/watch?v=0tUqIHwHDEc',
+    framingMode: 'podcast',
+    aspectRatio: '9:16',
+  },
+  {
+    id: 'gaming',
+    label: 'Gaming Stream',
+    badge: '🎮 Gaming',
+    url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk',
+    framingMode: 'gaming',
+    aspectRatio: '9:16',
+  },
+  {
+    id: 'vlog',
+    label: 'Vlog / Monolog',
+    badge: '👤 Vlog',
+    url: 'https://www.youtube.com/watch?v=jNQXAC9IVRw',
+    framingMode: 'single',
+    aspectRatio: '9:16',
+  },
+  {
+    id: 'center',
+    label: 'Studio Center',
+    badge: '🎯 Center Crop',
+    url: 'https://www.youtube.com/watch?v=21X5lGlDOfg',
+    framingMode: 'center',
+    aspectRatio: '9:16',
+  },
+];
 
 interface GeneratorFormProps {
   config: AppConfig | null;
@@ -77,7 +125,9 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
   const [localSubtitleStyle, setLocalSubtitleStyle] = useState<SubtitleStyle>('karaoke');
   const [subtitleTab, setSubtitleTab] = useState<'preset' | 'font'>('preset');
   const [previewText, setPreviewText] = useState(ILLUSTRATION_TRANSCRIPT_TEXT);
+  const [isSubtitleOpen, setIsSubtitleOpen] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [cookiesFile, setCookiesFile] = useState<File | null>(null);
 
   const aspectRatio = propAspectRatio ?? localAspectRatio;
   const subtitleStyle = propSubtitleStyle ?? localSubtitleStyle;
@@ -93,6 +143,7 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
   };
 
   const [gamingPreset, setGamingPreset] = useState<string>('auto');
+  const [gamingLayout, setGamingLayout] = useState<GamingLayout>('cam_top');
   const [videoQuality, setVideoQuality] = useState('720');
   const [autoDeleteSource, setAutoDeleteSource] = useState(
     () => config?.auto_delete_source_video ?? true
@@ -127,6 +178,7 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
   );
   const [geminiModel, setGeminiModel] = useState(() => config?.gemini_model || 'gemini-3.5-flash');
   const [openaiModel, setOpenaiModel] = useState(() => config?.openai_model || 'gpt-4o-mini');
+  const [isManualModelInput, setIsManualModelInput] = useState(false);
   const [transcriberProvider, setTranscriberProvider] = useState<TranscriberProvider>(() =>
     config?.transcriber_provider === 'whisper' ? 'whisper' : 'gemini'
   );
@@ -139,11 +191,17 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
     { id: 'gemini-2.5-flash', name: 'gemini-2.5-flash (Cepat)' },
     { id: 'gemini-2.5-pro', name: 'gemini-2.5-pro (Analisis Mendalam)' },
   ]);
-  const [openaiModels, setOpenaiModels] = useState<ModelOption[]>([
-    { id: 'gpt-4o-mini', name: 'gpt-4o-mini (Cepat & Ringan)' },
-    { id: 'gpt-4o', name: 'gpt-4o (Standar)' },
-    { id: 'gpt-4.1-mini', name: 'gpt-4.1-mini (Preview)' },
-  ]);
+  const [openaiModels, setOpenaiModels] = useState<ModelOption[]>(() => {
+    const list: ModelOption[] = [
+      { id: 'gpt-4o-mini', name: 'gpt-4o-mini (Cepat & Ringan)' },
+      { id: 'gpt-4o', name: 'gpt-4o (Standar)' },
+      { id: 'gpt-4.1-mini', name: 'gpt-4.1-mini (Preview)' },
+    ];
+    if (config?.openai_model && !list.some((m) => m.id === config.openai_model)) {
+      list.unshift({ id: config.openai_model, name: `${config.openai_model} (Aktif)` });
+    }
+    return list;
+  });
   const [whisperModels] = useState<ModelOption[]>([
     { id: 'tiny', name: 'tiny (Sangat Cepat)' },
     { id: 'base', name: 'base (Standar Cepat)' },
@@ -154,6 +212,41 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
   const [isFetchingModels, setIsFetchingModels] = useState(false);
   const [isTestingModel, setIsTestingModel] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Sync state when config updates
+  useEffect(() => {
+    if (!config) return;
+    if (config.llm_provider === 'openai' || config.llm_provider === 'gemini') {
+      setLlmProvider(config.llm_provider as LLMProvider);
+    }
+    if (config.gemini_model) {
+      setGeminiModel(config.gemini_model);
+    }
+    if (config.openai_model) {
+      setOpenaiModel(config.openai_model);
+      setOpenaiModels((prev) => {
+        if (!prev.some((m) => m.id === config.openai_model)) {
+          return [{ id: config.openai_model, name: `${config.openai_model} (Aktif)` }, ...prev];
+        }
+        return prev;
+      });
+    }
+    if (config.transcriber_provider === 'whisper' || config.transcriber_provider === 'gemini') {
+      setTranscriberProvider(config.transcriber_provider as TranscriberProvider);
+    }
+    if (config.gemini_transcriber_model) {
+      setGeminiTranscriberModel(config.gemini_transcriber_model);
+    }
+    if (config.whisper_model) {
+      setWhisperModel(config.whisper_model);
+    }
+    if (config.mode_default === 'api' || config.mode_default === 'local') {
+      setMode(config.mode_default as ProcessingMode);
+    }
+    if (typeof config.auto_delete_source_video === 'boolean') {
+      setAutoDeleteSource(config.auto_delete_source_video);
+    }
+  }, [config]);
 
   // Load models from API
   const loadModels = async (forceRefresh: boolean = false) => {
@@ -178,14 +271,23 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
             setOpenaiModel(list[0].id);
           }
         }
-        toast.success(`Daftar model ${llmProvider.toUpperCase()} diperbarui (${list.length} model).`);
+        if (forceRefresh) {
+          toast.success(`Daftar model ${llmProvider.toUpperCase()} diperbarui (${list.length} model).`);
+        }
       }
     } catch {
-      toast.error('Gagal mengambil daftar model dari server.');
+      if (forceRefresh) {
+        toast.error('Gagal mengambil daftar model dari server.');
+      }
     } finally {
       setIsFetchingModels(false);
     }
   };
+
+  // Auto-fetch on mount & when provider changes
+  useEffect(() => {
+    loadModels(false);
+  }, [llmProvider]);
 
   const handleTestModel = async () => {
     setIsTestingModel(true);
@@ -229,6 +331,15 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
     }
   };
 
+  const handleSelectQuickSample = (sample: QuickSampleUrl) => {
+    setUrl(sample.url);
+    handleFramingModeChange(sample.framingMode);
+    if (aspectRatio !== sample.aspectRatio) {
+      handleAspectRatioChange(sample.aspectRatio);
+    }
+    toast.info(`URL contoh ${sample.label} dimuat (${sample.badge}).`);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) {
@@ -252,10 +363,12 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
       transcriber_provider: transcriberProvider,
       gemini_transcriber_model: geminiTranscriberModel,
       whisper_model: whisperModel,
+      cookies_file: cookiesFile || undefined,
     };
 
     if (framingMode === 'gaming') {
       payload.gaming_preset = gamingPreset;
+      payload.gaming_layout = gamingLayout;
     }
 
     onSubmit(payload);
@@ -317,6 +430,38 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
                 <span>Tempel</span>
               </Button>
             </div>
+
+            {/* Quick Sample URL Pills */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              <span className="text-[11px] sm:text-xs font-semibold text-zinc-400 flex items-center gap-1 select-none">
+                <Sparkles className="w-3 h-3 text-violet-400 shrink-0" />
+                <span>Quick Sample:</span>
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {QUICK_SAMPLE_URLS.map((sample) => {
+                  const isCurrent = url === sample.url;
+                  return (
+                    <button
+                      key={sample.id}
+                      type="button"
+                      onClick={() => handleSelectQuickSample(sample)}
+                      className={`card-hover-lift text-[11px] sm:text-xs px-2.5 py-1 rounded-full border transition-all flex items-center gap-1.5 font-medium cursor-pointer ${
+                        isCurrent
+                          ? 'bg-violet-950/80 border-violet-500/80 text-violet-200 ring-1 ring-violet-500/40 shadow-sm'
+                          : 'bg-zinc-950/70 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 hover:bg-zinc-900/80'
+                      }`}
+                      title={`Muat contoh ${sample.label} (${sample.url})`}
+                      aria-label={`Pilih URL contoh ${sample.label}`}
+                    >
+                      <span className="font-semibold">{sample.badge}</span>
+                      <span className="text-zinc-400 text-[10px] hidden xs:inline">
+                        {sample.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* 2. Pengaturan Inti: Rasio Aspek & Target Jumlah Klip */}
@@ -339,7 +484,7 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
                     role="radio"
                     aria-checked={aspectRatio === ar.id}
                     onClick={() => handleAspectRatioChange(ar.id)}
-                    className={`py-1.5 px-1.5 sm:px-2.5 rounded-lg border text-center transition-colors cursor-pointer ${
+                    className={`card-hover-lift py-1.5 px-1.5 sm:px-2.5 rounded-lg border text-center transition-colors cursor-pointer ${
                       aspectRatio === ar.id
                         ? 'bg-violet-600 text-white border-violet-500 font-semibold'
                         : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80'
@@ -388,15 +533,51 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
           {/* 3. Mode Framing Kamera */}
           <div className="space-y-2">
             <label className="text-sm sm:text-base font-bold text-zinc-100 flex items-center gap-2">
-              <User className="w-4 h-4 text-cyan-400" />
+              <Video className="w-4 h-4 text-cyan-400" />
               <span>Mode Framing Kamera</span>
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5" role="radiogroup" aria-label="Mode Framing Kamera">
               {[
-                { id: 'podcast', label: 'Podcast Multi', desc: 'Auto track speaker', icon: Users },
-                { id: 'single', label: 'Single Face', desc: 'Kunci 1 wajah', icon: User },
-                { id: 'center', label: 'Center Crop', desc: 'Tengah statis', icon: Crop },
-                { id: 'gaming', label: 'Gaming 2-Layer', desc: 'Facecam + game', icon: Gamepad2 },
+                {
+                  id: 'podcast',
+                  label: 'Podcast Multi',
+                  desc: 'Auto track speaker',
+                  icon: Users,
+                  iconColor: 'text-sky-400',
+                  badgeBg: 'bg-sky-500/15',
+                  activeBorder: 'border-sky-500',
+                  activeBg: 'bg-sky-950/40',
+                },
+                {
+                  id: 'single',
+                  label: 'Single Face',
+                  desc: 'Kunci 1 wajah',
+                  icon: User,
+                  iconColor: 'text-amber-400',
+                  badgeBg: 'bg-amber-500/15',
+                  activeBorder: 'border-amber-500',
+                  activeBg: 'bg-amber-950/40',
+                },
+                {
+                  id: 'center',
+                  label: 'Center Crop',
+                  desc: 'Tengah statis',
+                  icon: Crop,
+                  iconColor: 'text-emerald-400',
+                  badgeBg: 'bg-emerald-500/15',
+                  activeBorder: 'border-emerald-500',
+                  activeBg: 'bg-emerald-950/40',
+                },
+                {
+                  id: 'gaming',
+                  label: 'Gaming 2-Layer',
+                  desc: 'Facecam + game',
+                  icon: Gamepad2,
+                  iconColor: 'text-fuchsia-400',
+                  badgeBg: 'bg-fuchsia-500/15',
+                  activeBorder: 'border-fuchsia-500',
+                  activeBg: 'bg-fuchsia-950/40',
+                },
               ].map((m) => {
                 const Icon = m.icon;
                 const isSelected = framingMode === m.id;
@@ -407,141 +588,190 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
                     role="radio"
                     aria-checked={isSelected}
                     onClick={() => handleFramingModeChange(m.id as FramingMode)}
-                    className={`min-h-[64px] sm:min-h-[72px] p-2.5 sm:p-3 rounded-xl border text-left transition-colors cursor-pointer ${
+                    className={`group card-hover-lift min-h-[64px] sm:min-h-[72px] p-2.5 sm:p-3 rounded-xl border text-left transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-violet-950/50 border-violet-500 text-white'
-                        : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                        ? `${m.activeBg} ${m.activeBorder} text-white shadow-sm`
+                        : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 hover:border-zinc-700'
                     }`}
                   >
                     <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                      <Icon className={`w-4 h-4 shrink-0 ${isSelected ? 'text-violet-400' : 'text-zinc-400'}`} />
-                      <span className="text-sm sm:text-base font-bold truncate">{m.label}</span>
+                      <div className={`p-1 rounded-md shrink-0 flex items-center justify-center transition-colors ${m.badgeBg}`}>
+                        <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${m.iconColor}`} />
+                      </div>
+                      <span className={`text-sm sm:text-base font-bold truncate ${isSelected ? 'text-white' : 'text-zinc-200'}`}>
+                        {m.label}
+                      </span>
                     </div>
-                    <div className="text-xs sm:text-sm text-zinc-300 font-medium mt-1 truncate">{m.desc}</div>
+                    <div className="text-xs sm:text-sm text-zinc-300 font-medium mt-1 truncate pl-0.5">
+                      {m.desc}
+                    </div>
                   </button>
                 );
               })}
             </div>
 
             {framingMode === 'gaming' && (
-              <div className="p-3 sm:p-3.5 rounded-xl bg-zinc-950/80 border border-zinc-800 space-y-2 mt-2">
-                <label htmlFor="generator-gaming-preset" className="text-sm sm:text-base font-bold text-zinc-100 flex items-center gap-2">
-                  <Gamepad2 className="w-4 h-4 text-violet-400" />
-                  <span>Posisi Facecam / Webcam</span>
-                </label>
-                <select
-                  id="generator-gaming-preset"
-                  value={gamingPreset}
-                  onChange={(e) => setGamingPreset(e.target.value)}
-                  className="w-full h-10 px-3 rounded-lg bg-zinc-900 border border-zinc-700/80 text-zinc-100 text-sm sm:text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 font-medium cursor-pointer"
-                >
-                  <option value="auto">Deteksi Otomatis (AI)</option>
-                  <option value="clean_2layer_bottom_right">Kanan Bawah</option>
-                  <option value="clean_2layer_bottom_left">Kiri Bawah</option>
-                  <option value="clean_2layer_top_right">Kanan Atas</option>
-                  <option value="clean_2layer_top_left">Kiri Atas</option>
-                  <option value="discord_top_cam_bottom_right">Squad Atas + Webcam Kanan Bawah</option>
-                </select>
+              <div className="p-3 sm:p-3.5 rounded-xl bg-zinc-950/80 border border-zinc-800 space-y-3 mt-2">
+                {/* 1. Susunan Layout 9:16 */}
+                <div className="space-y-1.5">
+                  <label className="text-xs sm:text-sm font-bold text-zinc-200 flex items-center gap-2">
+                    <Layers className="w-3.5 h-3.5 text-fuchsia-400" />
+                    <span>Susunan Layout 9:16</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Susunan Layout Gaming">
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={gamingLayout === 'cam_top'}
+                      onClick={() => setGamingLayout('cam_top')}
+                      className={`min-h-[48px] p-2 sm:p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                        gamingLayout === 'cam_top'
+                          ? 'bg-fuchsia-950/50 border-fuchsia-500 text-white shadow-sm ring-1 ring-fuchsia-500/50'
+                          : 'bg-zinc-900 border-zinc-700/70 text-zinc-300 hover:text-white hover:bg-zinc-850 hover:border-zinc-600'
+                      }`}
+                    >
+                      <div className="text-xs sm:text-sm font-bold truncate">Facecam Atas</div>
+                      <div className="text-[11px] sm:text-xs text-fuchsia-300/90 font-medium truncate">Windah Basudara style</div>
+                    </button>
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={gamingLayout === 'cam_bottom'}
+                      onClick={() => setGamingLayout('cam_bottom')}
+                      className={`min-h-[48px] p-2 sm:p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                        gamingLayout === 'cam_bottom'
+                          ? 'bg-fuchsia-950/50 border-fuchsia-500 text-white shadow-sm ring-1 ring-fuchsia-500/50'
+                          : 'bg-zinc-900 border-zinc-700/70 text-zinc-300 hover:text-white hover:bg-zinc-850 hover:border-zinc-600'
+                      }`}
+                    >
+                      <div className="text-xs sm:text-sm font-bold truncate">Gameplay Atas</div>
+                      <div className="text-[11px] sm:text-xs text-zinc-400 font-medium truncate">Facecam Bawah (Klasik)</div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Posisi Webcam di Video Sumber */}
+                <div className="space-y-1.5">
+                  <label htmlFor="generator-gaming-preset" className="text-xs sm:text-sm font-bold text-zinc-200 flex items-center gap-2">
+                    <Gamepad2 className="w-3.5 h-3.5 text-fuchsia-400" />
+                    <span>Posisi Webcam di Video Sumber</span>
+                  </label>
+                  <select
+                    id="generator-gaming-preset"
+                    value={gamingPreset}
+                    onChange={(e) => setGamingPreset(e.target.value)}
+                    className="w-full h-10 px-3 rounded-lg bg-zinc-900 border border-zinc-700/80 text-zinc-100 text-sm sm:text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 font-medium cursor-pointer"
+                  >
+                    <option value="auto">Deteksi Otomatis (AI)</option>
+                    <option value="clean_2layer_bottom_right">Kanan Bawah</option>
+                    <option value="clean_2layer_bottom_left">Kiri Bawah</option>
+                    <option value="clean_2layer_top_right">Kanan Atas</option>
+                    <option value="clean_2layer_top_left">Kiri Atas</option>
+                    <option value="discord_top_cam_bottom_right">Squad Atas + Webcam Kanan Bawah (3-Layer)</option>
+                  </select>
+                </div>
               </div>
             )}
           </div>
 
-          {/* 4. Subtitle & Tipografi (Inline Picker + Segmented Tabs + Mini Live Preview) */}
-          <div className="p-3.5 sm:p-5 rounded-xl border border-white/[0.08] bg-zinc-950/70 space-y-3.5 sm:space-y-4">
-            {/* Header Section */}
-            <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] pb-3">
-              <div className="flex items-center gap-2 min-w-0">
-                <Sparkles className="w-4 h-4 text-violet-400 shrink-0" />
-                <span className="text-sm sm:text-base font-bold text-zinc-100 truncate font-headline">
-                  Gaya Subtitle & Tipografi
-                </span>
+          {/* 4. Subtitle & Tipografi (Collapsible Accordion) */}
+          <div className="rounded-xl border border-white/[0.08] bg-zinc-950/70 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setIsSubtitleOpen((prev) => !prev)}
+              className="w-full min-h-[44px] sm:min-h-[48px] flex items-center justify-between px-3.5 py-2.5 text-sm sm:text-base font-bold text-zinc-200 hover:text-white transition-colors cursor-pointer select-none"
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-violet-400 shrink-0" />
+                <span className="font-headline">Gaya & Preset Subtitle</span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs sm:text-sm">
-                <span className={`text-xs font-mono px-2.5 py-1 rounded-md font-medium ${
-                  subtitleStyle === 'none'
-                    ? 'bg-rose-950/60 text-rose-300 border border-rose-800/60'
-                    : 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/60'
-                }`}>
-                  {subtitleStyle === 'none' ? 'Mati' : `${activePresetDef?.name || subtitleStyle} • ${activeFont}`}
-                </span>
-              </div>
-            </div>
-
-            {/* Live Video Animated Subtitle Preview Stage */}
-            <SubtitleVideoPreview
-              subtitleStyle={subtitleStyle}
-              activeFont={activeFont}
-              aspectRatio={aspectRatio}
-              previewText={previewText}
-              onPreviewTextChange={setPreviewText}
-              framingMode={framingMode}
-            />
-
-            {/* Segmented Control Tabs */}
-            <div className="space-y-3 pt-1">
-              <div className="flex p-1 bg-zinc-950 border border-zinc-800/90 rounded-xl gap-1.5" role="tablist">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={subtitleTab === 'preset'}
-                  onClick={() => setSubtitleTab('preset')}
-                  className={`flex-1 min-h-[38px] py-1.5 px-3.5 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    subtitleTab === 'preset'
-                      ? 'bg-violet-600 text-white shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
-                  }`}
-                >
-                  <span>🎨 Gaya Preset</span>
-                  {subtitleStyle !== 'none' && (
-                    <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-violet-700/80 text-violet-100 ml-1">
-                      {activePresetDef?.name?.split(' ')[0] || 'Aktif'}
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={subtitleTab === 'font'}
-                  onClick={() => setSubtitleTab('font')}
-                  className={`flex-1 min-h-[38px] py-1.5 px-3.5 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    subtitleTab === 'font'
-                      ? 'bg-violet-600 text-white shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
-                  }`}
-                >
-                  <span>🔤 Pilihan Font</span>
-                  <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 ml-1 truncate max-w-[120px]">
-                    {activeFont}
-                  </span>
-                </button>
-              </div>
-
-              {/* Inline Picker Panes */}
-              {subtitleTab === 'preset' ? (
-                <div className="pt-1 animate-in fade-in duration-150">
-                  <VisualPresetPicker
-                    selectedStyle={subtitleStyle}
-                    onSelectPreset={handleSubtitleStyleChange}
-                    compact={false}
-                  />
-                </div>
+              {isSubtitleOpen ? (
+                <ChevronUp className="w-4 h-4 text-zinc-400 shrink-0" />
               ) : (
-                <div className="pt-1 space-y-2 animate-in fade-in duration-150">
-                  {subtitleStyle === 'none' && (
-                    <div className="p-2.5 rounded-lg bg-amber-950/30 border border-amber-800/40 text-xs sm:text-sm text-amber-300 flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 shrink-0" />
-                      <span>Subtitle saat ini nonaktif. Font yang dipilih akan otomatis diterapkan saat mengaktifkan preset subtitle.</span>
+                <ChevronDown className="w-4 h-4 text-zinc-400 shrink-0" />
+              )}
+            </button>
+
+            {isSubtitleOpen && (
+              <div className="p-3.5 sm:p-5 border-t border-white/[0.08] space-y-3.5 sm:space-y-4 bg-zinc-950/90 animate-in fade-in duration-200">
+                {/* Live Video Animated Subtitle Preview Stage */}
+                <SubtitleVideoPreview
+                  subtitleStyle={subtitleStyle}
+                  activeFont={activeFont}
+                  aspectRatio={aspectRatio}
+                  previewText={previewText}
+                  onPreviewTextChange={setPreviewText}
+                  framingMode={framingMode}
+                />
+
+                {/* Segmented Control Tabs */}
+                <div className="space-y-3 pt-1">
+                  <div className="flex p-1 bg-zinc-950 border border-zinc-800/90 rounded-xl gap-1.5" role="tablist">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={subtitleTab === 'preset'}
+                      onClick={() => setSubtitleTab('preset')}
+                      className={`flex-1 min-h-[38px] py-1.5 px-3.5 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        subtitleTab === 'preset'
+                          ? 'bg-violet-600 text-white shadow-sm'
+                          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                      }`}
+                    >
+                      <span>🎨 Gaya Preset</span>
+                      {subtitleStyle !== 'none' && (
+                        <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-violet-700/80 text-violet-100 ml-1">
+                          {activePresetDef?.name?.split(' ')[0] || 'Aktif'}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={subtitleTab === 'font'}
+                      onClick={() => setSubtitleTab('font')}
+                      className={`flex-1 min-h-[38px] py-1.5 px-3.5 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        subtitleTab === 'font'
+                          ? 'bg-violet-600 text-white shadow-sm'
+                          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60'
+                      }`}
+                    >
+                      <span>🔤 Pilihan Font</span>
+                      <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 ml-1 truncate max-w-[120px]">
+                        {activeFont}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Inline Picker Panes */}
+                  {subtitleTab === 'preset' ? (
+                    <div className="pt-1 animate-in fade-in duration-150">
+                      <VisualPresetPicker
+                        selectedStyle={subtitleStyle}
+                        onSelectPreset={handleSubtitleStyleChange}
+                        compact={false}
+                        hideHeader={true}
+                      />
+                    </div>
+                  ) : (
+                    <div className="pt-1 space-y-2 animate-in fade-in duration-150">
+                      {subtitleStyle === 'none' && (
+                        <div className="p-2.5 rounded-lg bg-amber-950/30 border border-amber-800/40 text-xs sm:text-sm text-amber-300 flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 shrink-0" />
+                          <span>Subtitle saat ini nonaktif. Font yang dipilih akan otomatis diterapkan saat mengaktifkan preset subtitle.</span>
+                        </div>
+                      )}
+                      <FontFamilyPicker
+                        selectedFont={activeFont}
+                        onSelectFont={handleFontChange}
+                        presetDefaultFont={defaultFontForActivePreset}
+                        compact={false}
+                      />
                     </div>
                   )}
-                  <FontFamilyPicker
-                    selectedFont={activeFont}
-                    onSelectFont={handleFontChange}
-                    presetDefaultFont={defaultFontForActivePreset}
-                    compact={false}
-                  />
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* 5. Pengaturan Lanjutan (Accordion) */}
@@ -634,9 +864,19 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
                         <div className="flex items-center gap-2 text-xs sm:text-sm">
                           <button
                             type="button"
+                            onClick={() => setIsManualModelInput(!isManualModelInput)}
+                            className="text-zinc-400 hover:text-white cursor-pointer flex items-center gap-1 transition-colors"
+                            title={isManualModelInput ? 'Pilih dari daftar model' : 'Ketik nama model kustom secara manual'}
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline text-xs">{isManualModelInput ? 'Daftar' : 'Manual'}</span>
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => loadModels(true)}
                             disabled={isFetchingModels}
                             className="text-violet-400 hover:text-white cursor-pointer"
+                            title="Refresh daftar model dari API"
                           >
                             <RefreshCw className={`w-3.5 h-3.5 ${isFetchingModels ? 'animate-spin' : ''}`} />
                           </button>
@@ -645,27 +885,43 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
                             onClick={handleTestModel}
                             disabled={isTestingModel}
                             className="text-cyan-400 hover:text-white cursor-pointer"
+                            title="Tes ping respons model"
                           >
                             {isTestingModel ? 'Tes...' : 'Ping'}
                           </button>
                         </div>
                       </div>
-                      <select
-                        id="llm-model"
-                        value={llmProvider === 'gemini' ? geminiModel : openaiModel}
-                        onChange={(e) =>
-                          llmProvider === 'gemini'
-                            ? setGeminiModel(e.target.value)
-                            : setOpenaiModel(e.target.value)
-                        }
-                        className="w-full h-10 px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm sm:text-base font-mono cursor-pointer"
-                      >
-                        {(llmProvider === 'gemini' ? geminiModels : openaiModels).map((m) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name || m.id}
-                          </option>
-                        ))}
-                      </select>
+                      {isManualModelInput ? (
+                        <Input
+                          id="llm-model"
+                          type="text"
+                          placeholder={llmProvider === 'gemini' ? 'gemini-3.5-flash' : 'claude-sonnet-4-6-free'}
+                          value={llmProvider === 'gemini' ? geminiModel : openaiModel}
+                          onChange={(e) =>
+                            llmProvider === 'gemini'
+                              ? setGeminiModel(e.target.value)
+                              : setOpenaiModel(e.target.value)
+                          }
+                          className="w-full h-10 px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm sm:text-base font-mono"
+                        />
+                      ) : (
+                        <select
+                          id="llm-model"
+                          value={llmProvider === 'gemini' ? geminiModel : openaiModel}
+                          onChange={(e) =>
+                            llmProvider === 'gemini'
+                              ? setGeminiModel(e.target.value)
+                              : setOpenaiModel(e.target.value)
+                          }
+                          className="w-full h-10 px-3 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-100 text-sm sm:text-base font-mono cursor-pointer"
+                        >
+                          {(llmProvider === 'gemini' ? geminiModels : openaiModels).map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.name || m.id}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                   </div>
 
@@ -738,6 +994,65 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
                     <span className="text-xs sm:text-sm">Hapus file master setelah selesai</span>
                   </label>
                 </div>
+
+                {/* cookies.txt YouTube (Opsional) */}
+                <div className="pt-2 border-t border-zinc-800 space-y-2">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <label htmlFor="cookies-upload" className="text-xs sm:text-sm font-semibold text-zinc-200 flex items-center gap-1.5 cursor-pointer">
+                      <FileText className="w-3.5 h-3.5 text-violet-400" />
+                      <span>cookies.txt YouTube (Opsional)</span>
+                    </label>
+                    <span className="text-[11px] text-zinc-400" title="Bypass proteksi bot YouTube, video login-only, dan download resolusi 4K">
+                      Bypass bot check & unduh 4K
+                    </span>
+                  </div>
+                  <div>
+                    <input
+                      id="cookies-upload"
+                      type="file"
+                      accept=".txt"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setCookiesFile(file);
+                          toast.success(`cookies.txt dimuat: ${file.name}`);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                    {cookiesFile ? (
+                      <div className="flex items-center justify-between w-full px-3 py-2 rounded-lg bg-zinc-900 border border-violet-500/40 text-xs text-zinc-200">
+                        <div className="flex items-center gap-2 truncate">
+                          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span className="truncate font-mono">{cookiesFile.name}</span>
+                          <span className="text-zinc-500">({(cookiesFile.size / 1024).toFixed(1)} KB)</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCookiesFile(null);
+                            toast.info('cookies.txt dihapus');
+                          }}
+                          className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                          title="Hapus cookies.txt"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="cookies-upload"
+                        className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-lg bg-zinc-900 hover:bg-zinc-800/80 border border-dashed border-zinc-700 hover:border-violet-500/60 text-xs text-zinc-300 hover:text-white transition-all cursor-pointer font-medium"
+                      >
+                        <UploadCloud className="w-4 h-4 text-zinc-400" />
+                        <span>Pilih berkas cookies.txt (Netscape format)</span>
+                      </label>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-zinc-500 leading-relaxed">
+                    Dibutuhkan untuk video dengan batasan umur, YouTube Member, atau download 4K. Ekspor cookie browser via ekstensi "Get cookies.txt LOCALLY". File otomatis dihapus setelah download.
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -748,7 +1063,7 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
             variant="default"
             size="lg"
             disabled={isLoading || !url.trim()}
-            className="w-full min-h-[48px] h-12 sm:h-14 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-sm sm:text-base tracking-wide active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center gap-2.5 cursor-pointer font-headline shadow-md"
+            className="btn-shine w-full min-h-[48px] h-12 sm:h-14 rounded-xl text-white font-bold text-sm sm:text-base tracking-wide active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none disabled:!animation-none transition-all flex items-center justify-center gap-2.5 cursor-pointer font-headline shadow-lg shadow-violet-900/30"
           >
             {isLoading ? (
               <>

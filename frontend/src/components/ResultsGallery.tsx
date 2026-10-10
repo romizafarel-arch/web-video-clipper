@@ -1,5 +1,6 @@
 import { useState, type FC } from 'react';
 import { Download, Sparkles, CheckCircle2, Scissors, Play, Film } from 'lucide-react';
+import { toast } from 'sonner';
 import type { JobResult, GeneratedShort, HistoryShort, EditableClip, EditClipResponse } from '../types';
 import { ClipEditorModal } from './ClipEditorModal';
 
@@ -17,11 +18,29 @@ export const ResultsGallery: FC<ResultsGalleryProps> = ({
   onSelectClip,
 }) => {
   const [editingClip, setEditingClip] = useState<EditableClip | null>(null);
+  const [isDownloadingZip, setIsDownloadingZip] = useState(false);
   const shortsList = result.shorts || [];
 
   if (shortsList.length === 0) {
     return null;
   }
+
+  const handleDownloadAllZip = () => {
+    if (!result.session_folder) {
+      toast.error('Folder sesi tidak ditemukan.');
+      return;
+    }
+    setIsDownloadingZip(true);
+    const zipUrl = `/api/sessions/${encodeURIComponent(result.session_folder)}/zip`;
+    const link = document.createElement('a');
+    link.href = zipUrl;
+    link.download = `${result.session_folder}_clips.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Mengunduh paket ZIP semua klip video...');
+    setTimeout(() => setIsDownloadingZip(false), 2000);
+  };
 
   const formatSeconds = (sec?: number) => {
     if (typeof sec !== 'number') return '00:00';
@@ -64,6 +83,19 @@ export const ResultsGallery: FC<ResultsGalleryProps> = ({
             {result.video_title || 'Hasil pemotongan video YouTube'}
           </p>
         </div>
+
+        {shortsList.length > 1 && result.session_folder && (
+          <button
+            type="button"
+            onClick={handleDownloadAllZip}
+            disabled={isDownloadingZip}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 border border-violet-500/40 hover:border-violet-500/60 font-semibold text-xs sm:text-sm transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-50 self-start sm:self-center"
+            title="Download semua klip video sekaligus dalam berkas ZIP"
+          >
+            <Download className={`w-3.5 h-3.5 ${isDownloadingZip ? 'animate-bounce' : ''}`} />
+            <span>{isDownloadingZip ? 'Menyiapkan ZIP...' : 'Download Semua (.zip)'}</span>
+          </button>
+        )}
       </div>
 
       {/* Grid of Video Cards in Inspector Panel */}
@@ -80,7 +112,7 @@ export const ResultsGallery: FC<ResultsGalleryProps> = ({
           return (
             <div
               key={short.filename || idx}
-              className={`rounded-xl p-3 flex flex-col justify-between border transition-colors relative bg-[#12121A] ${
+              className={`rounded-xl p-3 flex flex-col justify-between border transition-colors relative bg-[#12121A] card-hover-lift ${
                 isSelected
                   ? 'border-violet-500 ring-1 ring-violet-500/50 shadow-sm'
                   : 'border-zinc-800 hover:border-zinc-700'
@@ -142,8 +174,13 @@ export const ResultsGallery: FC<ResultsGalleryProps> = ({
                           Browser tidak mendukung video HTML5.
                         </video>
                       ) : (
-                        <div className="p-4 text-center text-xs text-rose-400">
-                          File video tidak tersedia.
+                        <div className="p-4 text-center text-xs text-rose-400 space-y-1">
+                          <p className="font-semibold">File video tidak tersedia.</p>
+                          {short.error && (
+                            <p className="text-[10px] text-zinc-400 font-mono line-clamp-3">
+                              {short.error}
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>

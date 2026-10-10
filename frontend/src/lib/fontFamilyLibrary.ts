@@ -95,6 +95,42 @@ export const VIRAL_FONT_LIBRARY: FontItem[] = [
     sampleWord: 'Universal',
     cssClass: 'font-roboto font-bold',
   },
+  {
+    id: 'special_elite',
+    name: 'Special Elite',
+    family: 'Special Elite',
+    category: 'display',
+    tag: 'Dymo Docu Typewriter',
+    sampleWord: 'CLASSIFIED',
+    cssClass: 'font-special-elite uppercase tracking-wider',
+  },
+  {
+    id: 'cinzel',
+    name: 'Cinzel Serif',
+    family: 'Cinzel',
+    category: 'display',
+    tag: 'Editorial Luxury',
+    sampleWord: 'ETERNAL',
+    cssClass: 'font-cinzel uppercase tracking-[0.2em]',
+  },
+  {
+    id: 'vt323',
+    name: 'VT323 Pixel CRT',
+    family: 'VT323',
+    category: 'display',
+    tag: 'Bloomberg Terminal',
+    sampleWord: 'ALPHA_24/7',
+    cssClass: 'font-vt323 uppercase tracking-widest',
+  },
+  {
+    id: 'rubik',
+    name: 'Rubik Black',
+    family: 'Rubik',
+    category: 'viral',
+    tag: 'Sticker Die-Cut',
+    sampleWord: 'STICKER',
+    cssClass: 'font-rubik font-black uppercase tracking-tight',
+  },
 ];
 
 /**
@@ -106,6 +142,7 @@ export function getDefaultFontForPreset(presetId: TextPresetId): string {
     case 'hormozi_emerald':
     case 'karaoke_bounce':
     case 'nas_daily':
+    case 'brat_lime':
       return 'Montserrat Black';
     case 'tiktok_punch':
       return 'The Bold Font';
@@ -124,11 +161,20 @@ export function getDefaultFontForPreset(presetId: TextPresetId): string {
     case 'ali_abdaal':
     case 'ali_cyan':
     case 'pastel_vlog':
+    case 'capcut_glow':
       return 'Poppins';
     case 'aesthetic':
     case 'aesthetic_warm':
     case 'luxury_gold':
       return 'Bebas Neue';
+    case 'luxury_serif':
+      return 'Cinzel';
+    case 'dymo_tape':
+      return 'Special Elite';
+    case 'sticker_pop':
+      return 'Rubik';
+    case 'amber_terminal':
+      return 'VT323';
     case 'mrbeast':
     case 'mrbeast_yellow':
     case 'retro_synth':

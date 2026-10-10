@@ -18,6 +18,7 @@ export interface AppConfig {
 }
 
 export type FramingMode = 'podcast' | 'single' | 'center' | 'gaming';
+export type GamingLayout = 'cam_top' | 'cam_bottom';
 export type TextPresetId =
   | 'hormozi'
   | 'tiktok_punch'
@@ -39,6 +40,13 @@ export type TextPresetId =
   | 'dan_koe'
   | 'fire_flame'
   | 'pastel_vlog'
+  // 6 New Viral Presets (2025/2026 Trend)
+  | 'brat_lime'
+  | 'dymo_tape'
+  | 'luxury_serif'
+  | 'sticker_pop'
+  | 'amber_terminal'
+  | 'capcut_glow'
   // Legacy aliases for backward compatibility
   | 'hormozi_emerald'
   | 'hormozi_fire'
@@ -55,6 +63,8 @@ export type SubtitleStyle =
   | 'classic'
   | 'none'
   | TextPresetId;
+
+export type SubtitleFontSizeScale = 'small' | 'medium' | 'large';
 
 export type LLMProvider = 'gemini' | 'openai';
 export type TranscriberProvider = 'whisper' | 'gemini';
@@ -76,7 +86,9 @@ export interface HistoryShort {
   end_time?: number | null;
   framing_mode?: FramingMode;
   gaming_preset?: string;
+  gaming_layout?: GamingLayout;
   font_family?: string;
+  font_size_scale?: SubtitleFontSizeScale;
 }
 
 export interface HistorySession {
@@ -145,7 +157,10 @@ export interface GeneratePayload {
   gemini_transcriber_model?: string;
   whisper_model?: string;
   gaming_preset?: string;
+  gaming_layout?: GamingLayout;
   font_family?: string;
+  font_size_scale?: SubtitleFontSizeScale;
+  cookies_file?: File;
 }
 
 export interface GeneratedShort {
@@ -162,7 +177,9 @@ export interface GeneratedShort {
   error?: string;
   framing_mode?: FramingMode;
   gaming_preset?: string;
+  gaming_layout?: GamingLayout;
   font_family?: string;
+  clip_index?: number;
 }
 
 export interface JobResult {
@@ -243,6 +260,7 @@ export interface EditClipPayload {
   framing_mode?: FramingMode;
   subtitle_style?: SubtitleStyle;
   gaming_preset?: string;
+  gaming_layout?: GamingLayout;
   font_family?: string;
   burn_subtitles?: boolean;
   title?: string;
@@ -250,7 +268,6 @@ export interface EditClipPayload {
 }
 
 export interface EditClipResponse {
-  success: boolean;
   clip: {
     title: string;
     hook_sentence?: string;
@@ -271,6 +288,7 @@ export interface EditClipResponse {
     size_bytes?: number;
   };
   error?: string;
+  success: boolean;
 }
 
 export interface EditableClip {
@@ -284,8 +302,10 @@ export interface EditableClip {
   vtt_url?: string | null;
   framing_mode?: FramingMode;
   gaming_preset?: string;
+  gaming_layout?: GamingLayout;
   subtitle_style?: SubtitleStyle;
   font_family?: string;
+  font_size_scale?: SubtitleFontSizeScale;
   hook_sentence?: string;
   score?: number | null;
 }
@@ -304,6 +324,7 @@ export interface VideoClip {
   aspectRatio: string;
   subtitleStyle: SubtitleStyle;
   fontFamily?: string;
+  fontSizeScale?: SubtitleFontSizeScale;
   videoUrl: string;
   vttUrl?: string;
 }
@@ -318,6 +339,7 @@ export interface SavedClipItem {
   aspectRatio: string;
   subtitleStyle: SubtitleStyle;
   fontFamily?: string;
+  fontSizeScale?: SubtitleFontSizeScale;
   webUrl: string;
   vttUrl?: string | null;
   savedAt: number;

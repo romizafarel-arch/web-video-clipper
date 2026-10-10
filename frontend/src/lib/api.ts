@@ -33,17 +33,35 @@ export async function updateConfig(payload: Record<string, unknown>): Promise<{ 
 }
 
 export async function submitGenerate(payload: GeneratePayload): Promise<{ job_id: string; message?: string }> {
-  const res = await fetch('/api/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  let res: Response;
+
+  if (payload.cookies_file) {
+    const formData = new FormData();
+    formData.append('cookies_file', payload.cookies_file);
+    const { cookies_file: _cookies_file, ...rest } = payload;
+    formData.append('data', JSON.stringify(rest));
+
+    res = await fetch('/api/generate', {
+      method: 'POST',
+      body: formData,
+    });
+  } else {
+    res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  }
 
   const data = await res.json();
   if (!res.ok || data.error) {
     throw new Error(data.error || 'Failed to start generation job');
   }
   return data;
+}
+
+export function getSessionZipDownloadUrl(folderName: string): string {
+  return `/api/sessions/${encodeURIComponent(folderName)}/zip`;
 }
 
 export async function fetchJob(jobId: string): Promise<JobState | null> {
