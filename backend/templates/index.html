@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reef Clipper | Pembuat Klip Video</title>
+  <meta name="description" content="Platform ekstraksi klip video YouTube vertikal 9:16 untuk Shorts, Reels, dan TikTok berbasis AI multimodal dan smart face-tracking.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#0A0A0F">
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Studio Header -->
+  <header class="studio-header">
+    <div class="header-container">
+      <div class="brand">
+        <img class="brand-badge" src="/static/favicon.svg" alt="" aria-hidden="true" width="36" height="36">
+        <div class="brand-meta">
+          <span class="brand-title">Reef Clipper</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="status-indicator" id="apiStatusBadge" title="Status Engine & API Provider">
+          <span class="status-dot"></span>
+          <span class="status-label" id="statusLabel">Memeriksa API...</span>
+        </div>
+
+        <button class="nav-btn" id="historyBtn" type="button" aria-label="Riwayat Sesi dan Video">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 8v4l3 3"></path>
+            <circle cx="12" cy="12" r="9"></circle>
+          </svg>
+          <span>Riwayat (<span id="historyCountBadge">0</span>)</span>
+        </button>
+
+        <button class="nav-btn icon-only" id="settingsBtn" type="button" aria-label="Pengaturan API & Engine">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Studio Workspace -->
+  <main class="studio-workspace">
+    <!-- Intro Banner -->
+    <section class="studio-intro">
+      <h1 class="intro-headline">Ubah Video Panjang Menjadi Klip Vertikal 9:16</h1>
+      <p class="intro-description">Ekstraksi otomatis segmen berpotensi viral menggunakan transkripsi audio AI, kurasi hook LLM, dan smart face-tracking reframe.</p>
+    </section>
+
+    <!-- Generation Control Console -->
+    <section class="console-card" id="generatorSection">
+      <form id="generateForm" class="console-form">
+        <!-- Ingestion URL Section -->
+        <div class="url-input-block">
+          <div class="field-meta">
+            <label for="videoUrlInput" class="field-label">URL Video YouTube</label>
+            <span class="field-guide">Format didukung: video panjang, live stream VOD, atau rekaman podcast</span>
+          </div>
+          <div class="url-bar-wrapper">
+            <div class="url-input-lead">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+            </div>
+            <input 
+              type="url" 
+              id="videoUrlInput" 
+              class="url-input-element" 
+              placeholder="https://www.youtube.com/watch?v=..." 
+              required 
+              autocomplete="off"
+            >
+            <button type="button" class="btn-paste-action" id="pasteBtn" title="Tempel dari Clipboard">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              </svg>
+              <span>Paste</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Primary Creative Parameter Matrix -->
+        <div class="parameter-deck">
+          <!-- Parameter: Clip Count Segmented Control -->
+          <div class="param-cell">
+            <div class="param-label-row">
+              <label class="param-label">Target Jumlah Klip</label>
+              <span class="param-value-tag" id="clipCountLabel">3 Klip</span>
+            </div>
+            <div class="segmented-pills" id="clipCountControl" role="group" aria-label="Jumlah Klip Target">
+              <button type="button" class="segment-btn" data-value="1">1</button>
+              <button type="button" class="segment-btn" data-value="2">2</button>
+              <button type="button" class="segment-btn active" data-value="3">3</button>
+              <button type="button" class="segment-btn" data-value="4">4</button>
+              <button type="button" class="segment-btn" data-value="5">5</button>
+            </div>
+            <input type="hidden" id="numClipsInput" value="3">
+          </div>
+
+          <!-- Parameter: Aspect Ratio -->
+          <div class="param-cell">
+            <label class="param-label" for="aspectRatioSelect">Rasio Aspek Video</label>
+            <select id="aspectRatioSelect" class="studio-select">
+              <option value="9:16" selected>9:16 Vertikal (TikTok / Shorts / Reels)</option>
+              <option value="1:1">1:1 Persegi (Feed Instagram / LinkedIn)</option>
+              <option value="16:9">16:9 Lanskap (Original Widescreen)</option>
+            </select>
+            <span class="param-hint">Menyesuaikan posisi crop kamera dengan orientasi platform tujuan.</span>
+          </div>
+
+          <!-- Parameter: Camera Framing Mode -->
+          <div class="param-cell">
+            <label class="param-label" for="framingModeSelect">Mode Framing Kamera</label>
+            <select id="framingModeSelect" class="studio-select">
+              <option value="podcast" selected>Smart Podcast (Multi-Speaker & Anti-Jitter)</option>
+              <option value="single">Single Speaker (Fokus 1 Wajah Dominan)</option>
+              <option value="center">Fixed Center (Tanpa Tracking / Slide)</option>
+              <option value="gaming">Gaming (Gameplay + Facecam 9:16)</option>
+            </select>
+            <span class="param-hint">Algoritma cerdas penyesuaian crop wajah & komposisi subjek.</span>
+            <div class="cloud-constraint-hint hidden" id="cloudGamingNotice">⚠️ Mode Cloud API (MuAPI) belum mendukung layout Gaming Facecam. Gunakan Mode Local Engine.</div>
+          </div>
+
+          <!-- Parameter: Gaming Preset (Conditional) -->
+          <div class="param-cell" id="gamingPresetCell" style="display: none;">
+            <label class="param-label" for="gamingPresetSelect">Preset Layout Gaming</label>
+            <select id="gamingPresetSelect" class="studio-select">
+              <option value="clean_2layer_bottom_right" selected>Clean 2-Layer (Webcam Kanan Bawah - Rekomendasi)</option>
+              <option value="clean_2layer_bottom_left">Clean 2-Layer (Webcam Kiri Bawah)</option>
+              <option value="clean_2layer_top_right">Clean 2-Layer (Webcam Kanan Atas)</option>
+              <option value="clean_2layer_top_left">Clean 2-Layer (Webcam Kiri Atas)</option>
+              <option value="discord_top_cam_bottom_right">Discord Atas + Webcam Kanan Bawah (3-Layer)</option>
+              <option value="discord_left_cam_top_right">Discord Kiri + Webcam Kanan Atas (3-Layer)</option>
+              <option value="custom">Custom Bounding Box</option>
+            </select>
+            <span class="param-hint">Pilih tata letak Discord squad cam & webcam streamer.</span>
+          </div>
+
+          <!-- Parameter: Gaming Custom Bounding Box (Conditional) -->
+          <div class="param-cell" id="gamingCustomBoxCell" style="display: none;">
+            <label class="param-label">Koordinat Custom Box (Top / Mid / Bottom)</label>
+            <div class="gaming-custom-inputs">
+              <input type="text" id="gamingCustomTop" class="studio-input" placeholder="Top: x,y,w,h (misal 0,0,1920,260)">
+              <input type="text" id="gamingCustomMid" class="studio-input" placeholder="Mid: x,y,w,h (misal 260,60,1400,960)">
+              <input type="text" id="gamingCustomBot" class="studio-input" placeholder="Bottom: x,y,w,h (misal 1420,680,500,400)">
+            </div>
+            <span class="param-hint">Format x,y,w,h dalam pixel (basis 1080p) atau rasio 0.0-1.0</span>
+          </div>
+
+          <!-- Parameter: Subtitle Animation Style -->
+          <div class="param-cell">
+            <label class="param-label" for="subtitleStyleSelect">Gaya Animasi Subtitle</label>
+            <select id="subtitleStyleSelect" class="studio-select">
+              <option value="karaoke" selected>Word-by-Word Kinetic Karaoke (Kuning-Emas)</option>
+              <option value="kinetic">Word-by-Word Beat Pop (Lompat per Kata)</option>
+              <option value="classic">Teks Statis Klasik (Blok Kata)</option>
+              <option value="none">Tanpa Subtitle (Nonaktif)</option>
+            </select>
+            <span class="param-hint">Animasi takarir kata-demi-kata dinamis ala Shorts / TikTok viral.</span>
+          </div>
+
+          <!-- Parameter: Resolution Format -->
+          <div class="param-cell">
+            <label class="param-label" for="formatSelect">Kualitas Render Output</label>
+            <select id="formatSelect" class="studio-select">
+              <option value="720" selected>HD 720p (Cepat & Direkomendasikan)</option>
+              <option value="1080">Full HD 1080p (Kualitas Maksimal)</option>
+              <option value="480">SD 480p (Paling Cepat / Ringan)</option>
+            </select>
+            <span class="param-hint">Resolusi video sumber yang diunduh dan diproses ffmpeg.</span>
+          </div>
+
+          <!-- Parameter: Processing Engine -->
+          <div class="param-cell">
+            <label class="param-label" for="modeSelect">Engine Pemrosesan</label>
+            <select id="modeSelect" class="studio-select">
+              <option value="local" selected>Local Engine (Whisper/Gemini + FFmpeg)</option>
+              <option value="api">Cloud API Engine (MuAPI)</option>
+            </select>
+            <span class="param-hint">Local engine memproses langsung di perangkat tanpa kuota pihak ketiga.</span>
+          </div>
+        </div>
+
+        <!-- Option: Auto Delete Source Video -->
+        <div class="form-row-checkbox generate-storage-option" style="margin-top: 0.75rem; margin-bottom: 0.25rem;">
+          <label class="checkbox-label" for="autoDeleteSourceGenInput">
+            <input type="checkbox" id="autoDeleteSourceGenInput" checked>
+            <span>Hapus video sumber setelah selesai render (Hemat Storage)</span>
+          </label>
+        </div>
+
+        <!-- Render Launch Action (Directly below primary creative inputs) -->
+        <div class="console-submit-dock">
+          <button type="submit" class="btn-studio-primary" id="generateSubmitBtn">
+            <span class="btn-symbol">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </span>
+            <span class="btn-text">Generate Viral Shorts Sekarang</span>
+          </button>
+        </div>
+
+        <!-- Collapsible Advanced AI Engine Settings -->
+        <details class="advanced-settings-deck" id="advancedAiSettings">
+          <summary class="advanced-settings-summary">
+            <div class="summary-title-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span>Pengaturan Lanjutan Mesin AI (Model, Speech Transcriber, & Provider)</span>
+            </div>
+            <span class="summary-badge">Buka / Sesuaikan</span>
+          </summary>
+          <div class="advanced-settings-content">
+            <!-- Parameter: LLM Highlight Engine & Model Selection -->
+            <div class="param-cell local-only-setting model-control-item">
+              <div class="param-header-flex">
+                <label class="param-label" for="llmProviderSelect">AI Highlight & Virality Scorer</label>
+                <button type="button" class="btn-micro-action" id="btnLoadLlmModels" title="Perbarui daftar model AI dari API">
+                  <svg class="spin-icon-target" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                  </svg>
+                  <span>Muat Model API</span>
+                </button>
+              </div>
+              <div class="model-composite-row">
+                <select id="llmProviderSelect" class="studio-select provider-select">
+                  <option value="gemini" selected>Google Gemini</option>
+                  <option value="openai">OpenAI / APMIX</option>
+                </select>
+                <div class="model-selector-combo">
+                  <select id="llmModelSelect" class="studio-select model-select">
+                    <option value="gemini-3.5-flash" selected>gemini-3.5-flash (Default)</option>
+                    <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                    <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+                    <option value="__custom__">Tulis Model Custom...</option>
+                  </select>
+                  <button type="button" class="btn-verify-action" id="btnTestLlmModel" title="Uji ketersediaan dan latensi respons model">
+                    <span>Tes</span>
+                  </button>
+                </div>
+              </div>
+              <div class="custom-model-box hidden" id="customLlmBox">
+                <input type="text" id="customLlmInput" class="studio-input custom-input" placeholder="Masukkan ID model (contoh: gemini-3.5-flash-lite)">
+              </div>
+              <div class="model-diagnostic-note" id="llmModelStatus">
+                <span class="status-dot green"></span>
+                <span class="status-msg">Model aktif: gemini-3.5-flash</span>
+              </div>
+            </div>
+
+            <!-- Parameter: Audio Transcriber & Speech Model -->
+            <div class="param-cell local-only-setting model-control-item">
+              <div class="param-header-flex">
+                <label class="param-label" for="transcriberSelect">Speech Transcriber (Audio-to-Text)</label>
+                <button type="button" class="btn-micro-action" id="btnLoadTransModels" title="Perbarui model transkripsi">
+                  <svg class="spin-icon-target" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                  </svg>
+                  <span>Muat Model</span>
+                </button>
+              </div>
+              <div class="model-composite-row">
+                <select id="transcriberSelect" class="studio-select provider-select">
+                  <option value="gemini" selected>Google Gemini (Cloud Speech)</option>
+                  <option value="whisper">Faster-Whisper (Lokal GPU/CPU)</option>
+                </select>
+                <div class="model-selector-combo">
+                  <select id="transModelSelect" class="studio-select model-select">
+                    <option value="gemini-3.5-transcribe" selected>gemini-3.5-transcribe (Presisi & Cepat)</option>
+                    <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                    <option value="__custom__">Tulis Model Custom...</option>
+                  </select>
+                  <button type="button" class="btn-verify-action" id="btnTestTransModel" title="Uji ketersediaan model audio">
+                    <span>Tes</span>
+                  </button>
+                </div>
+              </div>
+              <div class="custom-model-box hidden" id="customTransBox">
+                <input type="text" id="customTransInput" class="studio-input custom-input" placeholder="Masukkan ID model audio transkripsi">
+              </div>
+              <div class="model-diagnostic-note" id="transModelStatus">
+                <span class="status-dot green"></span>
+                <span class="status-msg">Model aktif: gemini-3.5-transcribe</span>
+              </div>
+            </div>
+          </div>
+        </details>
+      </form>
+    </section>
+
+    <!-- Live Render Pipeline Inspector (Hidden initially) -->
+    <section class="pipeline-section hidden" id="progressSection" aria-live="polite">
+      <div class="pipeline-header">
+        <div class="pipeline-status-block">
+          <div class="render-activity-spinner" aria-hidden="true"></div>
+          <div>
+            <h2 class="pipeline-heading" id="progressTitle">Memproses Pipeline Video...</h2>
+            <p class="pipeline-description" id="progressSubtitle">Sedang menyiapkan modul ekstraksi dan AI...</p>
+          </div>
+        </div>
+        <div class="pipeline-controls">
+          <div class="pipeline-stopwatch" id="progressTimer">00:00</div>
+          <button type="button" class="btn-cancel-job" id="btnCancelJob" title="Batalkan proses pembuatan Shorts">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <span>Batalkan</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Pipeline Stepper Track -->
+      <div class="pipeline-stepper-track">
+        <div class="stepper-step" id="stepDownload">
+          <div class="step-num">1</div>
+          <div class="step-detail">
+            <span class="step-title">Ingestion</span>
+            <span class="step-caption">yt-dlp Video Stream</span>
+          </div>
+        </div>
+        <div class="stepper-connector" id="line1"></div>
+
+        <div class="stepper-step" id="stepTranscribe">
+          <div class="step-num">2</div>
+          <div class="step-detail">
+            <span class="step-title">Speech Engine</span>
+            <span class="step-caption">Audio to Text</span>
+          </div>
+        </div>
+        <div class="stepper-connector" id="line2"></div>
+
+        <div class="stepper-step" id="stepAnalyze">
+          <div class="step-num">3</div>
+          <div class="step-detail">
+            <span class="step-title">AI Highlights</span>
+            <span class="step-caption">Deteksi Hook & Virality</span>
+          </div>
+        </div>
+        <div class="stepper-connector" id="line3"></div>
+
+        <div class="stepper-step" id="stepCrop">
+          <div class="step-num">4</div>
+          <div class="step-detail">
+            <span class="step-title">Smart Reframe</span>
+            <span class="step-caption">9:16 Face Tracking</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Meter -->
+      <div class="meter-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+        <div class="meter-fill" id="progressBarFill" style="width: 5%;"></div>
+      </div>
+
+      <!-- Stage Inspector Tabs & Controls -->
+      <div class="inspector-toolbar">
+        <div class="inspector-tabs" role="tablist" aria-label="Tampilan Pemantau Pipeline">
+          <button type="button" class="tab-button active" id="tabAnimationView" role="tab" aria-selected="true" aria-controls="animationViewContainer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>Monitor Stage Visual</span>
+          </button>
+          <button type="button" class="tab-button" id="tabTerminalView" role="tab" aria-selected="false" aria-controls="terminalViewContainer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 17 10 11 4 5"></polyline>
+              <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+            <span>Console Output Log</span>
+            <span class="tab-notification-dot hidden" id="logAlertBadge" title="Aktivitas log / peringatan"></span>
+          </button>
+        </div>
+        <div class="stage-status-indicator">
+          <span class="stage-pulse"></span>
+          <span class="stage-status-text" id="animationStatusText">Memulai pipeline...</span>
+        </div>
+      </div>
+
+      <!-- Stage View Panels -->
+      <div class="inspector-panels">
+        <!-- Panel 1: Stage Visualization -->
+        <div class="animation-view-container" id="animationViewContainer" role="tabpanel" aria-labelledby="tabAnimationView">
+          <!-- Stage 1: Download Ingestion -->
+          <div class="anim-stage-scene stage-download active" id="sceneDownload">
+            <div class="anim-visual-box">
+              <div class="cloud-download-visual">
+                <div class="server-node origin-node">
+                  <div class="node-icon youtube-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                  </div>
+                  <span class="node-label">YouTube Stream</span>
+                </div>
+                <div class="stream-track">
+                  <div class="stream-packet packet-1"></div>
+                  <div class="stream-packet packet-2"></div>
+                  <div class="stream-packet packet-3"></div>
+                  <div class="stream-line"></div>
+                </div>
+                <div class="server-node dest-node">
+                  <div class="node-icon local-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                      <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                      <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                      <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                    </svg>
+                  </div>
+                  <span class="node-label">Penyimpanan Lokal</span>
+                </div>
+              </div>
+            </div>
+            <div class="anim-caption">
+              <span class="caption-title">Stream Ingestion & Demux Audio</span>
+              <span class="caption-subtitle">Mengambil stream video YouTube dan mengekstrak trek audio kualitas tinggi.</span>
+            </div>
+          </div>
+
+          <!-- Stage 2: Audio Transcription -->
+          <div class="anim-stage-scene stage-transcribe" id="sceneTranscribe">
+            <div class="anim-visual-box">
+              <div class="soundwave-visual">
+                <div class="soundbar bar-1"></div>
+                <div class="soundbar bar-2"></div>
+                <div class="soundbar bar-3"></div>
+                <div class="soundbar bar-4"></div>
+                <div class="soundbar bar-5"></div>
+                <div class="soundbar bar-6"></div>
+                <div class="soundbar bar-7"></div>
+                <div class="soundbar bar-8"></div>
+                <div class="soundbar bar-9"></div>
+                <div class="soundbar bar-10"></div>
+                <div class="soundbar bar-11"></div>
+                <div class="soundbar bar-12"></div>
+                <div class="soundbar bar-13"></div>
+                <div class="soundbar bar-14"></div>
+                <div class="soundbar bar-15"></div>
+              </div>
+              <div class="live-transcript-mock">
+                <span class="transcript-typing">"Mentranskripsikan percakapan kata demi kata dengan timestamp presisi..."</span>
+              </div>
+            </div>
+            <div class="anim-caption">
+              <span class="caption-title">Transkripsi Audio ke Teks Ber-Timestamp</span>
+              <span class="caption-subtitle">Model transkripsi memetakan alur dialog kata per kata untuk segmentasi klip.</span>
+            </div>
+          </div>
+
+          <!-- Stage 3: AI Analysis & Hook Detector -->
+          <div class="anim-stage-scene stage-analyze" id="sceneAnalyze">
+            <div class="anim-visual-box">
+              <div class="radar-analysis-visual">
+                <div class="radar-circle circle-outer"></div>
+                <div class="radar-circle circle-mid"></div>
+                <div class="radar-circle circle-inner"></div>
+                <div class="radar-sweep-beam"></div>
+                <div class="hook-badge badge-top">
+                  <span class="hook-dot"></span>
+                  <span class="hook-text">Hook Primer</span>
+                </div>
+                <div class="hook-badge badge-right">
+                  <span class="hook-dot"></span>
+                  <span class="hook-text">Skor 95</span>
+                </div>
+                <div class="hook-badge badge-bottom">
+                  <span class="hook-dot"></span>
+                  <span class="hook-text">Peak Retensi</span>
+                </div>
+              </div>
+            </div>
+            <div class="anim-caption">
+              <span class="caption-title">Evaluasi Hook & Skor Retensi</span>
+              <span class="caption-subtitle">LLM membedah 3 detik pertama dialog dan menentukan momen narasi paling menarik.</span>
+            </div>
+          </div>
+
+          <!-- Stage 4: Smart Crop Face Tracking -->
+          <div class="anim-stage-scene stage-crop" id="sceneCrop">
+            <div class="anim-visual-box">
+              <div class="face-track-canvas">
+                <div class="video-ratio-badge">16:9 Landscape Frame</div>
+                <div class="canvas-subject">
+                  <div class="subject-avatar">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                </div>
+                <div class="viewfinder-9-16">
+                  <div class="vf-corner tl"></div>
+                  <div class="vf-corner tr"></div>
+                  <div class="vf-corner bl"></div>
+                  <div class="vf-corner br"></div>
+                  <div class="vf-label">9:16 Shorts Viewfinder</div>
+                  <div class="target-crosshair"></div>
+                </div>
+              </div>
+            </div>
+            <div class="anim-caption">
+              <span class="caption-title">Auto-Reframe & Pelacakan Wajah 9:16</span>
+              <span class="caption-subtitle">OpenCV mendeteksi koordinat pembicara secara dinamis dan FFmpeg merender klip final.</span>
+            </div>
+          </div>
+
+          <!-- Stage 5: Completed -->
+          <div class="anim-stage-scene stage-completed" id="sceneCompleted">
+            <div class="anim-visual-box">
+              <div class="completion-visual">
+                <div class="check-circle-pulse">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <div class="completion-reels">
+                  <span class="reel-item">Klip 1</span>
+                  <span class="reel-item">Klip 2</span>
+                  <span class="reel-item">Klip 3</span>
+                </div>
+              </div>
+            </div>
+            <div class="anim-caption">
+              <span class="caption-title">Proses Pembuatan Selesai</span>
+              <span class="caption-subtitle">Semua klip vertikal siap ditonton, dipratinjau, atau diunduh di galeri bawah.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2: Raw Process Console Log -->
+        <div class="terminal-container hidden" id="terminalViewContainer" role="tabpanel" aria-labelledby="tabTerminalView">
+          <div class="terminal-header">
+            <div class="terminal-controls">
+              <span class="terminal-dot dot-red"></span>
+              <span class="terminal-dot dot-yellow"></span>
+              <span class="terminal-dot dot-green"></span>
+              <span class="terminal-tag">stdout / stderr pipe</span>
+            </div>
+            <button type="button" class="btn-console-collapse" id="terminalToggleBtn">Bersihkan Tampilan</button>
+          </div>
+          <div class="terminal-body" id="terminalLogBody">
+            <div class="log-line info">[Reef Clipper] Inisialisasi studio pipeline web...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results Section (Hidden initially) -->
+    <section class="results-section hidden" id="resultsSection">
+      <div class="results-header">
+        <div class="results-meta-wrap">
+          <div class="results-pill">Selesai Diproses</div>
+          <h2 class="results-heading">Galeri Klip Vertikal 9:16</h2>
+          <p class="results-meta" id="resultsMeta">Ditemukan 3 klip momen unggulan</p>
+        </div>
+        <div class="results-actions">
+          <button type="button" class="btn-studio-secondary" id="newGenerationBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Proses Video Baru</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Shorts Grid Cards Container -->
+      <div class="shorts-grid" id="shortsGrid">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <!-- History Drawer / Modal -->
+    <div class="modal-backdrop hidden" id="historyModal">
+      <div class="studio-dialog dialog-wide" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
+        <div class="dialog-header">
+          <div class="dialog-title-group">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <div>
+              <h3 id="historyModalTitle">Riwayat Sesi & Video Shorts</h3>
+              <p class="dialog-subtitle">Daftar arsip klip yang tersimpan di direktori lokal output</p>
+            </div>
+          </div>
+          <div class="dialog-header-actions">
+            <button type="button" class="btn-studio-secondary btn-sm" id="openMainOutputFolderBtn" title="Buka folder utama output/ di File Explorer">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+              <span>Folder Output</span>
+            </button>
+            <button type="button" class="btn-close-dialog" id="closeHistoryBtn" aria-label="Tutup Riwayat">&times;</button>
+          </div>
+        </div>
+        <div class="dialog-content">
+          <div class="history-list" id="historyListContainer">
+            <div class="empty-state">Memuat riwayat video...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-backdrop hidden" id="settingsModal">
+      <div class="studio-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+        <div class="dialog-header">
+          <div class="dialog-title-group">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <div>
+              <h3 id="settingsModalTitle">Konfigurasi API & Engine</h3>
+              <p class="dialog-subtitle">Atur kredensial API dan default model yang digunakan sistem</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close-dialog" id="closeSettingsBtn" aria-label="Tutup Pengaturan">&times;</button>
+        </div>
+        <form id="settingsForm" class="dialog-content dialog-form">
+          <!-- Gemini Key -->
+          <div class="form-row">
+            <div class="form-row-header">
+              <label for="geminiApiKeyInput">Google Gemini API Key</label>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="row-link">Dapatkan Kunci di AI Studio ↗</a>
+            </div>
+            <input type="password" id="geminiApiKeyInput" class="studio-input" placeholder="AIzaSy...">
+            <span class="row-guide">Digunakan untuk transkripsi audio presisi dan analisis hook viral.</span>
+          </div>
+
+          <!-- Gemini Transcriber Model -->
+          <div class="form-row">
+            <label for="geminiTransModelInput">Model Transkripsi Gemini (Audio-to-Text)</label>
+            <input type="text" id="geminiTransModelInput" class="studio-input" placeholder="gemini-3.5-transcribe" value="gemini-3.5-transcribe">
+            <span class="row-guide">Default: <code>gemini-3.5-transcribe</code> (khusus audio speech-to-text).</span>
+          </div>
+
+          <!-- Gemini LLM Model -->
+          <div class="form-row">
+            <label for="geminiModelInput">Model LLM Gemini (Highlight & Virality)</label>
+            <input type="text" id="geminiModelInput" class="studio-input" placeholder="gemini-3.5-flash" value="gemini-3.5-flash">
+            <span class="row-guide">Default: <code>gemini-3.5-flash</code>.</span>
+          </div>
+
+          <!-- OpenAI / APMIX Key -->
+          <div class="form-row">
+            <div class="form-row-header">
+              <label for="openaiApiKeyInput">OpenAI / APMIX API Key</label>
+              <a href="https://apmix.ai/" target="_blank" rel="noopener" class="row-link">Kunjungi APMIX ↗</a>
+            </div>
+            <input type="password" id="openaiApiKeyInput" class="studio-input" placeholder="sk-...">
+            <span class="row-guide">Digunakan jika memilih provider LLM OpenAI atau gateway APMIX.</span>
+          </div>
+
+          <!-- OpenAI Base URL -->
+          <div class="form-row">
+            <label for="openaiBaseUrlInput">Custom OpenAI Base URL (Opsional)</label>
+            <input type="text" id="openaiBaseUrlInput" class="studio-input" placeholder="https://api.apmix.ai/v1">
+            <span class="row-guide">Isi jika memakai gateway seperti APMIX, OpenRouter, atau OneAPI.</span>
+          </div>
+
+          <!-- MuAPI Key -->
+          <div class="form-row">
+            <div class="form-row-header">
+              <label for="muapiKeyInput">MuAPI API Key (Mode Cloud)</label>
+              <a href="https://muapi.ai" target="_blank" rel="noopener" class="row-link">Kunjungi MuAPI ↗</a>
+            </div>
+            <input type="password" id="muapiKeyInput" class="studio-input" placeholder="muapi_...">
+            <span class="row-guide">Hanya diperlukan jika memilih Mode Cloud API (MuAPI).</span>
+          </div>
+
+          <!-- Auto Delete Source Video -->
+          <div class="form-row form-row-checkbox">
+            <label class="checkbox-label" for="autoDeleteSourceInput">
+              <input type="checkbox" id="autoDeleteSourceInput" checked>
+              <span>Hapus video sumber setelah selesai render (Hemat Storage)</span>
+            </label>
+            <span class="row-guide" style="display: block; margin-top: 0.25rem;">Otomatis membersihkan file mentahan video YouTube dari disk setelah proses klip selesai, menjaga kapasitas penyimpanan tetap hemat.</span>
+          </div>
+
+          <div class="dialog-footer">
+            <button type="button" class="btn-studio-secondary" id="cancelSettingsBtn">Batal</button>
+            <button type="submit" class="btn-studio-primary" id="saveSettingsBtn">Simpan Pengaturan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Theater Video Preview Modal -->
+    <div class="modal-backdrop hidden" id="videoModal">
+      <div class="studio-dialog dialog-theater" role="dialog" aria-modal="true" aria-labelledby="modalVideoTitle">
+        <div class="dialog-header">
+          <h3 id="modalVideoTitle">Preview Short</h3>
+          <button type="button" class="btn-close-dialog" id="closeVideoModalBtn" aria-label="Tutup Preview">&times;</button>
+        </div>
+        <div class="dialog-content theater-player-body">
+          <video id="modalVideoPlayer" controls autoplay playsinline loop></video>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clip Editor & Reframe Modal -->
+    <div class="modal-backdrop hidden" id="editorModal">
+      <div class="studio-dialog dialog-editor" role="dialog" aria-modal="true" aria-labelledby="editorModalTitle">
+        <div class="dialog-header">
+          <div class="dialog-title-group">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            <div>
+              <h3 id="editorModalTitle">Editor Klip, Caption & Framing</h3>
+              <p class="dialog-subtitle">Atur detik in/out, koreksi teks hook/caption, dan pilih orientasi framing</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close-dialog" id="closeEditorBtn" aria-label="Tutup Editor">&times;</button>
+        </div>
+        <form id="editorForm" class="dialog-content editor-dialog-content">
+          <input type="hidden" id="editSessionFolder" value="">
+          <input type="hidden" id="editClipIndex" value="1">
+          <input type="hidden" id="editClipFilename" value="">
+          <input type="hidden" id="editScore" value="">
+
+          <div class="editor-layout">
+            <div class="editor-preview-column">
+              <div class="editor-source-switch" role="group" aria-label="Pilihan preview player">
+                <button type="button" class="btn-preview-mode active" id="btnPreviewSource" title="Preview video sumber asli (kontrak waktu absolut)">Video Sumber</button>
+                <button type="button" class="btn-preview-mode" id="btnPreviewClip" title="Preview klip hasil yang sudah dipotong">Klip Hasil</button>
+                <button type="button" class="btn-preview-mode" id="btnPreviewGaming" style="display: none;" title="Live Preview Layout 9:16 Gameplay + Facecam">🎮 Preview 9:16</button>
+              </div>
+              <div class="editor-video-wrapper" id="editorVideoWrapper">
+                <video id="editorVideoPlayer" controls playsinline></video>
+                <!-- Interactive Facecam Bounding Box Overlay -->
+                <div id="facecamOverlay" class="facecam-overlay hidden">
+                  <div id="facecamBoundingBox" class="facecam-box">
+                    <span class="facecam-box-label">📷 Facecam</span>
+                    <div class="facecam-handle handle-nw" data-handle="nw"></div>
+                    <div class="facecam-handle handle-ne" data-handle="ne"></div>
+                    <div class="facecam-handle handle-sw" data-handle="sw"></div>
+                    <div class="facecam-handle handle-se" data-handle="se"></div>
+                  </div>
+                </div>
+                <!-- Live Canvas Preview 9:16 -->
+                <canvas id="gamingPreviewCanvas" class="gaming-preview-canvas hidden" width="270" height="480"></canvas>
+              </div>
+              <div class="editor-playback-meta">
+                <span id="editorTimeDisplay">Durasi: 0s • Posisi: 0s</span>
+                <span id="editorModeBadge" class="editor-mode-badge badge-source">Mode: Sumber</span>
+              </div>
+
+              <!-- Toolbar Pengaturan Area Facecam -->
+              <div id="gamingFacecamToolbar" class="gaming-facecam-toolbar hidden">
+                <div class="gaming-toolbar-header">
+                  <span class="gaming-toolbar-title">🎮 Area Facecam</span>
+                  <span id="facecamCoordsDisplay" class="facecam-coords-badge">X: 74% | Y: 63% | W: 26% | H: 37%</span>
+                </div>
+                <div class="gaming-quick-presets">
+                  <button type="button" class="btn-corner-preset" data-corner="bottom_right" title="Set webcam di kanan bawah">↘️ Kanan Bawah</button>
+                  <button type="button" class="btn-corner-preset" data-corner="bottom_left" title="Set webcam di kiri bawah">↙️ Kiri Bawah</button>
+                  <button type="button" class="btn-corner-preset" data-corner="top_right" title="Set webcam di kanan atas">↗️ Kanan Atas</button>
+                  <button type="button" class="btn-corner-preset" data-corner="top_left" title="Set webcam di kiri atas">↖️ Kiri Atas</button>
+                  <button type="button" class="btn-corner-preset btn-autodetect" id="btnAutoDetectFacecam" title="Deteksi posisi webcam otomatis dari video">🤖 Deteksi Wajah</button>
+                </div>
+                <div id="facecamDetectStatus" class="facecam-detect-status hidden"></div>
+                <p class="facecam-drag-hint">💡 Klik & drag di video untuk menggambar kotak facecam baru, atau geser handle sudut.</p>
+              </div>
+            </div>
+
+            <div class="editor-controls-column">
+              <!-- Title & Hook -->
+              <div class="form-row">
+                <label for="editClipTitle">Judul Klip</label>
+                <input type="text" id="editClipTitle" class="studio-input" placeholder="Judul klip...">
+              </div>
+
+              <div class="form-row">
+                <label for="editClipHook">Teks Hook / Caption Pembuka</label>
+                <textarea id="editClipHook" class="studio-input studio-textarea" rows="2" placeholder="Hook kalimat pertama..."></textarea>
+              </div>
+
+              <!-- In / Out Time -->
+              <div class="editor-time-grid">
+                <div class="form-row">
+                  <label for="editStartTime">Detik Mulai (In)</label>
+                  <div class="time-input-wrap">
+                    <input type="number" step="0.1" min="0" id="editStartTime" class="studio-input" required>
+                    <button type="button" class="btn-time-step" id="btnSetInFromPlayer" title="Ambil waktu saat ini dari pemutar video">⏱️ In</button>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <label for="editEndTime">Detik Selesai (Out)</label>
+                  <div class="time-input-wrap">
+                    <input type="number" step="0.1" min="0" id="editEndTime" class="studio-input" required>
+                    <button type="button" class="btn-time-step" id="btnSetOutFromPlayer" title="Ambil waktu saat ini dari pemutar video">⏱️ Out</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Aspect Ratio -->
+              <div class="form-row">
+                <label for="editAspectRatio">Framing & Rasio Aspek</label>
+                <select id="editAspectRatio" class="studio-select">
+                  <option value="9:16">9:16 Vertikal (TikTok / Shorts / Reels)</option>
+                  <option value="1:1">1:1 Persegi (Feed)</option>
+                  <option value="16:9">16:9 Widescreen Landscape</option>
+                </select>
+              </div>
+
+              <!-- Framing Mode -->
+              <div class="form-row">
+                <label for="editFramingMode">Mode Framing Kamera</label>
+                <select id="editFramingMode" class="studio-select">
+                  <option value="podcast">Smart Podcast (Multi-Speaker & Anti-Jitter)</option>
+                  <option value="single">Single Speaker (Fokus 1 Wajah Dominan)</option>
+                  <option value="center">Fixed Center (Tanpa Tracking / Slide)</option>
+                  <option value="gaming">Gaming (Gameplay + Facecam 9:16)</option>
+                </select>
+              </div>
+
+              <!-- Gaming Preset in Editor -->
+              <div class="form-row" id="editGamingPresetRow" style="display: none;">
+                <label for="editGamingPreset">Preset Layout Gaming</label>
+                <select id="editGamingPreset" class="studio-select">
+                  <option value="clean_2layer_bottom_right">Clean 2-Layer (Webcam Kanan Bawah - Rekomendasi)</option>
+                  <option value="clean_2layer_bottom_left">Clean 2-Layer (Webcam Kiri Bawah)</option>
+                  <option value="clean_2layer_top_right">Clean 2-Layer (Webcam Kanan Atas)</option>
+                  <option value="clean_2layer_top_left">Clean 2-Layer (Webcam Kiri Atas)</option>
+                  <option value="discord_top_cam_bottom_right">Discord Atas + Webcam Kanan Bawah (3-Layer)</option>
+                  <option value="discord_left_cam_top_right">Discord Kiri + Webcam Kanan Atas (3-Layer)</option>
+                  <option value="custom">Custom Bounding Box</option>
+                </select>
+              </div>
+
+              <!-- Gaming Custom Box in Editor -->
+              <div class="form-row" id="editGamingCustomRow" style="display: none;">
+                <label>Koordinat Custom Box (Top / Mid / Bottom)</label>
+                <div class="gaming-custom-inputs">
+                  <input type="text" id="editGamingCustomTop" class="studio-input" placeholder="Top: x,y,w,h">
+                  <input type="text" id="editGamingCustomMid" class="studio-input" placeholder="Mid: x,y,w,h">
+                  <input type="text" id="editGamingCustomBot" class="studio-input" placeholder="Bottom: x,y,w,h">
+                </div>
+                <input type="hidden" id="editGamingBoxJson" value="">
+              </div>
+
+              <!-- Subtitle Style -->
+              <div class="form-row">
+                <label for="editSubtitleStyle">Gaya Animasi Subtitle</label>
+                <select id="editSubtitleStyle" class="studio-select">
+                  <option value="karaoke">Word-by-Word Kinetic Karaoke (Kuning-Emas)</option>
+                  <option value="kinetic">Word-by-Word Beat Pop (Lompat per Kata)</option>
+                  <option value="classic">Teks Statis Klasik (Blok Kata)</option>
+                  <option value="none">Tanpa Subtitle (Nonaktif)</option>
+                </select>
+              </div>
+
+              <!-- Subtitles toggle -->
+              <div class="form-row-checkbox">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="editBurnSubtitles" checked>
+                  <span>Burn subtitle / caption otomatis ke dalam video</span>
+                </label>
+              </div>
+
+              <div id="editorStatusMessage" class="editor-status-msg hidden"></div>
+            </div>
+          </div>
+
+          <div class="dialog-footer">
+            <button type="button" class="btn-studio-secondary" id="cancelEditorBtn">Batal</button>
+            <button type="submit" class="btn-studio-primary" id="saveRenderEditorBtn">
+              <span class="btn-text">Simpan & Render Ulang Klip</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- System Toast Container -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+  </main>
+
+  <footer class="studio-footer">
+    <div class="footer-container">
+      <p class="footer-copy">Reef Clipper &copy; 2026. Buat klip pendek dari video panjang.</p>
+    </div>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

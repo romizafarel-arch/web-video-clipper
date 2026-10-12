@@ -1,0 +1,15 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+output/
+output_val_*/
+*.mp4
+.DS_Store
+.tmp_chrome_qa*
+cloudflared.exe
+out.vtt
+scratch/*
+!scratch/run_controlled_replay_v3.py
+!scratch/run_validation_v2.py
