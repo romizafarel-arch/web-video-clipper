@@ -82,8 +82,7 @@ export const SubtitleVideoPreview: FC<SubtitleVideoPreviewProps> = ({
   const [fitMode, setFitMode] = useState<'contain' | 'cover'>('contain');
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const animFrameRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(performance.now());
+  const lastTimeRef = useRef<number>(0);
 
   const resolvedVideoUrl = sampleVideoUrl || getIllustrationVideoUrl(aspectRatio, framingMode);
 
@@ -192,15 +191,6 @@ export const SubtitleVideoPreview: FC<SubtitleVideoPreviewProps> = ({
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
   }, [isPlaying, duration, videoLoaded, hasVideoError]);
-
-  // Clean up
-  useEffect(() => {
-    return () => {
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-      }
-    };
-  }, []);
 
   // Responsive aspect ratio styling - cleanly proportioned and well-fitted
   const aspectClass =

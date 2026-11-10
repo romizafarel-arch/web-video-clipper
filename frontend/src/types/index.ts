@@ -17,7 +17,44 @@ export interface AppConfig {
   muapi_key_masked?: string;
 }
 
-export type FramingMode = 'podcast' | 'single' | 'center' | 'gaming';
+export type IdeaGoal = 'hiburan' | 'informasi' | 'promosi';
+export type IdeaTone = 'santai' | 'lucu' | 'serius' | 'meyakinkan';
+
+export interface VideoIdeaDirection {
+  title: string;
+  summary: string;
+  hook: string;
+  why: string;
+}
+
+export interface VideoIdeaScene {
+  visual: string;
+  spoken: string;
+  onscreen: string;
+}
+
+export interface VideoIdeaPlan {
+  hooks: string[];
+  scenes: VideoIdeaScene[];
+  closing: string;
+  editing_note: string;
+}
+
+export interface VideoIdeaRequest {
+  idea: string;
+  goal: IdeaGoal;
+  tone: IdeaTone;
+  duration: 15 | 30 | 45;
+}
+
+export interface VideoIdeaGuide {
+  idea: string;
+  directionTitle: string;
+  selectedHook: string;
+  plan: VideoIdeaPlan;
+}
+
+export type FramingMode = 'podcast' | 'single' | 'center' | 'gaming' | 'dual';
 export type GamingLayout = 'cam_top' | 'cam_bottom';
 export type TextPresetId =
   | 'hormozi'
@@ -73,6 +110,8 @@ export type ProcessingMode = 'local' | 'api';
 export interface HistoryShort {
   title?: string;
   hook_sentence?: string;
+  enable_sfx?: boolean;
+  remove_silence?: boolean;
   score?: number | null;
   web_url: string;
   vtt_url?: string | null;
@@ -161,6 +200,8 @@ export interface GeneratePayload {
   font_family?: string;
   font_size_scale?: SubtitleFontSizeScale;
   cookies_file?: File;
+  enable_sfx?: boolean;
+  remove_silence?: boolean;
 }
 
 export interface GeneratedShort {
@@ -265,12 +306,16 @@ export interface EditClipPayload {
   burn_subtitles?: boolean;
   title?: string;
   hook_sentence?: string;
+  enable_sfx?: boolean;
+  remove_silence?: boolean;
 }
 
 export interface EditClipResponse {
   clip: {
     title: string;
     hook_sentence?: string;
+  enable_sfx?: boolean;
+  remove_silence?: boolean;
     start_time: number;
     end_time: number;
     score?: number | null;
@@ -307,6 +352,8 @@ export interface EditableClip {
   font_family?: string;
   font_size_scale?: SubtitleFontSizeScale;
   hook_sentence?: string;
+  enable_sfx?: boolean;
+  remove_silence?: boolean;
   score?: number | null;
 }
 

@@ -90,6 +90,8 @@ def _run_local(
     font_family: Optional[str] = None,
     cookies_path: Optional[str] = None,
     gaming_layout: Optional[str] = None,
+    enable_sfx: bool = True,
+    remove_silence: bool = False,
 ) -> Dict:
     import uuid
     from datetime import datetime
@@ -183,6 +185,8 @@ def _run_local(
         gaming_custom_box=gaming_custom_box,
         font_family=font_family,
         gaming_layout=gaming_layout,
+        enable_sfx=enable_sfx,
+        remove_silence=remove_silence,
     )
 
     success_count = sum(1 for s in shorts if s.get("clip_url"))
@@ -293,6 +297,8 @@ def generate_shorts(
     font_family: Optional[str] = None,
     cookies_path: Optional[str] = None,
     gaming_layout: Optional[str] = None,
+    enable_sfx: bool = True,
+    remove_silence: bool = False,
 ) -> Dict:
     """Run the full pipeline and return a structured result.
 
@@ -345,6 +351,8 @@ def generate_shorts(
             font_family=font_family,
             cookies_path=cookies_path,
             gaming_layout=gaming_layout,
+        enable_sfx=enable_sfx,
+        remove_silence=remove_silence,
         )
     if mode == "api":
         return _run_api(youtube_url, num_clips, aspect_ratio, download_format, language, job_ctx=job_ctx)

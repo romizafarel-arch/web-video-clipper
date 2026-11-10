@@ -465,6 +465,8 @@ def create_ass_subtitle_file(
             # Facecam Atas (Windah style): webcam is at top (0..480px).
             # Gameplay is at bottom (480..1920px). Subtitle sits safely in lower gameplay area!
             margin_v = int(height * 0.16)
+    elif framing_norm in ("dual", "split"):
+        margin_v = int(height * 0.12)
     else:
         margin_v = int(height * 0.16)
 
@@ -763,12 +765,15 @@ def create_vtt_subtitle_file(
         return False
 
     is_gaming = (framing_mode or "").strip().lower() == "gaming"
+    is_dual = (framing_mode or "").strip().lower() in ("dual", "split")
     if is_gaming:
         resolved_layout = get_gaming_layout(
             preset_name=gaming_preset or "auto",
             requested_layout=gaming_layout,
         )
         pos_tag = " line:72%" if resolved_layout == "cam_bottom" else " line:84%"
+    elif is_dual:
+        pos_tag = " line:84%"
     else:
         pos_tag = ""
 
@@ -1568,7 +1573,7 @@ def detect_facecam_candidate(
     4. If confidence is low, does not falsely claim detection; returns low confidence and safe default.
     5. Returns normalized coordinates (x, y, w, h in 0.0..1.0).
     """
-    default_box = {"x": 0.74, "y": 0.63, "w": 0.26, "h": 0.37}
+    default_box = {"x": 0.53, "y": 0.61, "w": 0.47, "h": 0.37}
     try:
         import cv2  # type: ignore
     except ImportError:
@@ -1624,10 +1629,10 @@ def detect_facecam_candidate(
     # Corner search definitions (relative to frame dimensions 0.0 - 1.0)
     # Streamer facecams almost exclusively occupy one of the 4 screen corners:
     corners = {
-        "bottom_right": {"x": 0.65, "y": 0.55, "w": 0.35, "h": 0.45},
-        "bottom_left":  {"x": 0.00, "y": 0.55, "w": 0.35, "h": 0.45},
-        "top_right":    {"x": 0.65, "y": 0.00, "w": 0.35, "h": 0.45},
-        "top_left":     {"x": 0.00, "y": 0.00, "w": 0.35, "h": 0.45},
+        "bottom_right": {"x": 0.50, "y": 0.50, "w": 0.50, "h": 0.50},
+        "bottom_left":  {"x": 0.00, "y": 0.50, "w": 0.50, "h": 0.50},
+        "top_right":    {"x": 0.50, "y": 0.00, "w": 0.50, "h": 0.50},
+        "top_left":     {"x": 0.00, "y": 0.00, "w": 0.50, "h": 0.50},
     }
 
     corner_hits = {c: [] for c in corners}
@@ -1689,13 +1694,27 @@ def detect_facecam_candidate(
                     fx, fy, fw_f, fh_f = best_f
                     global_fx = cx0 + fx
                     global_fy = cy0 + fy
-                    # Estimate webcam bounding box around streamer face with padding
-                    cam_w = int(fw_f * 1.55)
-                    cam_h = int(fh_f * 1.70)
-                    cam_x = max(0, global_fx - int(fw_f * 0.28))
-                    cam_y = max(0, global_fy - int(fh_f * 0.35))
-                    cam_w = min(fw - cam_x, cam_w)
-                    cam_h = min(fh - cam_y, cam_h)
+                    face_cx = global_fx + fw_f // 2
+                    face_cy = global_fy + fh_f // 2
+
+                    # Target 9:4 (2.25:1) aspect ratio for 1080x480 facecam canvas
+                    target_ar = 1080.0 / float(FACECAM_2L_HEIGHT)  # 2.25
+                    cam_h = max(int(fh_f * 2.8), int(fh * 0.35), 320)
+                    cam_h = min(fh, cam_h)
+                    cam_w = int(round(cam_h * target_ar))
+                    if cam_w > fw:
+                        cam_w = fw
+                        cam_h = int(round(cam_w / target_ar))
+
+                    cam_x = int(face_cx - cam_w // 2)
+                    cam_y = int(face_cy - cam_h * 0.38)
+
+                    cam_x = max(0, min(fw - cam_w, cam_x))
+                    cam_y = max(0, min(fh - cam_h, cam_y))
+                    cam_w = max(2, cam_w - (cam_w % 2))
+                    cam_h = max(2, cam_h - (cam_h % 2))
+                    cam_x = max(0, cam_x - (cam_x % 2))
+                    cam_y = max(0, cam_y - (cam_y % 2))
 
                     corner_hits[c_name].append({
                         "x": cam_x, "y": cam_y, "w": cam_w, "h": cam_h,
@@ -1753,10 +1772,10 @@ def detect_facecam_candidate(
         }
     else:
         preset_corner_boxes = {
-            "bottom_right": {"x": 0.74, "y": 0.63, "w": 0.26, "h": 0.37},
-            "bottom_left": {"x": 0.0, "y": 0.63, "w": 0.26, "h": 0.37},
-            "top_right": {"x": 0.74, "y": 0.0, "w": 0.26, "h": 0.37},
-            "top_left": {"x": 0.0, "y": 0.0, "w": 0.26, "h": 0.37},
+            "bottom_right": {"x": 0.53, "y": 0.61, "w": 0.47, "h": 0.37},
+            "bottom_left":  {"x": 0.00, "y": 0.61, "w": 0.47, "h": 0.37},
+            "top_right":    {"x": 0.53, "y": 0.00, "w": 0.47, "h": 0.37},
+            "top_left":     {"x": 0.00, "y": 0.00, "w": 0.47, "h": 0.37},
         }
         suggested_box = preset_corner_boxes.get(best_corner, default_box)
         return {
@@ -1896,6 +1915,164 @@ def _reframe_gaming_stack(
     t_dur = time.perf_counter() - t_start
     log_job_message(
         f"[clip/local] Gaming short rendered ({layout_name}): {CANVAS_WIDTH}x{CANVAS_HEIGHT} (timing: {t_dur:.2f}s, preset: {preset})",
+        job_ctx=job_ctx,
+    )
+    return out_path
+
+
+def _reframe_dual_split(
+    in_path: str,
+    out_path: str,
+    ass_path: Optional[str] = None,
+    job_ctx: Optional[Any] = None,
+) -> str:
+    """Render dual-speaker / split-screen vertical short (1080x1920).
+    Scene with 2 people or 2 sections:
+    - Top panel (1080x960): Centered on Person 1 (Host / Left speaker)
+    - Bottom panel (1080x960): Centered on Person 2 (Guest / Right speaker)
+    Stacked vertically with zero distortion and burned-in subtitles.
+    """
+    src_w, src_h = 1920, 1080
+    try:
+        cmd_probe = [
+            "ffprobe", "-v", "error",
+            "-select_streams", "v:0",
+            "-show_entries", "stream=width,height",
+            "-of", "csv=p=0",
+            in_path,
+        ]
+        res = subprocess.run(cmd_probe, capture_output=True, text=True, check=True)
+        parts = res.stdout.strip().split(",")
+        if len(parts) == 2:
+            src_w, src_h = int(parts[0]), int(parts[1])
+    except Exception as e:
+        log_job_message(f"[clip/local] Warning: ffprobe resolution fallback ({e})", job_ctx=job_ctx)
+
+    try:
+        import cv2  # type: ignore
+    except ImportError as e:
+        raise RuntimeError("OpenCV diperlukan untuk mode dual split.") from e
+
+    cap = cv2.VideoCapture(in_path)
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+    detected_faces_list: List[Tuple[int, int, int, int]] = []
+
+    try:
+        sample_fractions = [0.15, 0.30, 0.50, 0.70, 0.85]
+        sample_indices = [max(0, min(total_frames - 1, int(total_frames * p))) for p in sample_fractions]
+        if not sample_indices:
+            sample_indices = [0]
+
+        for s_idx in sample_indices:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, s_idx)
+            ret, frame = cap.read()
+            if not ret or frame is None:
+                continue
+            fh, fw = frame.shape[:2]
+            f_faces = _detect_faces_with_yunet(frame, fw, fh)
+            if not f_faces:
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+                if os.path.exists(cascade_path):
+                    fc = cv2.CascadeClassifier(cascade_path)
+                    if not fc.empty():
+                        h_faces = fc.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=4, minSize=(30, 30))
+                        f_faces = [(int(x), int(y), int(w), int(h)) for (x, y, w, h) in h_faces]
+            for f in f_faces:
+                detected_faces_list.append(f)
+    except Exception as e:
+        log_job_message(f"[clip/local] Note: Face sampling in dual split encountered {e}", job_ctx=job_ctx)
+    finally:
+        cap.release()
+
+    target_ar = 1080.0 / 960.0  # 1.125 (9:8)
+
+    def _calc_panel_crop(cx: int, cy: int, fh_f: int) -> Tuple[int, int, int, int]:
+        panel_h = min(src_h, max(int(fh_f * 2.8), int(src_h * 0.75)))
+        panel_w = int(round(panel_h * target_ar))
+        if panel_w > src_w:
+            panel_w = src_w
+            panel_h = int(round(panel_w / target_ar))
+        x = max(0, min(src_w - panel_w, int(cx - panel_w // 2)))
+        y = max(0, min(src_h - panel_h, int(cy - panel_h * 0.38)))
+        panel_w = max(2, panel_w - (panel_w % 2))
+        panel_h = max(2, panel_h - (panel_h % 2))
+        x = max(0, x - (x % 2))
+        y = max(0, y - (y % 2))
+        return x, y, panel_w, panel_h
+
+    left_faces = [f for f in detected_faces_list if (f[0] + f[2] // 2) < src_w * 0.52]
+    right_faces = [f for f in detected_faces_list if (f[0] + f[2] // 2) >= src_w * 0.48]
+
+    if left_faces and right_faces:
+        avg_left_cx = int(sum(f[0] + f[2] // 2 for f in left_faces) / len(left_faces))
+        avg_left_cy = int(sum(f[1] + f[3] // 2 for f in left_faces) / len(left_faces))
+        avg_left_h = int(sum(f[3] for f in left_faces) / len(left_faces))
+
+        avg_right_cx = int(sum(f[0] + f[2] // 2 for f in right_faces) / len(right_faces))
+        avg_right_cy = int(sum(f[1] + f[3] // 2 for f in right_faces) / len(right_faces))
+        avg_right_h = int(sum(f[3] for f in right_faces) / len(right_faces))
+
+        top_crop = _calc_panel_crop(avg_left_cx, avg_left_cy, avg_left_h)
+        bot_crop = _calc_panel_crop(avg_right_cx, avg_right_cy, avg_right_h)
+        desc = "Dual Speaker (Host Kiri Atas + Tamu Kanan Bawah)"
+    elif len(detected_faces_list) >= 2:
+        detected_faces_list.sort(key=lambda f: f[0])
+        f1 = detected_faces_list[0]
+        f2 = detected_faces_list[-1]
+        top_crop = _calc_panel_crop(f1[0] + f1[2] // 2, f1[1] + f1[3] // 2, f1[3])
+        bot_crop = _calc_panel_crop(f2[0] + f2[2] // 2, f2[1] + f2[3] // 2, f2[3])
+        desc = "Dual Wajah (Orang 1 Atas + Orang 2 Bawah)"
+    elif len(detected_faces_list) == 1:
+        f1 = detected_faces_list[0]
+        top_crop = _calc_panel_crop(f1[0] + f1[2] // 2, f1[1] + f1[3] // 2, f1[3])
+        bot_crop = _calc_panel_crop(src_w // 2, src_h // 2, f1[3])
+        desc = "Dual Wajah (Pembicara Atas + Scene Utama Bawah)"
+    else:
+        top_crop = _calc_panel_crop(int(src_w * 0.30), src_h // 2, int(src_h * 0.3))
+        bot_crop = _calc_panel_crop(int(src_w * 0.70), src_h // 2, int(src_h * 0.3))
+        desc = "Dual Wajah (Split Kiri-Kanan ke Atas-Bawah)"
+
+    tx, ty, tw, th = top_crop
+    bx, by, bw, bh = bot_crop
+
+    PANEL_HEIGHT = 960
+    filters = [
+        "[0:v]split=2[raw_top][raw_bot]",
+        f"[raw_top]crop={tw}:{th}:{tx}:{ty},scale={CANVAS_WIDTH}:{PANEL_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{PANEL_HEIGHT}:(in_w-out_w)/2:max(0\\,(in_h-out_h)*0.15)[v_top]",
+        f"[raw_bot]crop={bw}:{bh}:{bx}:{by},scale={CANVAS_WIDTH}:{PANEL_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{PANEL_HEIGHT}:(in_w-out_w)/2:max(0\\,(in_h-out_h)*0.15)[v_bot]",
+        "[v_top][v_bot]vstack=inputs=2[v_stacked]",
+    ]
+
+    if ass_path and os.path.exists(ass_path):
+        escaped_ass = os.path.abspath(ass_path).replace("\\", "/").replace(":", "\\:")
+        if os.path.isdir(FONTS_DIR):
+            escaped_fontsdir = FONTS_DIR.replace("\\", "/").replace(":", "\\:")
+            filters.append(f"[v_stacked]ass=filename='{escaped_ass}':fontsdir='{escaped_fontsdir}'[v_out]")
+        else:
+            filters.append(f"[v_stacked]ass=filename='{escaped_ass}'[v_out]")
+    else:
+        filters.append("[v_stacked]null[v_out]")
+
+    filter_complex = ";".join(filters)
+
+    cmd = [
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-i", in_path,
+        "-filter_complex", filter_complex,
+        "-map", "[v_out]", "-map", "0:a:0?",
+        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "veryfast", "-crf", "20",
+        "-threads", "0",
+        "-c:a", "aac", "-b:a", "128k",
+        "-movflags", "+faststart",
+        "-shortest",
+        out_path,
+    ]
+    t_start = time.perf_counter()
+    _run_ffmpeg_cmd(cmd, job_ctx=job_ctx)
+    t_dur = time.perf_counter() - t_start
+    log_job_message(
+        f"[clip/local] Dual-wajah short rendered ({desc}): {CANVAS_WIDTH}x{CANVAS_HEIGHT} (timing: {t_dur:.2f}s)",
         job_ctx=job_ctx,
     )
     return out_path
@@ -2095,7 +2272,8 @@ def _reframe_vertical(
     gaming_layout: Optional[str] = None,
 ) -> str:
     """Crop cut clip to target aspect ratio (tracking faces) and burn subtitles with native single-pass FFmpeg."""
-    if (framing_mode or "").strip().lower() == "gaming":
+    framing_norm = (framing_mode or "podcast").strip().lower()
+    if framing_norm == "gaming":
         return _reframe_gaming_stack(
             in_path=in_path,
             out_path=out_path,
@@ -2104,6 +2282,13 @@ def _reframe_vertical(
             custom_box=gaming_custom_box,
             job_ctx=job_ctx,
             gaming_layout=gaming_layout,
+        )
+    if framing_norm in ("dual", "split"):
+        return _reframe_dual_split(
+            in_path=in_path,
+            out_path=out_path,
+            ass_path=ass_path,
+            job_ctx=job_ctx,
         )
 
     try:
@@ -2467,6 +2652,8 @@ def crop_clip_local(
     gaming_custom_box: Optional[Dict] = None,
     font_family: Optional[str] = None,
     gaming_layout: Optional[str] = None,
+    enable_sfx: bool = True,
+    remove_silence: bool = False,
 ) -> str:
     """Cut + reframe one highlight + burn subtitles, returning local mp4 path."""
     t_start = time.perf_counter()
@@ -2479,6 +2666,7 @@ def crop_clip_local(
         eff_source_dur = _probe_media_duration(source_path)
 
     has_subs = False
+    cues: Optional[List[Dict]] = None
     t_sub = 0.0
     t_cut = 0.0
     t_reframe = 0.0
@@ -2488,6 +2676,19 @@ def crop_clip_local(
         t_cut_start = time.perf_counter()
         _cut_subclip(source_path, start_time, end_time, cut_path, job_ctx=job_ctx)
         t_cut = time.perf_counter() - t_cut_start
+
+        if remove_silence and os.path.exists(cut_path):
+            from ..silence_cutter import trim_silence_from_video
+            tight_cut_path = cut_path + ".tight.mp4"
+            effective_cut, trimmed = trim_silence_from_video(
+                cut_path, tight_cut_path, min_silence_duration=0.45, job_ctx=job_ctx
+            )
+            if trimmed and os.path.exists(effective_cut):
+                try:
+                    os.replace(effective_cut, cut_path)
+                    eff_source_dur = _probe_media_duration(cut_path)
+                except Exception:
+                    pass
 
         if segments:
             t_sub_start = time.perf_counter()
@@ -2548,7 +2749,7 @@ def crop_clip_local(
                     gaming_layout=gaming_layout,
                 )
                 if effective_burn:
-                    if (framing_mode or "").strip().lower() == "gaming":
+                    if (framing_mode or "").strip().lower() in ("gaming", "dual", "split"):
                         res_w, res_h = (CANVAS_WIDTH, CANVAS_HEIGHT)
                     else:
                         target_ratio = _ratio(aspect_ratio)
@@ -2582,6 +2783,20 @@ def crop_clip_local(
             gaming_layout=gaming_layout,
         )
         t_reframe = time.perf_counter() - t_ref_start
+
+        if enable_sfx and cues and os.path.exists(out_path):
+            from ..sfx_manager import detect_sfx_events, apply_sfx_to_video
+            sfx_events = detect_sfx_events(cues)
+            if sfx_events:
+                sfx_tmp_out = out_path + ".sfx.mp4"
+                res_path = apply_sfx_to_video(
+                    out_path, sfx_tmp_out, sfx_events, sfx_volume=0.35, job_ctx=job_ctx
+                )
+                if res_path == sfx_tmp_out and os.path.exists(sfx_tmp_out):
+                    try:
+                        os.replace(sfx_tmp_out, out_path)
+                    except Exception:
+                        pass
     finally:
         for tmp_file in [cut_path, ass_path]:
             if os.path.exists(tmp_file):
@@ -2613,6 +2828,8 @@ def crop_highlights_local(
     gaming_custom_box: Optional[Dict] = None,
     font_family: Optional[str] = None,
     gaming_layout: Optional[str] = None,
+    enable_sfx: bool = True,
+    remove_silence: bool = False,
 ) -> List[Dict]:
     """Crop every highlight, burn subtitles, and return list with clip_url."""
     if out_dir is None:
@@ -2663,6 +2880,8 @@ def crop_highlights_local(
                 gaming_custom_box=gaming_custom_box,
                 font_family=font_family,
                 gaming_layout=gaming_layout,
+                enable_sfx=enable_sfx,
+                remove_silence=remove_silence,
             )
             vtt_url = vtt_path if os.path.exists(vtt_path) else None
             clip_record = {

@@ -658,6 +658,7 @@ export const ClipEditorModal: FC<ClipEditorModalProps> = ({
                       className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:border-violet-500 focus:outline-none"
                     >
                       <option value="podcast">Podcast (Face Tracking Multi-speaker)</option>
+                      <option value="dual">Dual Wajah (Split 2 Bagian Atas-Bawah)</option>
                       <option value="single">Single Speaker (Fokus 1 Wajah)</option>
                       <option value="center">Center Crop (Tanpa Deteksi)</option>
                       <option value="gaming">Gaming (2-Layer Clean / Webcam)</option>

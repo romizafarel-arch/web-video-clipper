@@ -29,7 +29,7 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 import shorts_generator.config as cfg
-from shorts_generator import cleanup_source_video, generate_shorts
+from shorts_generator import cleanup_source_video, generate_shorts, report_error_to_reef_flow
 from shorts_generator.job_manager import (
     JobConflictError,
     JobCancelledException,
@@ -39,6 +39,8 @@ from shorts_generator.job_manager import (
     job_manager,
     mask_sensitive_keys,
 )
+from shorts_generator.idea_planner import generate_directions, generate_plan
+from shorts_generator.local.llm import call_local_llm, call_openai_llm
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
@@ -491,6 +493,8 @@ def run_generation_job(job_id: str, params: Dict[str, Any]):
                 auto_delete_source_video=params.get("auto_delete_source_video"),
                 font_family=params.get("font_family"),
                 cookies_path=params.get("cookies_path"),
+                enable_sfx=bool(params.get("enable_sfx", True)),
+                remove_silence=bool(params.get("remove_silence", False)),
             )
 
             # Normalize clip paths to web-accessible URLs
@@ -530,11 +534,21 @@ def run_generation_job(job_id: str, params: Dict[str, Any]):
             if not shorts or len(shorts) == 0:
                 err_text = "Tidak ada klip video yang berhasil dibuat oleh AI."
                 job_ctx.transition_to(JobStatus.FAILED, stage="failed", progress=100, error=err_text, result=result)
+                report_error_to_reef_flow(
+                    title=f"[Worker Gagal] AI tidak menghasilkan klip (Job {job_id})",
+                    description=f"Job ID: {job_id}\nURL: {params.get('url')}\nError: {err_text}",
+                    priority="HIGH",
+                )
             elif len(valid_shorts) == 0:
                 errors = [s.get("error") for s in failed_shorts if s.get("error")]
                 error_msg = "; ".join(errors[:2]) if errors else "Semua proses pemotongan klip video gagal."
                 err_text = f"Render gagal total: {error_msg}"
                 job_ctx.transition_to(JobStatus.FAILED, stage="failed", progress=100, error=err_text, result=result)
+                report_error_to_reef_flow(
+                    title=f"[Worker Gagal] Render gagal total (Job {job_id})",
+                    description=f"Job ID: {job_id}\nURL: {params.get('url')}\nDetail: {err_text}",
+                    priority="URGENT",
+                )
             elif len(failed_shorts) > 0:
                 job_ctx.transition_to(JobStatus.PARTIAL, stage="partial", progress=100, error="Sebagian klip gagal dirender.", result=result)
             else:
@@ -643,6 +657,12 @@ def run_generation_job(job_id: str, params: Dict[str, Any]):
                 result=result,
             )
             job_ctx.emit_log(f"[ERROR] Generation failed: {e}")
+            import traceback
+            report_error_to_reef_flow(
+                title=f"[Worker Error] Job {job_id}: {str(e)[:80]}",
+                description=f"Job ID: {job_id}\nURL: {params.get('url')}\nError: {e}\n\nStack Trace:\n{traceback.format_exc()}",
+                priority="URGENT",
+            )
 
         finally:
             # Purge temporary cookies file to prevent credential leaks
@@ -1400,6 +1420,96 @@ def update_config():
     return jsonify({"success": True, "message": "Pengaturan & pilihan model berhasil disimpan!"})
 
 
+def _idea_request_data():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return None, (jsonify({"error": "Isi permintaan tidak terbaca."}), 400)
+
+    idea = data.get("idea")
+    goal = data.get("goal", "informasi")
+    tone = data.get("tone", "santai")
+    duration = data.get("duration", 30)
+    if not isinstance(idea, str) or not idea.strip() or len(idea.strip()) > 1000:
+        return None, (jsonify({"error": "Tulis ide maksimal 1.000 karakter."}), 400)
+    if goal not in ("hiburan", "informasi", "promosi"):
+        return None, (jsonify({"error": "Pilih tujuan video yang tersedia."}), 400)
+    if tone not in ("santai", "lucu", "serius", "meyakinkan"):
+        return None, (jsonify({"error": "Pilih gaya bicara yang tersedia."}), 400)
+    if duration not in (15, 30, 45):
+        return None, (jsonify({"error": "Durasi harus 15, 30, atau 45 detik."}), 400)
+    return {"idea": idea.strip(), "goal": goal, "tone": tone, "duration": duration}, None
+
+
+def _idea_llm_call():
+    """Use the configured model when available; fall back only for this idea request."""
+    provider = str(cfg.LLM_PROVIDER or "gemini").strip().lower()
+    if provider != "openai":
+        return call_local_llm, None
+
+    model_response = get_openai_models()
+    if model_response.get("success") is not True:
+        return call_local_llm, None
+    available = model_response.get("models", [])
+    model_ids = [item.get("id") for item in available if isinstance(item, dict) and item.get("id")]
+    configured_model = str(cfg.OPENAI_MODEL or "").strip()
+    if not model_ids or configured_model in model_ids:
+        return call_local_llm, None
+
+    fallback_model = model_ids[0]
+    notice = f"Model {configured_model or 'aktif'} tidak tersedia; untuk ide ini dipakai {fallback_model}."
+    app.logger.warning(notice)
+    return lambda prompt: call_openai_llm(prompt, model=fallback_model), notice
+
+
+def _idea_error_response(exc: Exception, task: str):
+    detail = str(exc).lower()
+    if "api_key" in detail and ("not set" in detail or "belum disetel" in detail):
+        return jsonify({"error": "Sambungkan AI dulu lewat Pengaturan sebelum membuat panduan."}), 503
+    if "model_not_found" in detail or "unknown model" in detail:
+        return jsonify({"error": "Model AI yang dipilih tidak tersedia. Buka Pengaturan dan pilih model yang tersedia."}), 502
+    if "connection error" in detail or "connecterror" in detail:
+        return jsonify({"error": "Tidak bisa terhubung ke layanan AI. Periksa koneksi atau alamat AI di Pengaturan."}), 502
+    app.logger.exception("Idea %s generation failed", task)
+    label = "Arah cerita" if task == "direction" else "Panduan video"
+    return jsonify({"error": f"{label} belum berhasil dibuat. Coba lagi sebentar."}), 502
+
+
+@app.route("/api/ideas/directions", methods=["POST"])
+def api_idea_directions():
+    data, error = _idea_request_data()
+    if error:
+        return error
+    try:
+        llm_call, notice = _idea_llm_call()
+        result = generate_directions(llm_call, **data)
+        if notice:
+            result["notice"] = notice
+        return jsonify(result)
+    except Exception as exc:
+        return _idea_error_response(exc, "direction")
+
+
+@app.route("/api/ideas/plan", methods=["POST"])
+def api_idea_plan():
+    data, error = _idea_request_data()
+    if error:
+        return error
+    direction = request.get_json(silent=True).get("direction")
+    if not isinstance(direction, dict) or any(
+        not isinstance(direction.get(key), str) or not direction[key].strip()
+        for key in ("title", "summary", "hook", "why")
+    ):
+        return jsonify({"error": "Pilih salah satu arah cerita terlebih dahulu."}), 400
+    try:
+        llm_call, notice = _idea_llm_call()
+        result = generate_plan(llm_call, direction=direction, **data)
+        if notice:
+            result["notice"] = notice
+        return jsonify(result)
+    except Exception as exc:
+        return _idea_error_response(exc, "plan")
+
+
 @app.route("/api/generate", methods=["POST"])
 def api_generate():
     """Trigger shorts generation in the background with strict input validation and config snapshotting."""
@@ -1462,7 +1572,7 @@ def api_generate():
     if not isinstance(raw_framing, str):
         return jsonify({"error": "Mode framing harus berupa teks."}), 400
     framing_mode = raw_framing.strip().lower()
-    if framing_mode not in ("podcast", "single", "center", "gaming"):
+    if framing_mode not in ("podcast", "single", "center", "gaming", "dual"):
         framing_mode = "podcast"
 
     raw_preset = data.get("gaming_preset", "auto")
@@ -1606,6 +1716,8 @@ def api_generate():
             "config": config_snapshot,
             "auto_delete_source_video": auto_delete_source_video,
             "cookies_path": cookies_temp_path,
+            "enable_sfx": bool(data.get("enable_sfx", True)),
+            "remove_silence": bool(data.get("remove_silence", False)),
         }
         job_ctx = job_manager.admit_job(
             job_id=job_id,
@@ -2244,7 +2356,7 @@ def api_edit_clip():
         aspect_ratio = "9:16"
 
     raw_framing = data.get("framing_mode", "podcast")
-    if not isinstance(raw_framing, str) or raw_framing.strip().lower() not in ("podcast", "single", "center", "gaming"):
+    if not isinstance(raw_framing, str) or raw_framing.strip().lower() not in ("podcast", "single", "center", "gaming", "dual"):
         framing_mode = "podcast"
     else:
         framing_mode = raw_framing.strip().lower()
@@ -2374,6 +2486,8 @@ def api_edit_clip():
             gaming_preset=gaming_preset,
             gaming_custom_box=gaming_custom_box,
             gaming_layout=gaming_layout,
+            enable_sfx=bool(data.get("enable_sfx", True)),
+            remove_silence=bool(data.get("remove_silence", False)),
         )
 
         # 5. Staging Verification (Finding A-05): Check decodable media and duration match
@@ -2552,6 +2666,12 @@ def api_edit_clip():
         return jsonify({"success": True, "clip": updated_clip})
 
     except Exception as e:
+        import traceback
+        report_error_to_reef_flow(
+            title=f"[Editor Error] Gagal merender klip #{clip_index}",
+            description=f"Folder: {session_folder}\nClip Index: {clip_index}\nError: {e}\n\nStack Trace:\n{traceback.format_exc()}",
+            priority="HIGH",
+        )
         # Cleanup temporary files on failure
         if staged_out_path.exists():
             try:
@@ -2581,6 +2701,44 @@ def api_edit_clip():
             clip_lock.release()
         finally:
             session_gate.unregister_editor_done(session_folder, clip_index)
+
+
+@app.route("/api/report-error", methods=["POST"])
+def api_report_error():
+    """Client error reporting proxy to Reef Flow (avoids exposing API keys in frontend)."""
+    data = request.get_json(silent=True) or {}
+    title = str(data.get("title") or "Client Error").strip()
+    description = str(data.get("description") or "").strip()
+    priority = str(data.get("priority") or "HIGH").strip().upper()
+    status = str(data.get("status") or "TODO").strip().upper()
+    report_error_to_reef_flow(title=title, description=description, priority=priority, status=status)
+    return jsonify({"status": "reported"}), 200
+
+
+@app.errorhandler(500)
+def internal_server_error_handler(e):
+    import traceback
+    report_error_to_reef_flow(
+        title=f"[Unhandled 500] {request.method} {request.path}",
+        description=f"Path: {request.path}\nMethod: {request.method}\nError: {e}\n\nStack Trace:\n{traceback.format_exc()}",
+        priority="URGENT",
+    )
+    return jsonify({"error": "Terjadi kesalahan internal server."}), 500
+
+
+@app.errorhandler(Exception)
+def unhandled_exception_handler(e):
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        if e.code and e.code < 500:
+            return e
+    import traceback
+    report_error_to_reef_flow(
+        title=f"[Unhandled Exception] {request.method} {request.path}: {str(e)[:60]}",
+        description=f"Path: {request.path}\nMethod: {request.method}\nError: {e}\n\nStack Trace:\n{traceback.format_exc()}",
+        priority="URGENT",
+    )
+    return jsonify({"error": f"Internal server error: {e}"}), 500
 
 
 if __name__ == "__main__":

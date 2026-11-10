@@ -58,6 +58,14 @@ def main() -> int:
             auto_delete_source_video=auto_delete,
         )
     except Exception as e:
+        import traceback
+        from shorts_generator import report_error_to_reef_flow
+        report_error_to_reef_flow(
+            title=f"[CLI Pipeline Error] {str(e)[:80]}",
+            description=f"URL: {args.url}\nError: {e}\n\nStack Trace:\n{traceback.format_exc()}",
+            priority="URGENT",
+            async_mode=False,
+        )
         print(f"\nFAILED: {e}", file=sys.stderr)
         return 1
 

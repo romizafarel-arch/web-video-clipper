@@ -38,7 +38,7 @@ GAMING_PRESETS: Dict[str, Dict[str, Any]] = {
         "layout": "cam_top",
         "top": None,
         "mid": {"x": 240, "y": 0, "w": 1440, "h": 1080},
-        "bottom": {"x": 1420, "y": 680, "w": 500, "h": 400},
+        "bottom": {"x": 1020, "y": 660, "w": 900, "h": 400},
     },
     "auto_detect": {
         "name": "Auto-Detect Facecam (AI)",
@@ -46,7 +46,7 @@ GAMING_PRESETS: Dict[str, Dict[str, Any]] = {
         "layout": "cam_top",
         "top": None,
         "mid": {"x": 240, "y": 0, "w": 1440, "h": 1080},
-        "bottom": {"x": 1420, "y": 680, "w": 500, "h": 400},
+        "bottom": {"x": 1020, "y": 660, "w": 900, "h": 400},
     },
     "clean_2layer": {
         "name": "Clean 2-Layer (Facecam Atas + Gameplay Bawah)",
@@ -54,7 +54,7 @@ GAMING_PRESETS: Dict[str, Dict[str, Any]] = {
         "layout": "cam_top",
         "top": None,
         "mid": {"x": 240, "y": 0, "w": 1440, "h": 1080},
-        "bottom": {"x": 1420, "y": 680, "w": 500, "h": 400},
+        "bottom": {"x": 1020, "y": 660, "w": 900, "h": 400},
     },
     "clean_2layer_cam_top": {
         "name": "Clean 2-Layer (Facecam Atas + Gameplay Bawah)",
@@ -62,7 +62,7 @@ GAMING_PRESETS: Dict[str, Dict[str, Any]] = {
         "layout": "cam_top",
         "top": None,
         "mid": {"x": 240, "y": 0, "w": 1440, "h": 1080},
-        "bottom": {"x": 1420, "y": 680, "w": 500, "h": 400},
+        "bottom": {"x": 1020, "y": 660, "w": 900, "h": 400},
     },
     "clean_2layer_cam_bottom": {
         "name": "Clean 2-Layer (Gameplay Atas + Facecam Bawah)",
@@ -70,7 +70,7 @@ GAMING_PRESETS: Dict[str, Dict[str, Any]] = {
         "layout": "cam_bottom",
         "top": None,
         "mid": {"x": 240, "y": 0, "w": 1440, "h": 1080},
-        "bottom": {"x": 1420, "y": 680, "w": 500, "h": 400},
+        "bottom": {"x": 1020, "y": 660, "w": 900, "h": 400},
     },
     "clean_2layer_bottom_right": {
         "name": "Clean 2-Layer (Webcam Kanan Bawah)",
@@ -78,7 +78,7 @@ GAMING_PRESETS: Dict[str, Dict[str, Any]] = {
         "layout": "cam_top",
         "top": None,
         "mid": {"x": 240, "y": 0, "w": 1440, "h": 1080},
-        "bottom": {"x": 1420, "y": 680, "w": 500, "h": 400},
+        "bottom": {"x": 1020, "y": 660, "w": 900, "h": 400},
     },
     "clean_2layer_bottom_left": {
         "name": "Clean 2-Layer (Webcam Kiri Bawah)",
@@ -86,7 +86,7 @@ GAMING_PRESETS: Dict[str, Dict[str, Any]] = {
         "layout": "cam_top",
         "top": None,
         "mid": {"x": 240, "y": 0, "w": 1440, "h": 1080},
-        "bottom": {"x": 0, "y": 680, "w": 500, "h": 400},
+        "bottom": {"x": 0, "y": 660, "w": 900, "h": 400},
     },
     "clean_2layer_top_right": {
         "name": "Clean 2-Layer (Webcam Kanan Atas)",
@@ -94,7 +94,7 @@ GAMING_PRESETS: Dict[str, Dict[str, Any]] = {
         "layout": "cam_top",
         "top": None,
         "mid": {"x": 240, "y": 0, "w": 1440, "h": 1080},
-        "bottom": {"x": 1420, "y": 0, "w": 500, "h": 400},
+        "bottom": {"x": 1020, "y": 0, "w": 900, "h": 400},
     },
     "clean_2layer_top_left": {
         "name": "Clean 2-Layer (Webcam Kiri Atas)",
@@ -102,7 +102,7 @@ GAMING_PRESETS: Dict[str, Dict[str, Any]] = {
         "layout": "cam_top",
         "top": None,
         "mid": {"x": 240, "y": 0, "w": 1440, "h": 1080},
-        "bottom": {"x": 0, "y": 0, "w": 500, "h": 400},
+        "bottom": {"x": 0, "y": 0, "w": 900, "h": 400},
     },
     "discord_top_cam_bottom_right": {
         "name": "Discord Atas + Webcam Kanan Bawah (3-Layer)",
@@ -110,7 +110,7 @@ GAMING_PRESETS: Dict[str, Dict[str, Any]] = {
         "layout": "3layer",
         "top": {"x": 0, "y": 0, "w": 1920, "h": 260},
         "mid": {"x": 260, "y": 60, "w": 1400, "h": 960},
-        "bottom": {"x": 1420, "y": 680, "w": 500, "h": 400},
+        "bottom": {"x": 1020, "y": 660, "w": 900, "h": 400},
     },
     "discord_left_cam_top_right": {
         "name": "Discord Kiri + Webcam Kanan Atas (3-Layer)",
@@ -118,7 +118,7 @@ GAMING_PRESETS: Dict[str, Dict[str, Any]] = {
         "layout": "3layer",
         "top": {"x": 0, "y": 0, "w": 520, "h": 720},
         "mid": {"x": 240, "y": 80, "w": 1440, "h": 960},
-        "bottom": {"x": 1420, "y": 0, "w": 500, "h": 380},
+        "bottom": {"x": 1020, "y": 0, "w": 900, "h": 400},
     },
     "custom": {
         "name": "Custom Bounding Box",
@@ -257,7 +257,7 @@ def build_gaming_filter_complex(
             filters = [
                 "[0:v]split=2[raw_mid][raw_bot]",
                 f"[raw_mid]crop={mw}:{mh}:{mx}:{my},scale={CANVAS_WIDTH}:{GAMEPLAY_2L_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{GAMEPLAY_2L_HEIGHT}[v_mid]",
-                f"[raw_bot]crop={bw}:{bh}:{bx}:{by},scale={CANVAS_WIDTH}:{BOTTOM_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{BOTTOM_HEIGHT}[v_bot]",
+                f"[raw_bot]crop={bw}:{bh}:{bx}:{by},scale={CANVAS_WIDTH}:{BOTTOM_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{BOTTOM_HEIGHT}:(in_w-out_w)/2:max(0\\,(in_h-out_h)*0.15)[v_bot]",
                 "[v_mid][v_bot]vstack=inputs=2[v_stacked]",
             ]
         else:
@@ -265,7 +265,7 @@ def build_gaming_filter_complex(
             filters = [
                 "[0:v]split=2[raw_mid][raw_bot]",
                 f"[raw_mid]crop={mw}:{mh}:{mx}:{my},scale={CANVAS_WIDTH}:{GAMEPLAY_2L_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{GAMEPLAY_2L_HEIGHT}[v_mid]",
-                f"[raw_bot]crop={bw}:{bh}:{bx}:{by},scale={CANVAS_WIDTH}:{BOTTOM_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{BOTTOM_HEIGHT}[v_bot]",
+                f"[raw_bot]crop={bw}:{bh}:{bx}:{by},scale={CANVAS_WIDTH}:{BOTTOM_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{BOTTOM_HEIGHT}:(in_w-out_w)/2:max(0\\,(in_h-out_h)*0.15)[v_bot]",
                 "[v_bot][v_mid]vstack=inputs=2[v_stacked]",
             ]
     else:
@@ -274,7 +274,7 @@ def build_gaming_filter_complex(
             "[0:v]split=3[raw_top][raw_mid][raw_bot]",
             f"[raw_top]crop={tw}:{th}:{tx}:{ty},scale={CANVAS_WIDTH}:{TOP_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{TOP_HEIGHT}[v_top]",
             f"[raw_mid]crop={mw}:{mh}:{mx}:{my},scale={CANVAS_WIDTH}:{MID_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{MID_HEIGHT}[v_mid]",
-            f"[raw_bot]crop={bw}:{bh}:{bx}:{by},scale={CANVAS_WIDTH}:{BOTTOM_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{BOTTOM_HEIGHT}[v_bot]",
+            f"[raw_bot]crop={bw}:{bh}:{bx}:{by},scale={CANVAS_WIDTH}:{BOTTOM_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{BOTTOM_HEIGHT}:(in_w-out_w)/2:max(0\\,(in_h-out_h)*0.15)[v_bot]",
             "[v_top][v_mid][v_bot]vstack=inputs=3[v_stacked]",
         ]
 

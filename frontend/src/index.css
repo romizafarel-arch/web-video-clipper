@@ -106,49 +106,9 @@ body {
     scroll-behavior: auto !important;
   }
 
-  .glow-pulse {
-    animation: none !important;
-  }
 }
 
-/* MotionKit Glass & Glow Helpers */
-.glass-panel {
-  background: rgba(21, 21, 32, 0.65);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-}
-
-.glass-panel-hover {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.glass-panel-hover:hover {
-  background: rgba(25, 25, 38, 0.75);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), 0 0 24px rgba(139, 92, 246, 0.25);
-}
-
-.shadow-glass {
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-}
-
-.shadow-focus {
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.45);
-}
-
-.glow-primary {
-  box-shadow: 0 0 24px rgba(139, 92, 246, 0.4);
-}
-
-.glow-secondary {
-  box-shadow: 0 0 24px rgba(34, 211, 238, 0.35);
-}
-
-.glow-tertiary {
-  box-shadow: 0 0 24px rgba(244, 114, 182, 0.35);
-}
-
+/* Studio Typography Helpers */
 .font-headline {
   font-family: 'Sora', sans-serif;
 }
@@ -159,19 +119,6 @@ body {
 
 .font-mono-code {
   font-family: 'Space Mono', monospace;
-}
-
-.glow-pulse {
-  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
-  }
 }
 
 /* TikTok Style Subtitles Stroke & Shadow */

@@ -38,6 +38,8 @@ LOCAL_WHISPER_DEVICE = os.getenv("LOCAL_WHISPER_DEVICE", "auto")  # auto / cpu /
 LOCAL_OUTPUT_DIR = os.getenv("LOCAL_OUTPUT_DIR", "output")
 JOB_TIMEOUT_SECONDS = float(os.getenv("JOB_TIMEOUT_SECONDS", "1800"))
 AUTO_DELETE_SOURCE_VIDEO = os.getenv("AUTO_DELETE_SOURCE_VIDEO", "true").strip().lower() in ("true", "1", "yes")
+REEF_FLOW_WEBHOOK_URL = os.getenv("REEF_FLOW_WEBHOOK_URL", "").strip()
+REEF_FLOW_API_KEY = os.getenv("REEF_FLOW_API_KEY", "").strip()
 
 # VAD (Voice Activity Detection) settings for faster-whisper
 # Default threshold is 0.5; lower = more sensitive, higher = less sensitive

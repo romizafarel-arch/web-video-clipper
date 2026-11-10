@@ -21,6 +21,8 @@ import {
   FileText,
   UploadCloud,
   X,
+  Volume2,
+  Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type {
@@ -148,6 +150,8 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
   const [autoDeleteSource, setAutoDeleteSource] = useState(
     () => config?.auto_delete_source_video ?? true
   );
+  const [enableSfx, setEnableSfx] = useState<boolean>(true);
+  const [removeSilence, setRemoveSilence] = useState<boolean>(false);
 
   const handleAspectRatioChange = (val: string) => {
     setLocalAspectRatio(val);
@@ -364,6 +368,8 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
       gemini_transcriber_model: geminiTranscriberModel,
       whisper_model: whisperModel,
       cookies_file: cookiesFile || undefined,
+      enable_sfx: enableSfx,
+      remove_silence: removeSilence,
     };
 
     if (framingMode === 'gaming') {
@@ -445,7 +451,7 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
                       key={sample.id}
                       type="button"
                       onClick={() => handleSelectQuickSample(sample)}
-                      className={`card-hover-lift text-[11px] sm:text-xs px-2.5 py-1 rounded-full border transition-all flex items-center gap-1.5 font-medium cursor-pointer ${
+                      className={`card-hover-lift text-xs px-3 py-1.5 min-h-[36px] rounded-full border transition-all flex items-center gap-1.5 font-medium cursor-pointer ${
                         isCurrent
                           ? 'bg-violet-950/80 border-violet-500/80 text-violet-200 ring-1 ring-violet-500/40 shadow-sm'
                           : 'bg-zinc-950/70 border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700 hover:bg-zinc-900/80'
@@ -454,7 +460,7 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
                       aria-label={`Pilih URL contoh ${sample.label}`}
                     >
                       <span className="font-semibold">{sample.badge}</span>
-                      <span className="text-zinc-400 text-[10px] hidden xs:inline">
+                      <span className="text-zinc-400 text-xs hidden xs:inline">
                         {sample.label}
                       </span>
                     </button>
@@ -484,9 +490,9 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
                     role="radio"
                     aria-checked={aspectRatio === ar.id}
                     onClick={() => handleAspectRatioChange(ar.id)}
-                    className={`card-hover-lift py-1.5 px-1.5 sm:px-2.5 rounded-lg border text-center transition-colors cursor-pointer ${
+                    className={`card-hover-lift min-h-[44px] py-2 px-2 sm:px-3 rounded-lg border text-center transition-colors cursor-pointer flex flex-col items-center justify-center ${
                       aspectRatio === ar.id
-                        ? 'bg-violet-600 text-white border-violet-500 font-semibold'
+                        ? 'bg-violet-600 text-white border-violet-500 font-semibold shadow-sm'
                         : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80'
                     }`}
                   >
@@ -536,7 +542,7 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
               <Video className="w-4 h-4 text-cyan-400" />
               <span>Mode Framing Kamera</span>
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5" role="radiogroup" aria-label="Mode Framing Kamera">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5" role="radiogroup" aria-label="Mode Framing Kamera">
               {[
                 {
                   id: 'podcast',
@@ -547,6 +553,16 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
                   badgeBg: 'bg-sky-500/15',
                   activeBorder: 'border-sky-500',
                   activeBg: 'bg-sky-950/40',
+                },
+                {
+                  id: 'dual',
+                  label: 'Dual Wajah',
+                  desc: 'Split 2 bagian',
+                  icon: Layers,
+                  iconColor: 'text-violet-400',
+                  badgeBg: 'bg-violet-500/15',
+                  activeBorder: 'border-violet-500',
+                  activeBg: 'bg-violet-950/40',
                 },
                 {
                   id: 'single',
@@ -978,6 +994,66 @@ export const GeneratorForm: FC<GeneratorFormProps> = ({
                         <option value="gemini-2.5-flash">gemini-2.5-flash</option>
                       </select>
                     )}
+                  </div>
+                </div>
+
+                {/* Fitur Retensi Viral (Sound Design & Silence Cutter) */}
+                <div className="pt-3 border-t border-zinc-800 space-y-2.5">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-violet-400" />
+                    <span className="text-sm font-bold text-zinc-100">Optimasi Retensi &amp; Audio (Viral Boost)</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {/* Auto SFX Layering */}
+                    <label
+                      htmlFor="enable-sfx-toggle"
+                      className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer select-none transition-colors ${
+                        enableSfx ? 'bg-violet-950/20 border-violet-500/40 text-white' : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      <input
+                        id="enable-sfx-toggle"
+                        type="checkbox"
+                        checked={enableSfx}
+                        onChange={(e) => setEnableSfx(e.target.checked)}
+                        className="w-4 h-4 mt-0.5 rounded border-zinc-700 bg-zinc-900 text-violet-600 focus-visible:ring-2 focus-visible:ring-violet-500 accent-violet-600 cursor-pointer shrink-0"
+                      />
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 font-semibold text-xs sm:text-sm">
+                          <Volume2 className="w-3.5 h-3.5 text-violet-400" />
+                          <span>Smart Sound Design (SFX)</span>
+                        </div>
+                        <p className="text-[11px] leading-relaxed text-zinc-400">
+                          Auto layering whoosh &amp; pop pada kata penekanan subtitle.
+                        </p>
+                      </div>
+                    </label>
+
+                    {/* Silence Cutter */}
+                    <label
+                      htmlFor="remove-silence-toggle"
+                      className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer select-none transition-colors ${
+                        removeSilence ? 'bg-cyan-950/20 border-cyan-500/40 text-white' : 'bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      <input
+                        id="remove-silence-toggle"
+                        type="checkbox"
+                        checked={removeSilence}
+                        onChange={(e) => setRemoveSilence(e.target.checked)}
+                        className="w-4 h-4 mt-0.5 rounded border-zinc-700 bg-zinc-900 text-cyan-600 focus-visible:ring-2 focus-visible:ring-cyan-500 accent-cyan-600 cursor-pointer shrink-0"
+                      />
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 font-semibold text-xs sm:text-sm">
+                          <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Pangkas Jeda Hening</span>
+                        </div>
+                        <p className="text-[11px] leading-relaxed text-zinc-400">
+                          Hilangkan dead air (&gt;0.45s) agar ritme bicara padat &amp; cepat.
+                        </p>
+                      </div>
+                    </label>
                   </div>
                 </div>
 

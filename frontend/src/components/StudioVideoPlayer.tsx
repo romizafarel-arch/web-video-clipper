@@ -384,7 +384,7 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
             <div className="relative w-full h-full flex flex-col items-center justify-center p-6 text-center bg-zinc-950">
               <Film className="w-10 h-10 text-zinc-600 mb-2" />
               <p className="text-xs font-semibold text-zinc-300 font-headline">Monitor Siap</p>
-              <p className="text-[11px] text-zinc-500 max-w-[220px] mt-1">
+              <p className="text-xs text-zinc-400 max-w-[220px] mt-1">
                 Pilih klip video dari antrean hasil untuk memutar dan memeriksa tampilan subtitle.
               </p>
             </div>
@@ -412,10 +412,10 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
       <div className="border-t border-zinc-800 bg-zinc-950/90 p-3 sm:p-4 space-y-3 shrink-0 rounded-b-2xl">
         {/* Scrubber Timeline Bar */}
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono text-zinc-400 w-11 text-right shrink-0">
+          <span className="text-xs font-mono font-medium text-zinc-300 w-12 text-right shrink-0">
             {formatTime(currentTime)}
           </span>
-          <div className="flex-1 min-h-[36px] flex items-center">
+          <div className="flex-1 min-h-[44px] flex items-center">
             <input
               type="range"
               min={0}
@@ -428,7 +428,7 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
               className="w-full accent-violet-500 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:opacity-40 disabled:cursor-not-allowed"
             />
           </div>
-          <span className="text-[11px] font-mono text-zinc-400 w-11 shrink-0">
+          <span className="text-xs font-mono font-medium text-zinc-300 w-12 shrink-0">
             {formatTime(duration)}
           </span>
         </div>
@@ -441,17 +441,17 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
               type="button"
               onClick={handlePlayPause}
               disabled={!hasRealVideo}
-              className="min-h-[38px] px-3.5 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+              className="min-h-[44px] px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 shadow-sm"
               aria-label={isPlaying ? 'Pause pemutaran' : 'Mulai pemutaran video'}
             >
               {isPlaying ? (
                 <>
-                  <Pause className="w-3.5 h-3.5 fill-white" />
+                  <Pause className="w-4 h-4 fill-white" />
                   <span>Pause</span>
                 </>
               ) : (
                 <>
-                  <Play className="w-3.5 h-3.5 fill-white" />
+                  <Play className="w-4 h-4 fill-white" />
                   <span>Putar</span>
                 </>
               )}
@@ -462,11 +462,11 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
               type="button"
               onClick={handleReset}
               disabled={!hasRealVideo}
-              className="min-h-[38px] min-w-[38px] p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+              className="min-h-[44px] min-w-[44px] p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 shadow-sm"
               title="Mulai Ulang dari Awal"
               aria-label="Mulai ulang video dari awal"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-4 h-4" />
             </button>
 
             {/* Mute Toggle */}
@@ -474,11 +474,11 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
               type="button"
               onClick={handleToggleMute}
               disabled={!hasRealVideo}
-              className="min-h-[38px] min-w-[38px] p-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+              className="min-h-[44px] min-w-[44px] p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 shadow-sm"
               title={isMuted ? 'Nyalakan Suara' : 'Bisukan Suara'}
               aria-label={isMuted ? 'Nyalakan audio video' : 'Bisukan audio video'}
             >
-              {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5" />}
+              {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4" />}
             </button>
           </div>
 
@@ -488,12 +488,12 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
             <button
               type="button"
               onClick={() => setSubtitleColor((prev) => (prev === 'yellow' ? 'white' : 'yellow'))}
-              className="min-h-[38px] px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 hover:text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+              className="min-h-[44px] px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs sm:text-sm text-zinc-300 hover:text-white flex items-center justify-center gap-2 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 shadow-sm"
               title="Ganti Warna Subtitle (Kuning / Putih)"
               aria-label={`Warna subtitle saat ini: ${subtitleColor}`}
             >
               <span
-                className={`w-3 h-3 rounded-full border border-black/40 shrink-0 ${
+                className={`w-3.5 h-3.5 rounded-full border border-black/40 shrink-0 ${
                   subtitleColor === 'yellow' ? 'bg-[#FACC15]' : 'bg-white'
                 }`}
               />
@@ -504,14 +504,14 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
             <button
               type="button"
               onClick={() => setSubtitlePosition((prev) => (prev === 'bottom' ? 'center' : 'bottom'))}
-              className="min-h-[38px] px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 hover:text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+              className="min-h-[44px] px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs sm:text-sm text-zinc-300 hover:text-white flex items-center justify-center gap-2 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 shadow-sm"
               title="Ganti Posisi Subtitle (Bawah / Tengah)"
               aria-label={`Posisi subtitle: ${subtitlePosition === 'bottom' ? 'Bawah' : 'Tengah'}`}
             >
               {subtitlePosition === 'bottom' ? (
-                <AlignVerticalJustifyStart className="w-3.5 h-3.5 rotate-180 text-cyan-400 shrink-0" />
+                <AlignVerticalJustifyStart className="w-4 h-4 rotate-180 text-cyan-400 shrink-0" />
               ) : (
-                <AlignVerticalJustifyCenter className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <AlignVerticalJustifyCenter className="w-4 h-4 text-cyan-400 shrink-0" />
               )}
               <span className="hidden sm:inline">{subtitlePosition === 'bottom' ? 'Bawah' : 'Tengah'}</span>
             </button>
@@ -520,7 +520,7 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
             <button
               type="button"
               onClick={() => setShowLiveOverlay((prev) => !prev)}
-              className={`min-h-[38px] px-2.5 py-1.5 rounded-lg border text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+              className={`min-h-[44px] px-3 py-2 rounded-xl border text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 shadow-sm ${
                 showLiveOverlay
                   ? 'bg-violet-600/30 border-violet-500 text-violet-200'
                   : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-400 hover:text-zinc-200'
@@ -528,7 +528,7 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
               title="Tampilkan / Sembunyikan Overlay Subtitle Interaktif"
               aria-label={`Overlay subtitle: ${showLiveOverlay ? 'Aktif' : 'Mati'}`}
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-4 h-4" />
               <span className="hidden sm:inline">Overlay:</span>
               <span>{showLiveOverlay ? 'Aktif' : 'Mati'}</span>
             </button>
@@ -543,10 +543,10 @@ export const StudioVideoPlayer: FC<StudioVideoPlayerProps> = ({
                   return next;
                 });
               }}
-              className="min-h-[38px] px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 hover:text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+              className="min-h-[44px] px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs sm:text-sm text-zinc-300 hover:text-white flex items-center justify-center gap-2 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 shadow-sm"
               title="Buka / Tutup Pilihan Preset Subtitle"
             >
-              <Type className="w-3.5 h-3.5 text-violet-400" />
+              <Type className="w-4 h-4 text-violet-400" />
               <span className="font-semibold text-zinc-200">
                 {subtitleStyle === 'none' ? 'Tanpa Teks' : getTextPreset(subtitleStyle).name}
               </span>

@@ -1,0 +1,32 @@
+{
+  "endpoint": "/api/edit-clip",
+  "http_status": 200,
+  "claims_tested": [
+    "trim 1\u20133 seconds",
+    "9:16 center crop",
+    "manual subtitle text",
+    "MP4 render"
+  ],
+  "paid_ai_calls": 0,
+  "limitation": "Earlier multiword cue on a tone-only source returned KEEP only. Film uses the verified single-word cue KEEP; no automatic caption claim.",
+  "media": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1080,
+        "height": 1920
+      },
+      {
+        "codec_type": "audio"
+      }
+    ],
+    "format": {
+      "duration": "2.033333"
+    }
+  },
+  "subtitle_vtt": "WEBVTT\n\n00:00:00.000 --> 00:00:00.380\nKEEP\n",
+  "download_status": 200,
+  "decode_ok": true
+}

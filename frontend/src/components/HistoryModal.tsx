@@ -108,31 +108,31 @@ const HistoryClipCard: FC<HistoryClipCardProps> = ({
 
         {/* Virality score badge */}
         {hasScore && (
-          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-emerald-500/90 text-white text-[10px] font-bold flex items-center gap-1 shadow-md font-mono pointer-events-none">
-            <Sparkles className="w-2.5 h-2.5" />
+          <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full bg-emerald-500/90 text-white text-xs font-bold flex items-center gap-1.5 shadow-md font-mono pointer-events-none">
+            <Sparkles className="w-3 h-3" />
             Score {clip.score}
           </div>
         )}
 
         {/* Ratio badge */}
-        <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-mono text-white/90 pointer-events-none">
+        <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/80 text-xs font-mono font-medium text-white/90 pointer-events-none">
           {clipAr}
         </div>
 
         {/* Duration badge */}
-        <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/80 text-[10px] font-mono text-white/90 pointer-events-none">
+        <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 text-xs font-mono font-medium text-white/90 pointer-events-none">
           {formatSeconds(clip.start_time)} - {formatSeconds(clip.end_time)}
         </div>
       </div>
 
       {/* Clip Info */}
-      <div className="p-3 flex-1 flex flex-col justify-between space-y-2">
+      <div className="p-3.5 flex-1 flex flex-col justify-between space-y-2.5">
         <div>
-          <h5 className="text-xs font-semibold text-white line-clamp-2 leading-tight" title={clip.title}>
+          <h5 className="text-xs sm:text-sm font-semibold text-white line-clamp-2 leading-tight" title={clip.title}>
             {clip.title || clip.filename}
           </h5>
           {clip.hook_sentence && (
-            <p className="text-[10px] text-slate-400 line-clamp-1 italic mt-1" title={clip.hook_sentence}>
+            <p className="text-xs text-slate-300 line-clamp-1 italic mt-1.5" title={clip.hook_sentence}>
               "{clip.hook_sentence}"
             </p>
           )}
@@ -142,17 +142,17 @@ const HistoryClipCard: FC<HistoryClipCardProps> = ({
         <div className="pt-2.5 border-t border-white/5 flex flex-col gap-2">
           {/* Baris Atas: Meta & Download */}
           <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-mono text-[11px] text-slate-400 font-medium">
+            <span className="font-mono text-xs text-slate-300 font-medium">
               {formatBytes(clip.size_bytes)}
             </span>
             <a
               href={clip.web_url}
               download={clip.filename}
-              className="min-h-[36px] min-w-[36px] w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 hover:border-white/20 active:scale-95 text-slate-300 flex items-center justify-center transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 shadow-sm"
+              className="min-h-[44px] min-w-[44px] size-11 rounded-xl bg-white/5 hover:bg-white/10 hover:text-white border border-white/10 hover:border-white/20 active:scale-95 text-slate-300 flex items-center justify-center transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 shadow-sm"
               title={`Unduh file video MP4 (${clipAr})`}
               aria-label={`Unduh file video MP4 ${clip.filename}`}
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
             </a>
           </div>
 
@@ -169,22 +169,22 @@ const HistoryClipCard: FC<HistoryClipCardProps> = ({
                   onPreviewClip(clip);
                 }
               }}
-              className="w-full min-h-[40px] px-2 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 active:scale-[0.98] border border-cyan-500/20 hover:border-cyan-500/40 text-cyan-300 font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 text-xs shadow-sm"
+              className="w-full min-h-[44px] px-2.5 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 active:scale-[0.98] border border-cyan-500/20 hover:border-cyan-500/40 text-cyan-300 font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 text-xs sm:text-sm shadow-sm"
               title="Buka dan tonton di Player Studio Utama"
               aria-label={`Buka klip ${clip.title || clip.filename} di Studio`}
             >
-              <Film className="w-3.5 h-3.5 shrink-0" />
+              <Film className="w-4 h-4 shrink-0" />
               <span className="truncate">Studio</span>
             </button>
 
             <button
               type="button"
               onClick={() => onOpenEditor(clip, session.folder_name, idx)}
-              className="w-full min-h-[40px] px-2 py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 active:scale-[0.98] border border-violet-500/20 hover:border-violet-500/40 text-violet-300 font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 text-xs shadow-sm"
+              className="w-full min-h-[44px] px-2.5 py-2 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 active:scale-[0.98] border border-violet-500/20 hover:border-violet-500/40 text-violet-300 font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 text-xs sm:text-sm shadow-sm"
               title="Edit klip (trimmer dan subtitle)"
               aria-label={`Edit klip ${clip.title || clip.filename}`}
             >
-              <Scissors className="w-3.5 h-3.5 shrink-0" />
+              <Scissors className="w-4 h-4 shrink-0" />
               <span className="truncate">Edit</span>
             </button>
           </div>

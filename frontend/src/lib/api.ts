@@ -9,7 +9,33 @@ import type {
   ModelTestResponse,
   EditClipPayload,
   EditClipResponse,
+  VideoIdeaDirection,
+  VideoIdeaPlan,
+  VideoIdeaRequest,
 } from '../types';
+
+async function postIdeaRequest<T>(path: string, payload: VideoIdeaRequest & { direction?: VideoIdeaDirection }): Promise<T> {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok || data.error) {
+    throw new Error(data.error || 'Belum berhasil memproses ide. Coba lagi.');
+  }
+  return data as T;
+}
+
+export async function fetchIdeaDirections(payload: VideoIdeaRequest): Promise<{ directions: VideoIdeaDirection[]; notice?: string }> {
+  return postIdeaRequest('/api/ideas/directions', payload);
+}
+
+export async function fetchIdeaPlan(
+  payload: VideoIdeaRequest & { direction: VideoIdeaDirection },
+): Promise<VideoIdeaPlan & { notice?: string }> {
+  return postIdeaRequest('/api/ideas/plan', payload);
+}
 
 export async function fetchConfig(): Promise<AppConfig> {
   const res = await fetch('/api/config');

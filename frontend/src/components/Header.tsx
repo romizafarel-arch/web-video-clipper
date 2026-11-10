@@ -63,7 +63,7 @@ export const Header: FC<HeaderProps> = ({ config, historyCount, onOpenHistory, o
             variant="outline"
             size="default"
             onClick={onOpenHistory}
-            className="min-h-[40px] sm:min-h-[44px] h-10 sm:h-11 px-3 sm:px-4 gap-2 text-xs sm:text-sm font-semibold rounded-xl border-white/12 bg-white/[0.05] hover:bg-white/[0.1] hover:border-white/20 text-zinc-200 hover:text-white cursor-pointer transition-all shadow-sm"
+            className="min-h-[44px] h-11 px-3.5 sm:px-4 gap-2 text-xs sm:text-sm font-semibold rounded-xl border-white/12 bg-white/[0.05] hover:bg-white/[0.1] hover:border-white/20 text-zinc-200 hover:text-white cursor-pointer transition-all shadow-sm"
             title="Buka Riwayat Sesi & Video Shorts"
             aria-label={`Buka Riwayat Sesi (${historyCount} klip)`}
           >
@@ -79,16 +79,16 @@ export const Header: FC<HeaderProps> = ({ config, historyCount, onOpenHistory, o
             variant="outline"
             size="icon"
             onClick={onOpenSettings}
-            className="min-h-[40px] min-w-[40px] sm:min-h-[44px] sm:min-w-[44px] size-10 sm:size-11 rounded-xl border-white/12 bg-white/[0.05] hover:bg-white/[0.1] hover:border-white/20 text-zinc-300 hover:text-white cursor-pointer transition-all"
+            className="min-h-[44px] min-w-[44px] size-11 rounded-xl border-white/12 bg-white/[0.05] hover:bg-white/[0.1] hover:border-white/20 text-zinc-300 hover:text-white cursor-pointer transition-all"
             title="Pengaturan API & Engine"
             aria-label="Buka Pengaturan API & Engine"
           >
-            <Settings className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
+            <Settings className="w-5 h-5" />
           </Button>
 
           <a
             href="/"
-            className="min-h-[40px] sm:min-h-[44px] hidden md:inline-flex items-center px-3 text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 transition-colors underline decoration-dotted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded-xl"
+            className="min-h-[44px] hidden md:inline-flex items-center px-3 text-xs sm:text-sm font-medium text-zinc-400 hover:text-zinc-200 transition-colors underline decoration-dotted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded-xl"
             title="Buka interface klasik Flask jika perlu"
           >
             Versi Klasik
