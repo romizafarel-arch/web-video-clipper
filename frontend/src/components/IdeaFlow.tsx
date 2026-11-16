@@ -1,19 +1,30 @@
 import { useState, type FC, type FormEvent } from 'react';
-import { ArrowLeft, Check, ClipboardCopy, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Check, ClipboardCopy, Film, RotateCcw, Sparkles } from 'lucide-react';
 import type {
+  AgnesAspectRatio,
+  AgnesVideoModel,
+  AgnesVideoSize,
   AppConfig,
   IdeaGoal,
   IdeaTone,
+  JobState,
   VideoIdeaDirection,
   VideoIdeaGuide,
   VideoIdeaPlan,
   VideoIdeaRequest,
 } from '../types';
-import { fetchIdeaDirections, fetchIdeaPlan } from '../lib/api';
+import { fetchIdeaDirections, fetchIdeaPlan, generateIdeaVideo } from '../lib/api';
 import { Button } from './ui/button';
+import { JobProgressCard } from './JobProgressCard';
 
 interface IdeaFlowProps {
   config: AppConfig | null;
+  activeJob: JobState | null;
+  isCanceling: boolean;
+  pollingError: string | null;
+  onCancelJob: () => void;
+  onRetryPolling: () => void;
+  onVideoJobStarted: (jobId: string) => void;
   onBack: () => void;
   onOpenSettings: () => void;
   onUseFootage: (guide: VideoIdeaGuide) => void;
@@ -33,6 +44,24 @@ const TONES: Array<{ value: IdeaTone; label: string }> = [
 ];
 
 const DURATIONS = [15, 30, 45] as const;
+const AGNES_DURATIONS = [4, 6, 8, 10, 12] as const;
+const AGNES_RATIOS: AgnesAspectRatio[] = ['9:16', '16:9', '1:1', '3:4', '4:3'];
+
+function buildDefaultVideoPrompt(
+  idea: string,
+  direction?: VideoIdeaDirection | null,
+  hook?: string,
+  plan?: VideoIdeaPlan | null,
+): string {
+  const parts = [idea.trim()];
+  if (direction?.summary) parts.push(`Concept: ${direction.summary.trim()}`);
+  if (hook?.trim()) parts.push(`Opening shot: ${hook.trim()}`);
+  if (plan?.scenes?.length) {
+    const visuals = plan.scenes.map((s) => s.visual.trim()).filter(Boolean).slice(0, 4);
+    if (visuals.length > 0) parts.push(`Visual sequence: ${visuals.join(' -> ')}`);
+  }
+  return parts.filter(Boolean).join('. ').slice(0, 2000);
+}
 
 function formatPlanText(idea: string, direction: string, hook: string, plan: VideoIdeaPlan): string {
   const scenes = plan.scenes.map((scene, index) =>
@@ -49,7 +78,18 @@ function formatPlanText(idea: string, direction: string, hook: string, plan: Vid
   ].join('\n\n');
 }
 
-export const IdeaFlow: FC<IdeaFlowProps> = ({ config, onBack, onOpenSettings, onUseFootage }) => {
+export const IdeaFlow: FC<IdeaFlowProps> = ({
+  config,
+  activeJob,
+  isCanceling,
+  pollingError,
+  onCancelJob,
+  onRetryPolling,
+  onVideoJobStarted,
+  onBack,
+  onOpenSettings,
+  onUseFootage,
+}) => {
   const [idea, setIdea] = useState('');
   const [goal, setGoal] = useState<IdeaGoal>('informasi');
   const [tone, setTone] = useState<IdeaTone>('santai');
@@ -58,18 +98,30 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({ config, onBack, onOpenSettings, on
   const [selectedDirection, setSelectedDirection] = useState<VideoIdeaDirection | null>(null);
   const [plan, setPlan] = useState<VideoIdeaPlan | null>(null);
   const [selectedHook, setSelectedHook] = useState('');
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 'video'>(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [modelNotice, setModelNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Agnes AI Video Generation state
+  const [videoPrompt, setVideoPrompt] = useState('');
+  const [videoModel, setVideoModel] = useState<AgnesVideoModel>(
+    config?.agnes_video_model === 'agnes-video-2.5' ? 'agnes-video-2.5' : 'agnes-video-2.5-flash',
+  );
+  const [videoRatio, setVideoRatio] = useState<AgnesAspectRatio>('9:16');
+  const [videoDuration, setVideoDuration] = useState<number>(6);
+  const [videoSize, setVideoSize] = useState<AgnesVideoSize>('720P');
+  const [isSubmittingVideo, setIsSubmittingVideo] = useState(false);
+
   const request: VideoIdeaRequest = { idea: idea.trim(), goal, tone, duration };
   const hasConfiguredKey = config
-    ? config.llm_provider === 'openai'
-      ? config.has_openai_key
-      : config.has_gemini_key
+    ? (config.llm_provider === 'openai' ? config.has_openai_key : config.has_gemini_key) || Boolean(config.has_agnes_key)
     : true;
+  const hasAgnesKey = config ? Boolean(config.has_agnes_key) : true;
+  const isJobActive = Boolean(
+    activeJob && (activeJob.status === 'running' || activeJob.status === 'queued' || activeJob.status === 'canceling'),
+  );
 
   const handleDirections = async (event?: FormEvent) => {
     event?.preventDefault();
@@ -104,11 +156,49 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({ config, onBack, onOpenSettings, on
       setPlan(result);
       setModelNotice(result.notice ?? null);
       setSelectedHook(result.hooks[0]);
+      setVideoPrompt(buildDefaultVideoPrompt(idea, selectedDirection, result.hooks[0], result));
       setStep(3);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Panduan video belum berhasil dibuat. Coba lagi.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const openVideoComposer = () => {
+    setError(null);
+    if (!videoPrompt.trim() && idea.trim()) {
+      setVideoPrompt(buildDefaultVideoPrompt(idea, selectedDirection, selectedHook, plan));
+    }
+    setStep('video');
+  };
+
+  const handleGenerateVideo = async (event: FormEvent) => {
+    event.preventDefault();
+    const cleanPrompt = videoPrompt.trim();
+    if (!cleanPrompt) {
+      setError('Tulis dulu deskripsi visual video untuk Agnes AI.');
+      return;
+    }
+    setIsSubmittingVideo(true);
+    setError(null);
+    try {
+      const effectiveSize: AgnesVideoSize = videoModel === 'agnes-video-2.5-flash' ? '720P' : videoSize;
+      const res = await generateIdeaVideo({
+        prompt: cleanPrompt,
+        title: selectedDirection?.title || idea.trim().slice(0, 80) || 'Video Ide Agnes AI',
+        idea: idea.trim(),
+        hook: selectedHook || selectedDirection?.hook || '',
+        model: videoModel,
+        duration: videoDuration,
+        aspect_ratio: videoRatio,
+        size: effectiveSize,
+      });
+      onVideoJobStarted(res.job_id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Belum berhasil memulai pembuatan video Agnes AI.');
+    } finally {
+      setIsSubmittingVideo(false);
     }
   };
 
@@ -125,20 +215,25 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({ config, onBack, onOpenSettings, on
 
   const goBack = () => {
     setError(null);
+    if (step === 'video') {
+      setStep(plan ? 3 : 1);
+      return;
+    }
     setStep(step === 3 ? 2 : 1);
   };
 
+  const activeStepNum = step === 'video' ? 4 : step;
   const renderProgress = () => (
-    <div className="mb-7 flex items-center gap-2 text-xs text-zinc-400" aria-label={`Langkah ${step} dari 3`}>
-      {[1, 2, 3].map((item) => (
+    <div className="mb-7 flex flex-wrap items-center gap-2 text-xs text-zinc-400" aria-label={`Langkah ${activeStepNum} dari 4`}>
+      {([1, 2, 3, 4] as const).map((item) => (
         <div key={item} className="flex items-center gap-2">
-          <span className={`grid h-7 w-7 place-items-center rounded-full border ${item === step ? 'border-violet-400 bg-violet-500/15 text-white' : item < step ? 'border-emerald-500/50 text-emerald-300' : 'border-zinc-700 text-zinc-500'}`}>
-            {item < step ? <Check aria-hidden="true" className="h-3.5 w-3.5" /> : item}
+          <span className={`grid h-7 w-7 place-items-center rounded-full border ${item === activeStepNum ? 'border-violet-400 bg-violet-500/15 text-white' : item < activeStepNum ? 'border-emerald-500/50 text-emerald-300' : 'border-zinc-700 text-zinc-500'}`}>
+            {item < activeStepNum ? <Check aria-hidden="true" className="h-3.5 w-3.5" /> : item}
           </span>
-          <span className={item === step ? 'text-zinc-100' : 'hidden sm:inline'}>
-            {item === 1 ? 'Tulis ide' : item === 2 ? 'Pilih cerita' : 'Panduan video'}
+          <span className={item === activeStepNum ? 'text-zinc-100' : 'hidden sm:inline'}>
+            {item === 1 ? 'Tulis ide' : item === 2 ? 'Pilih cerita' : item === 3 ? 'Panduan video' : 'Video AI'}
           </span>
-          {item < 3 && <span aria-hidden="true" className="mx-1 h-px w-5 bg-zinc-700 sm:w-9" />}
+          {item < 4 && <span aria-hidden="true" className="mx-1 h-px w-4 bg-zinc-700 sm:w-7" />}
         </div>
       ))}
     </div>
@@ -216,9 +311,15 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({ config, onBack, onOpenSettings, on
               <Button type="button" variant="outline" onClick={onOpenSettings} className="min-h-11">Buka Pengaturan</Button>
             </div>
           )}
-          <Button type="submit" disabled={isLoading || !idea.trim()} className="min-h-12 w-full sm:w-auto">
-            {isLoading ? 'Mencari arah cerita...' : 'Cari arah cerita'}
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <Button type="submit" disabled={isLoading || !idea.trim()} className="min-h-12 w-full sm:w-auto">
+              {isLoading ? 'Mencari arah cerita...' : 'Cari arah cerita'}
+            </Button>
+            <Button type="button" variant="outline" disabled={isLoading || !idea.trim()} onClick={openVideoComposer} className="min-h-12 w-full sm:w-auto">
+              <Sparkles aria-hidden="true" className="h-4 w-4 text-amber-400" />
+              Langsung jadi video (Agnes AI)
+            </Button>
+          </div>
         </form>
       )}
 
@@ -309,16 +410,148 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({ config, onBack, onOpenSettings, on
           {modelNotice && <p role="status" className="border-l-2 border-amber-400 pl-3 text-sm leading-6 text-amber-100">{modelNotice}</p>}
           {error && <div role="alert" className="rounded-md border border-rose-500/40 bg-rose-950/30 p-3 text-sm leading-5 text-rose-200">{error}</div>}
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <Button type="button" onClick={openVideoComposer} className="min-h-11">
+              <Film aria-hidden="true" className="h-4 w-4" />
+              Buat Video AI (Agnes)
+            </Button>
             <Button type="button" variant="outline" onClick={() => void handleCopy()} className="min-h-11">
               {copied ? <Check aria-hidden="true" /> : <ClipboardCopy aria-hidden="true" />}
               {copied ? 'Panduan tersalin' : 'Salin panduan'}
             </Button>
-            <Button type="button" onClick={() => onUseFootage({ idea, directionTitle: selectedDirection.title, selectedHook, plan })} className="min-h-11">
+            <Button type="button" variant="outline" onClick={() => onUseFootage({ idea, directionTitle: selectedDirection.title, selectedHook, plan })} className="min-h-11">
               Saya sudah punya video
             </Button>
           </div>
-          <p className="text-xs leading-5 text-zinc-500">Panduan ini membantu menyiapkan rekaman. Untuk membuat klip, lanjutkan dengan video yang kamu punya.</p>
+          <p className="text-xs leading-5 text-zinc-500">Render langsung jadi video dengan Agnes AI, atau lanjutkan ke pemotong jika sudah punya rekaman sendiri.</p>
         </div>
+      )}
+
+      {step === 'video' && (
+        <form onSubmit={handleGenerateVideo} className="space-y-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="font-headline text-2xl font-semibold text-white sm:text-3xl">Buat video dari ide (Agnes AI)</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">Sesuaikan prompt visual di bawah, lalu render otomatis ke MP4 siap putar di Studio.</p>
+            </div>
+            <Button type="button" variant="outline" onClick={goBack} className="min-h-11 self-start sm:self-auto">
+              <ArrowLeft aria-hidden="true" />
+              {plan ? 'Kembali ke panduan' : 'Ubah ide'}
+            </Button>
+          </div>
+
+          <div>
+            <label htmlFor="agnes-video-prompt" className="mb-2 block text-sm font-medium text-zinc-200">Prompt visual video</label>
+            <textarea
+              id="agnes-video-prompt"
+              value={videoPrompt}
+              onChange={(event) => setVideoPrompt(event.target.value.slice(0, 2000))}
+              placeholder="Deskripsikan adegan, gerakan kamera, pencahayaan, dan suasana video..."
+              rows={5}
+              maxLength={2000}
+              required
+              className="min-h-36 w-full resize-y rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm leading-6 text-white placeholder:text-zinc-500 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+            />
+            <div className="mt-1 flex justify-between gap-3 text-xs text-zinc-500">
+              <span>Tip: jelaskan subjek, aksi, sudut kamera, dan pencahayaan.</span>
+              <span>{videoPrompt.length}/2000</span>
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="block text-sm font-medium text-zinc-200" htmlFor="agnes-model-select">
+              Model Agnes AI
+              <select
+                id="agnes-model-select"
+                value={videoModel}
+                onChange={(event) => {
+                  const nextModel = event.target.value as AgnesVideoModel;
+                  setVideoModel(nextModel);
+                  if (nextModel === 'agnes-video-2.5-flash') setVideoSize('720P');
+                }}
+                className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+              >
+                <option value="agnes-video-2.5-flash">agnes-video-2.5-flash (Cepat · 720P)</option>
+                <option value="agnes-video-2.5">agnes-video-2.5 (HD · 720P / 1080P)</option>
+              </select>
+            </label>
+
+            <label className="block text-sm font-medium text-zinc-200" htmlFor="agnes-size-select">
+              Resolusi
+              <select
+                id="agnes-size-select"
+                value={videoModel === 'agnes-video-2.5-flash' ? '720P' : videoSize}
+                disabled={videoModel === 'agnes-video-2.5-flash'}
+                onChange={(event) => setVideoSize(event.target.value as AgnesVideoSize)}
+                className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white disabled:opacity-60 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+              >
+                <option value="720P">720P</option>
+                {videoModel === 'agnes-video-2.5' && <option value="1080P">1080P</option>}
+              </select>
+            </label>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <fieldset>
+              <legend className="mb-2 text-sm font-medium text-zinc-200">Rasio aspek</legend>
+              <div className="grid grid-cols-5 gap-2">
+                {AGNES_RATIOS.map((ratio) => (
+                  <button
+                    key={ratio}
+                    type="button"
+                    aria-pressed={videoRatio === ratio}
+                    onClick={() => setVideoRatio(ratio)}
+                    className={`min-h-11 rounded-md border px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${videoRatio === ratio ? 'border-violet-400 bg-violet-500/15 text-white' : 'border-zinc-700 bg-zinc-900/50 text-zinc-300 hover:border-zinc-500'}`}
+                  >
+                    {ratio}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend className="mb-2 text-sm font-medium text-zinc-200">Durasi klip (Agnes AI)</legend>
+              <div className="grid grid-cols-5 gap-2">
+                {AGNES_DURATIONS.map((sec) => (
+                  <button
+                    key={sec}
+                    type="button"
+                    aria-pressed={videoDuration === sec}
+                    onClick={() => setVideoDuration(sec)}
+                    className={`min-h-11 rounded-md border px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${videoDuration === sec ? 'border-violet-400 bg-violet-500/15 text-white' : 'border-zinc-700 bg-zinc-900/50 text-zinc-300 hover:border-zinc-500'}`}
+                  >
+                    {sec}d
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+
+          {!hasAgnesKey && (
+            <div className="flex flex-col gap-3 border-l-2 border-amber-400 pl-3 text-sm text-amber-100 sm:flex-row sm:items-center sm:justify-between">
+              <span>AGNES_API_KEY belum terpasang. Masukkan kunci Agnes AI di Pengaturan untuk generate video.</span>
+              <Button type="button" variant="outline" onClick={onOpenSettings} className="min-h-11">Buka Pengaturan</Button>
+            </div>
+          )}
+
+          {error && <div role="alert" className="rounded-md border border-rose-500/40 bg-rose-950/30 p-3 text-sm leading-5 text-rose-200">{error}</div>}
+
+          <Button type="submit" disabled={isSubmittingVideo || isJobActive || !videoPrompt.trim() || !hasAgnesKey} className="min-h-12 w-full sm:w-auto">
+            <Film aria-hidden="true" className="h-4 w-4" />
+            {isSubmittingVideo ? 'Mengirim ke Agnes AI...' : isJobActive ? 'Video sedang dibuat...' : 'Generate Video AI'}
+          </Button>
+
+          {activeJob && (activeJob.status === 'running' || activeJob.status === 'queued' || activeJob.status === 'canceling' || activeJob.status === 'failed') && (
+            <div className="pt-2">
+              <JobProgressCard
+                job={activeJob}
+                onCancel={onCancelJob}
+                isCanceling={isCanceling}
+                pollingError={pollingError}
+                onRetry={onRetryPolling}
+              />
+            </div>
+          )}
+        </form>
       )}
     </section>
   );

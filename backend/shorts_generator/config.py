@@ -21,6 +21,11 @@ load_dotenv()
 MUAPI_API_KEY = os.getenv("MUAPI_API_KEY", "").strip()
 MUAPI_BASE_URL = os.getenv("MUAPI_BASE_URL", "https://api.muapi.ai/api/v1").rstrip("/")
 
+AGNES_API_KEY = os.getenv("AGNES_API_KEY", "").strip()
+AGNES_BASE_URL = os.getenv("AGNES_BASE_URL", "https://apihub.agnes-ai.com").strip().rstrip("/")
+AGNES_VIDEO_MODEL = os.getenv("AGNES_VIDEO_MODEL", "agnes-video-2.5-flash").strip() or "agnes-video-2.5-flash"
+AGNES_CHAT_MODEL = os.getenv("AGNES_CHAT_MODEL", "agnes-2.5-flash").strip() or "agnes-2.5-flash"
+
 POLL_INTERVAL_SECONDS = float(os.getenv("MUAPI_POLL_INTERVAL", "5"))
 POLL_TIMEOUT_SECONDS = float(os.getenv("MUAPI_POLL_TIMEOUT", "600"))
 
@@ -86,3 +91,11 @@ def require_gemini_key() -> str:
             "Add it to your .env or export it, or switch LLM_PROVIDER back to openai."
         )
     return GEMINI_API_KEY
+
+
+def require_agnes_key() -> str:
+    if not AGNES_API_KEY:
+        raise RuntimeError(
+            "AGNES_API_KEY is not set. Add it in Settings or .env to generate videos from ideas."
+        )
+    return AGNES_API_KEY

@@ -12,9 +12,13 @@ export interface AppConfig {
   has_gemini_key: boolean;
   has_openai_key: boolean;
   has_muapi_key: boolean;
+  has_agnes_key?: boolean;
+  agnes_base_url?: string;
+  agnes_video_model?: string;
   gemini_key_masked?: string;
   openai_key_masked?: string;
   muapi_key_masked?: string;
+  agnes_key_masked?: string;
 }
 
 export type IdeaGoal = 'hiburan' | 'informasi' | 'promosi';
@@ -52,6 +56,21 @@ export interface VideoIdeaGuide {
   directionTitle: string;
   selectedHook: string;
   plan: VideoIdeaPlan;
+}
+
+export type AgnesVideoModel = 'agnes-video-2.5-flash' | 'agnes-video-2.5';
+export type AgnesAspectRatio = '9:16' | '16:9' | '1:1' | '3:4' | '4:3' | '21:9';
+export type AgnesVideoSize = '720P' | '1080P';
+
+export interface GenerateIdeaVideoPayload {
+  prompt: string;
+  title?: string;
+  idea?: string;
+  hook?: string;
+  model: AgnesVideoModel;
+  duration: number;
+  aspect_ratio: AgnesAspectRatio;
+  size: AgnesVideoSize;
 }
 
 export type FramingMode = 'podcast' | 'single' | 'center' | 'gaming' | 'dual';

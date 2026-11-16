@@ -27,6 +27,9 @@ export const SettingsModal: FC<SettingsModalProps> = ({
   const [openaiKey, setOpenaiKey] = useState('');
   const [openaiBaseUrl, setOpenaiBaseUrl] = useState(config?.openai_base_url || '');
   const [muapiKey, setMuapiKey] = useState('');
+  const [agnesKey, setAgnesKey] = useState('');
+  const [agnesBaseUrl, setAgnesBaseUrl] = useState(config?.agnes_base_url || 'https://apihub.agnes-ai.com');
+  const [agnesVideoModel, setAgnesVideoModel] = useState(config?.agnes_video_model || 'agnes-video-2.5-flash');
   const [autoDeleteSource, setAutoDeleteSource] = useState(config?.auto_delete_source_video ?? true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -34,6 +37,8 @@ export const SettingsModal: FC<SettingsModalProps> = ({
     if (isOpen && config) {
       queueMicrotask(() => {
         setOpenaiBaseUrl(config.openai_base_url || '');
+        setAgnesBaseUrl(config.agnes_base_url || 'https://apihub.agnes-ai.com');
+        setAgnesVideoModel(config.agnes_video_model || 'agnes-video-2.5-flash');
         setAutoDeleteSource(config.auto_delete_source_video ?? true);
       });
     }
@@ -59,6 +64,15 @@ export const SettingsModal: FC<SettingsModalProps> = ({
     if (muapiKey.trim()) {
       payload.MUAPI_API_KEY = muapiKey.trim();
     }
+    if (agnesKey.trim()) {
+      payload.AGNES_API_KEY = agnesKey.trim();
+    }
+    if (agnesBaseUrl.trim() && agnesBaseUrl.trim() !== (config?.agnes_base_url || 'https://apihub.agnes-ai.com')) {
+      payload.AGNES_BASE_URL = agnesBaseUrl.trim();
+    }
+    if (agnesVideoModel !== (config?.agnes_video_model || 'agnes-video-2.5-flash')) {
+      payload.AGNES_VIDEO_MODEL = agnesVideoModel;
+    }
 
     try {
       await updateConfig(payload);
@@ -68,6 +82,7 @@ export const SettingsModal: FC<SettingsModalProps> = ({
       setGeminiKey('');
       setOpenaiKey('');
       setMuapiKey('');
+      setAgnesKey('');
       onClose();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Gagal menyimpan pengaturan.';
@@ -224,6 +239,71 @@ export const SettingsModal: FC<SettingsModalProps> = ({
               onChange={(e) => setMuapiKey(e.target.value)}
               className="w-full h-10 px-3 rounded-lg bg-white/5 border border-white/10 text-xs text-white placeholder-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:border-transparent font-mono"
             />
+          </div>
+
+          {/* Agnes AI Key (Idea to Video) */}
+          <div className="space-y-3 pt-3 border-t border-white/10">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label htmlFor="agnes-key" className="text-xs font-semibold text-slate-200 flex items-center gap-1.5 cursor-pointer">
+                  <Key className="w-3.5 h-3.5 text-amber-400" />
+                  Agnes AI API Key (Ide ke Video)
+                </label>
+                <a
+                  href="https://platform.agnes-ai.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[11px] text-amber-400 hover:text-amber-300 flex items-center gap-1 focus-visible:outline-none focus-visible:underline"
+                >
+                  <span>Agnes Platform</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+              <input
+                id="agnes-key"
+                type="password"
+                placeholder={config?.agnes_key_masked || 'agnes-...'}
+                value={agnesKey}
+                onChange={(e) => setAgnesKey(e.target.value)}
+                className="w-full h-10 px-3 rounded-lg bg-white/5 border border-white/10 text-xs text-white placeholder-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:border-transparent font-mono"
+              />
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                <ShieldCheck className={`w-3.5 h-3.5 ${config?.has_agnes_key ? 'text-emerald-400' : 'text-slate-500'}`} />
+                <span>
+                  Status: {config?.has_agnes_key ? <strong className="text-emerald-400">Tersambung ({config.agnes_key_masked})</strong> : 'Belum disetel'}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label htmlFor="agnes-video-model" className="text-[11px] font-semibold text-slate-300 block">
+                  Model Video Default
+                </label>
+                <select
+                  id="agnes-video-model"
+                  value={agnesVideoModel}
+                  onChange={(e) => setAgnesVideoModel(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg bg-zinc-950 border border-white/10 text-xs text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                >
+                  <option value="agnes-video-2.5-flash">agnes-video-2.5-flash (Cepat, 720P)</option>
+                  <option value="agnes-video-2.5">agnes-video-2.5 (HD 720P/1080P)</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="agnes-base-url" className="text-[11px] font-semibold text-slate-300 block">
+                  Agnes Base URL
+                </label>
+                <input
+                  id="agnes-base-url"
+                  type="text"
+                  placeholder="https://apihub.agnes-ai.com"
+                  value={agnesBaseUrl}
+                  onChange={(e) => setAgnesBaseUrl(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg bg-white/5 border border-white/10 text-xs text-white placeholder-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 font-mono"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Storage & Auto Cleanup */}

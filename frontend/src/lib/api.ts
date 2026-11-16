@@ -9,6 +9,7 @@ import type {
   ModelTestResponse,
   EditClipPayload,
   EditClipResponse,
+  GenerateIdeaVideoPayload,
   VideoIdeaDirection,
   VideoIdeaPlan,
   VideoIdeaRequest,
@@ -35,6 +36,21 @@ export async function fetchIdeaPlan(
   payload: VideoIdeaRequest & { direction: VideoIdeaDirection },
 ): Promise<VideoIdeaPlan & { notice?: string }> {
   return postIdeaRequest('/api/ideas/plan', payload);
+}
+
+export async function generateIdeaVideo(
+  payload: GenerateIdeaVideoPayload,
+): Promise<{ job_id: string; status: string }> {
+  const res = await fetch('/api/ideas/generate-video', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok || data.error) {
+    throw new Error(data.error || 'Belum berhasil memulai pembuatan video Agnes AI.');
+  }
+  return data;
 }
 
 export async function fetchConfig(): Promise<AppConfig> {

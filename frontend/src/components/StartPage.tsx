@@ -24,7 +24,7 @@ export const StartPage: FC<StartPageProps> = ({ onStartIdeas, onStartClipping })
         <Lightbulb aria-hidden="true" className="mb-7 h-6 w-6 text-violet-300" />
         <span className="block font-headline text-lg font-semibold text-white">Aku punya ide</span>
         <span className="mt-2 block max-w-sm text-sm leading-6 text-zinc-400">
-          Temukan arah cerita, susun naskah, dan dapatkan panduan adegan.
+          Kembangkan arah cerita, susun naskah, lalu render jadi video AI dengan Agnes AI.
         </span>
         <span className="mt-5 block text-sm font-semibold text-violet-300 group-hover:text-white">Kembangkan ide</span>
       </button>

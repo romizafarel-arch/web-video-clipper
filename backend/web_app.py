@@ -39,8 +39,15 @@ from shorts_generator.job_manager import (
     job_manager,
     mask_sensitive_keys,
 )
+from shorts_generator.agnes import (
+    AGNES_ASPECT_RATIOS,
+    AGNES_SIZES,
+    AGNES_VIDEO_MODELS,
+    agnes_chat,
+    generate_video_to_file,
+)
 from shorts_generator.idea_planner import generate_directions, generate_plan
-from shorts_generator.local.llm import call_local_llm, call_openai_llm
+from shorts_generator.local.llm import call_gemini_llm, call_local_llm, call_openai_llm
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
@@ -1004,9 +1011,13 @@ def get_config():
         "has_gemini_key": bool(cfg.GEMINI_API_KEY and cfg.GEMINI_API_KEY != "your_gemini_key_here"),
         "has_openai_key": bool(cfg.OPENAI_API_KEY and cfg.OPENAI_API_KEY != "your_openai_key_here" and cfg.OPENAI_API_KEY != "your_apmix_or_openai_key_here"),
         "has_muapi_key": bool(cfg.MUAPI_API_KEY and cfg.MUAPI_API_KEY != "your_muapi_key_here"),
+        "has_agnes_key": bool(cfg.AGNES_API_KEY and cfg.AGNES_API_KEY != "your_agnes_key_here"),
+        "agnes_base_url": getattr(cfg, "AGNES_BASE_URL", "https://apihub.agnes-ai.com"),
+        "agnes_video_model": getattr(cfg, "AGNES_VIDEO_MODEL", "agnes-video-2.5-flash"),
         "gemini_key_masked": mask_key(cfg.GEMINI_API_KEY),
         "openai_key_masked": mask_key(cfg.OPENAI_API_KEY),
         "muapi_key_masked": mask_key(cfg.MUAPI_API_KEY),
+        "agnes_key_masked": mask_key(cfg.AGNES_API_KEY),
     })
 
 
@@ -1346,6 +1357,9 @@ def update_config():
         "TRANSCRIBER_PROVIDER",
         "LOCAL_WHISPER_MODEL",
         "MUAPI_API_KEY",
+        "AGNES_API_KEY",
+        "AGNES_BASE_URL",
+        "AGNES_VIDEO_MODEL",
         "JOB_TIMEOUT_SECONDS",
         "AUTO_DELETE_SOURCE_VIDEO",
     ]
@@ -1408,6 +1422,8 @@ def update_config():
     cfg.OPENAI_MODEL = os.getenv("OPENAI_MODEL", getattr(cfg, "OPENAI_MODEL", "gpt-4o-mini")).strip()
     cfg.LOCAL_WHISPER_MODEL = os.getenv("LOCAL_WHISPER_MODEL", getattr(cfg, "LOCAL_WHISPER_MODEL", "base")).strip()
     cfg.OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "").strip() or None
+    cfg.AGNES_BASE_URL = (os.getenv("AGNES_BASE_URL", getattr(cfg, "AGNES_BASE_URL", "https://apihub.agnes-ai.com")) or "https://apihub.agnes-ai.com").strip().rstrip("/")
+    cfg.AGNES_VIDEO_MODEL = (os.getenv("AGNES_VIDEO_MODEL", getattr(cfg, "AGNES_VIDEO_MODEL", "agnes-video-2.5-flash")) or "agnes-video-2.5-flash").strip()
     try:
         cfg.JOB_TIMEOUT_SECONDS = float(os.getenv("JOB_TIMEOUT_SECONDS", getattr(cfg, "JOB_TIMEOUT_SECONDS", 7200.0)))
     except (ValueError, TypeError):
@@ -1440,25 +1456,68 @@ def _idea_request_data():
     return {"idea": idea.strip(), "goal": goal, "tone": tone, "duration": duration}, None
 
 
+def _has_usable_key(value: Optional[str], *placeholders: str) -> bool:
+    cleaned = (value or "").strip()
+    return bool(cleaned and cleaned not in placeholders)
+
+
 def _idea_llm_call():
-    """Use the configured model when available; fall back only for this idea request."""
+    """Use configured model when available; fall back across Gemini/Agnes/OpenAI on runtime errors."""
     provider = str(cfg.LLM_PROVIDER or "gemini").strip().lower()
+    has_gemini = _has_usable_key(cfg.GEMINI_API_KEY, "your_gemini_key_here")
+    has_openai = _has_usable_key(cfg.OPENAI_API_KEY, "your_openai_key_here", "your_apmix_or_openai_key_here")
+    has_agnes = _has_usable_key(getattr(cfg, "AGNES_API_KEY", ""), "your_agnes_key_here")
+
+    primary_fn = call_local_llm
+    notice: Optional[str] = None
+
     if provider != "openai":
-        return call_local_llm, None
+        if not has_gemini and has_agnes:
+            return agnes_chat, "Gemini belum disetel; menyusun ide memakai Agnes AI."
+    else:
+        if not has_openai and has_agnes:
+            return agnes_chat, "OpenAI belum disetel; menyusun ide memakai Agnes AI."
+        model_response = get_openai_models()
+        if model_response.get("success") is True:
+            available = model_response.get("models", [])
+            model_ids = [item.get("id") for item in available if isinstance(item, dict) and item.get("id")]
+            configured_model = str(cfg.OPENAI_MODEL or "").strip()
+            if model_ids and configured_model not in model_ids:
+                fallback_model = model_ids[0]
+                notice = f"Model {configured_model or 'aktif'} tidak tersedia; untuk ide ini dipakai {fallback_model}."
+                app.logger.warning(notice)
+                primary_fn = lambda prompt, _m=fallback_model: call_openai_llm(prompt, model=_m)
 
-    model_response = get_openai_models()
-    if model_response.get("success") is not True:
-        return call_local_llm, None
-    available = model_response.get("models", [])
-    model_ids = [item.get("id") for item in available if isinstance(item, dict) and item.get("id")]
-    configured_model = str(cfg.OPENAI_MODEL or "").strip()
-    if not model_ids or configured_model in model_ids:
-        return call_local_llm, None
+    fallbacks = []
+    if provider == "openai":
+        if has_gemini:
+            fallbacks.append(("gemini", call_gemini_llm))
+        if has_agnes:
+            fallbacks.append(("agnes", agnes_chat))
+    else:
+        if has_agnes:
+            fallbacks.append(("agnes", agnes_chat))
+        if has_openai:
+            fallbacks.append(("openai", call_openai_llm))
 
-    fallback_model = model_ids[0]
-    notice = f"Model {configured_model or 'aktif'} tidak tersedia; untuk ide ini dipakai {fallback_model}."
-    app.logger.warning(notice)
-    return lambda prompt: call_openai_llm(prompt, model=fallback_model), notice
+    if not fallbacks:
+        return primary_fn, notice
+
+    def runner(prompt: str) -> str:
+        try:
+            return primary_fn(prompt)
+        except Exception as exc:
+            last_err = exc
+            app.logger.warning("Idea LLM primary (%s) failed: %s. Mencoba fallback...", provider, exc)
+            for name, fn in fallbacks:
+                try:
+                    return fn(prompt)
+                except Exception as fb_exc:
+                    last_err = fb_exc
+                    app.logger.warning("Idea LLM fallback (%s) failed: %s", name, fb_exc)
+            raise last_err
+
+    return runner, notice
 
 
 def _idea_error_response(exc: Exception, task: str):
@@ -1508,6 +1567,202 @@ def api_idea_plan():
         return jsonify(result)
     except Exception as exc:
         return _idea_error_response(exc, "plan")
+
+
+def run_agnes_idea_job(job_id: str, params: Dict[str, Any]) -> None:
+    """Background worker to generate a video from an idea using Agnes AI."""
+    with generation_lock:
+        job_ctx = job_manager.get_job(job_id)
+        if not job_ctx:
+            job_ctx = JobContext(job_id=job_id, url=params.get("url", "idea://agnes"), params=params)
+            job_manager._jobs[job_id] = job_ctx
+
+        job_ctx.worker_thread = threading.current_thread()
+        session_folder = params.get("session_folder") or job_ctx.session_folder
+        if not session_folder:
+            session_folder = f"idea_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{job_id}"
+        job_ctx.session_folder = session_folder
+        job_dir = OUTPUT_DIR / session_folder
+        result: Optional[Dict[str, Any]] = None
+
+        try:
+            job_dir.mkdir(parents=True, exist_ok=True)
+            if job_ctx.status == JobStatus.CANCELED:
+                jobs[job_id] = job_ctx.to_dict()
+                _persist_job_metadata(job_ctx)
+                return
+
+            job_ctx.transition_to(JobStatus.RUNNING, stage="rendering", progress=10)
+            job_ctx.started_at = time.time()
+            job_ctx.emit_log("[agnes] Mengirim prompt ide ke Agnes AI...")
+            jobs[job_id] = job_ctx.to_dict()
+            _persist_job_metadata(job_ctx)
+
+            filename = "short_1.mp4"
+            dest_path = job_dir / filename
+
+            def on_status(_status: str, pct: Optional[int], message: str) -> None:
+                job_ctx.emit_log(f"[agnes] {message}")
+                if pct is not None:
+                    mapped = max(20, min(92, int(pct)))
+                    job_ctx.transition_to(JobStatus.RUNNING, stage="rendering", progress=mapped)
+                jobs[job_id] = job_ctx.to_dict()
+
+            gen_info = generate_video_to_file(
+                prompt=params["prompt"],
+                dest_path=dest_path,
+                model=params.get("model"),
+                duration=params.get("duration", 6),
+                aspect_ratio=params.get("aspect_ratio", "9:16"),
+                size=params.get("size", "720P"),
+                api_key=params.get("api_key"),
+                base_url=params.get("base_url"),
+                check_cancel=job_ctx.check_cancellation_or_timeout,
+                on_status=on_status,
+            )
+
+            title = (params.get("title") or "Video Ide Agnes AI").strip()[:120]
+            aspect_ratio = params.get("aspect_ratio", "9:16")
+            duration = float(params.get("duration", 6))
+            short_entry = {
+                "title": title,
+                "hook_sentence": params.get("hook") or params["prompt"][:140],
+                "score": 95,
+                "clip_index": 1,
+                "filename": filename,
+                "folder_name": session_folder,
+                "web_url": f"/output/{session_folder}/{filename}",
+                "clip_url": str(dest_path),
+                "aspect_ratio": aspect_ratio,
+                "start_time": 0,
+                "end_time": duration,
+                "summary": params["prompt"],
+                "agnes_video_id": gen_info.get("video_id"),
+                "agnes_model": gen_info.get("model"),
+            }
+            result = {
+                "session_folder": session_folder,
+                "video_title": title,
+                "aspect_ratio": aspect_ratio,
+                "shorts": [short_entry],
+                "stats": {"total": 1, "success": 1, "failed": 0},
+            }
+            job_ctx.emit_log(f"[agnes] Video selesai disimpan: {filename}")
+            job_ctx.transition_to(JobStatus.COMPLETED, stage="completed", progress=100, result=result)
+
+        except JobCancelledException as exc:
+            job_ctx.emit_log(f"[INFO] Generasi video Agnes AI dibatalkan: {exc}")
+            job_ctx.transition_to(
+                JobStatus.CANCELED,
+                stage="canceled",
+                progress=100,
+                error=str(exc),
+                result={"shorts": [], "stats": {"total": 1, "success": 0, "failed": 0}},
+            )
+        except JobTimeoutException as exc:
+            job_ctx.emit_log(f"[ERROR] Batas waktu Agnes AI terlampaui: {exc}")
+            job_ctx.transition_to(
+                JobStatus.TIMEOUT,
+                stage="timeout",
+                progress=100,
+                error=str(exc),
+                result={"shorts": [], "stats": {"total": 1, "success": 0, "failed": 0}},
+            )
+        except Exception as exc:
+            job_ctx.emit_log(f"[ERROR] Agnes AI gagal: {exc}")
+            job_ctx.transition_to(JobStatus.FAILED, stage="failed", progress=100, error=str(exc), result=result)
+        finally:
+            if session_folder:
+                try:
+                    _persist_job_metadata(job_ctx)
+                except Exception:
+                    pass
+            jobs[job_id] = job_ctx.to_dict()
+
+
+@app.route("/api/ideas/generate-video", methods=["POST"])
+def api_idea_generate_video():
+    """Generate a video from an idea prompt via Agnes AI in a background job."""
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "Payload harus berupa objek JSON yang valid."}), 400
+
+    if not _has_usable_key(getattr(cfg, "AGNES_API_KEY", ""), "your_agnes_key_here"):
+        return jsonify({"error": "Sambungkan AGNES_API_KEY dulu lewat Pengaturan sebelum membuat video."}), 503
+
+    prompt = data.get("prompt")
+    if not isinstance(prompt, str) or not prompt.strip() or len(prompt.strip()) > 2000:
+        return jsonify({"error": "Prompt video wajib diisi (maksimal 2.000 karakter)."}), 400
+
+    model = str(data.get("model") or getattr(cfg, "AGNES_VIDEO_MODEL", "agnes-video-2.5-flash")).strip()
+    if model not in AGNES_VIDEO_MODELS:
+        return jsonify({"error": f"Model Agnes tidak valid. Pilihan: {', '.join(AGNES_VIDEO_MODELS)}"}), 400
+
+    aspect_ratio = str(data.get("aspect_ratio") or "9:16").strip()
+    if aspect_ratio not in AGNES_ASPECT_RATIOS:
+        return jsonify({"error": f"Rasio aspek tidak valid. Pilihan: {', '.join(AGNES_ASPECT_RATIOS)}"}), 400
+
+    raw_duration = data.get("duration", 6)
+    try:
+        duration = int(raw_duration)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Durasi video Agnes AI harus berupa angka 4 sampai 12 detik."}), 400
+    if not 4 <= duration <= 12:
+        return jsonify({"error": "Durasi video Agnes AI harus antara 4 sampai 12 detik."}), 400
+
+    size = str(data.get("size") or "720P").strip().upper()
+    if size not in AGNES_SIZES:
+        return jsonify({"error": f"Resolusi tidak valid. Pilihan: {', '.join(AGNES_SIZES)}"}), 400
+
+    title = str(data.get("title") or data.get("idea") or "Video Ide Agnes AI").strip()
+    hook = str(data.get("hook") or "").strip()
+
+    with job_manager._admission_lock:
+        active_job = get_active_job()
+        if active_job:
+            return jsonify({
+                "error": f"Sedang ada proses generasi yang aktif (Job ID: {active_job['job_id']}). Harap tunggu hingga selesai atau batalkan pekerjaan tersebut."
+            }), 409
+
+        job_id = str(uuid.uuid4())[:8]
+        session_folder = f"idea_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{job_id}"
+        (OUTPUT_DIR / session_folder).mkdir(parents=True, exist_ok=True)
+
+        job_params = {
+            "session_folder": session_folder,
+            "prompt": prompt.strip(),
+            "title": title,
+            "hook": hook,
+            "model": model,
+            "duration": duration,
+            "aspect_ratio": aspect_ratio,
+            "size": size,
+            "api_key": cfg.AGNES_API_KEY,
+            "base_url": getattr(cfg, "AGNES_BASE_URL", "https://apihub.agnes-ai.com"),
+            "config": {
+                "agnes_api_key": cfg.AGNES_API_KEY,
+                "agnes_base_url": getattr(cfg, "AGNES_BASE_URL", "https://apihub.agnes-ai.com"),
+                "agnes_video_model": model,
+            },
+        }
+        job_ctx = job_manager.admit_job(
+            job_id=job_id,
+            url=f"agnes://{model}",
+            params=job_params,
+            timeout_seconds=getattr(cfg, "JOB_TIMEOUT_SECONDS", 1800.0),
+        )
+        job_ctx.session_folder = session_folder
+        jobs[job_id] = job_ctx.to_dict()
+        try:
+            _persist_job_metadata(job_ctx)
+        except Exception:
+            pass
+
+    thread = threading.Thread(target=run_agnes_idea_job, args=(job_id, job_params), daemon=True)
+    job_ctx.worker_thread = thread
+    thread.start()
+
+    return jsonify({"job_id": job_id, "status": "started"})
 
 
 @app.route("/api/generate", methods=["POST"])

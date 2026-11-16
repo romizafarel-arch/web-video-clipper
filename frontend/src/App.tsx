@@ -370,6 +370,16 @@ export function App() {
         ) : workspace === 'ideas' ? (
           <IdeaFlow
             config={config}
+            activeJob={activeJob}
+            isCanceling={isCanceling}
+            pollingError={pollingError}
+            onCancelJob={handleCancel}
+            onRetryPolling={handleRetryPolling}
+            onVideoJobStarted={(jobId) => {
+              setJobResult(null);
+              toast.info('Tugas video dikirim ke Agnes AI...');
+              startPolling(jobId);
+            }}
             onBack={() => setWorkspace('start')}
             onOpenSettings={() => setIsSettingsOpen(true)}
             onUseFootage={(guide) => {
