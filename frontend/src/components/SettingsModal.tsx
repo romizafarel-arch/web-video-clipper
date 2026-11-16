@@ -1,5 +1,5 @@
-import { useState, useEffect, type FC } from 'react';
-import { X, Key, Settings, ExternalLink, Save, ShieldCheck, Cpu } from 'lucide-react';
+import { useState, useEffect, useCallback, type FC } from 'react';
+import { X, Key, Settings, ExternalLink, Save, ShieldCheck, Cpu, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -7,8 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from './ui/dialog';
-import type { AppConfig } from '../types';
-import { updateConfig, fetchConfig } from '../lib/api';
+import type { AppConfig, LLMProvider, ModelOption } from '../types';
+import { updateConfig, fetchConfig, fetchModels } from '../lib/api';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -30,19 +30,69 @@ export const SettingsModal: FC<SettingsModalProps> = ({
   const [agnesKey, setAgnesKey] = useState('');
   const [agnesBaseUrl, setAgnesBaseUrl] = useState(config?.agnes_base_url || 'https://apihub.agnes-ai.com');
   const [agnesVideoModel, setAgnesVideoModel] = useState(config?.agnes_video_model || 'agnes-video-2.5-flash');
+  const [llmProvider, setLlmProvider] = useState<LLMProvider>(
+    config?.llm_provider === 'openai' ? 'openai' : 'gemini',
+  );
+  const [geminiModel, setGeminiModel] = useState(config?.gemini_model || 'gemini-3.5-flash');
+  const [openaiModel, setOpenaiModel] = useState(config?.openai_model || 'gpt-4o-mini');
+  const [providerModels, setProviderModels] = useState<ModelOption[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [modelFetchError, setModelFetchError] = useState<string | null>(null);
   const [autoDeleteSource, setAutoDeleteSource] = useState(config?.auto_delete_source_video ?? true);
   const [isSaving, setIsSaving] = useState(false);
 
+  const loadProviderModels = useCallback(async (provider: LLMProvider, forceRefresh: boolean = false) => {
+    setIsLoadingModels(true);
+    setModelFetchError(null);
+    try {
+      const data = await fetchModels(provider, forceRefresh);
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray((data as { models?: ModelOption[] }).models)
+        ? ((data as { models?: ModelOption[] }).models ?? [])
+        : [];
+      const errMsg = !Array.isArray(data) ? (data as { error?: string }).error : undefined;
+      setProviderModels(list);
+      if (errMsg) setModelFetchError(errMsg);
+    } catch {
+      setProviderModels([]);
+      setModelFetchError('Gagal mengambil daftar model dari server.');
+    } finally {
+      setIsLoadingModels(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (isOpen && config) {
+      const initialProvider: LLMProvider = config.llm_provider === 'openai' ? 'openai' : 'gemini';
       queueMicrotask(() => {
         setOpenaiBaseUrl(config.openai_base_url || '');
         setAgnesBaseUrl(config.agnes_base_url || 'https://apihub.agnes-ai.com');
         setAgnesVideoModel(config.agnes_video_model || 'agnes-video-2.5-flash');
+        setLlmProvider(initialProvider);
+        setGeminiModel(config.gemini_model || 'gemini-3.5-flash');
+        setOpenaiModel(config.openai_model || 'gpt-4o-mini');
         setAutoDeleteSource(config.auto_delete_source_video ?? true);
       });
     }
   }, [isOpen, config]);
+
+  useEffect(() => {
+    if (isOpen) {
+      queueMicrotask(() => {
+        void loadProviderModels(llmProvider, false);
+      });
+    }
+  }, [isOpen, llmProvider, loadProviderModels]);
+
+  const activeLlmModel = llmProvider === 'openai' ? openaiModel : geminiModel;
+  const setActiveLlmModel = (nextModel: string) => {
+    if (llmProvider === 'openai') {
+      setOpenaiModel(nextModel);
+    } else {
+      setGeminiModel(nextModel);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +122,15 @@ export const SettingsModal: FC<SettingsModalProps> = ({
     }
     if (agnesVideoModel !== (config?.agnes_video_model || 'agnes-video-2.5-flash')) {
       payload.AGNES_VIDEO_MODEL = agnesVideoModel;
+    }
+    if (llmProvider !== (config?.llm_provider === 'openai' ? 'openai' : 'gemini')) {
+      payload.LLM_PROVIDER = llmProvider;
+    }
+    if (geminiModel.trim() && geminiModel.trim() !== (config?.gemini_model || '')) {
+      payload.GEMINI_MODEL = geminiModel.trim();
+    }
+    if (openaiModel.trim() && openaiModel.trim() !== (config?.openai_model || '')) {
+      payload.OPENAI_MODEL = openaiModel.trim();
     }
 
     try {
@@ -304,6 +363,82 @@ export const SettingsModal: FC<SettingsModalProps> = ({
                 />
               </div>
             </div>
+          </div>
+
+          {/* LLM Provider & Model Selection */}
+          <div className="space-y-3 pt-3 border-t border-white/10">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                <Cpu className="w-3.5 h-3.5 text-violet-400" />
+                Provider & Model AI (Ide & Analisis)
+              </span>
+              <button
+                type="button"
+                onClick={() => void loadProviderModels(llmProvider, true)}
+                disabled={isLoadingModels}
+                className="min-h-[44px] px-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] text-slate-200 flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                aria-label="Muat ulang daftar model"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingModels ? 'animate-spin' : ''}`} />
+                <span>Muat ulang</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label htmlFor="settings-llm-provider" className="text-[11px] font-semibold text-slate-300 block">
+                  LLM Provider
+                </label>
+                <select
+                  id="settings-llm-provider"
+                  value={llmProvider}
+                  onChange={(e) => setLlmProvider(e.target.value as LLMProvider)}
+                  className="w-full h-11 px-3 rounded-lg bg-zinc-950 border border-white/10 text-xs text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                >
+                  <option value="gemini">Google Gemini</option>
+                  <option value="openai">OpenAI / APMIX</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="settings-llm-model" className="text-[11px] font-semibold text-slate-300 block">
+                  Model AI ({llmProvider === 'gemini' ? 'Gemini' : 'OpenAI'})
+                </label>
+                {providerModels.length > 0 ? (
+                  <select
+                    id="settings-llm-model"
+                    value={activeLlmModel}
+                    onChange={(e) => setActiveLlmModel(e.target.value)}
+                    disabled={isLoadingModels}
+                    className="w-full h-11 px-3 rounded-lg bg-zinc-950 border border-white/10 text-xs text-white disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 font-mono"
+                  >
+                    {activeLlmModel && !providerModels.some((m) => m.id === activeLlmModel) && (
+                      <option value={activeLlmModel}>{activeLlmModel} (saat ini)</option>
+                    )}
+                    {providerModels.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name || m.id}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    id="settings-llm-model"
+                    type="text"
+                    value={activeLlmModel}
+                    onChange={(e) => setActiveLlmModel(e.target.value)}
+                    placeholder={llmProvider === 'gemini' ? 'gemini-3.5-flash-lite' : 'gpt-4o-mini'}
+                    className="w-full h-11 px-3 rounded-lg bg-zinc-950 border border-white/10 text-xs text-white placeholder-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 font-mono"
+                  />
+                )}
+              </div>
+            </div>
+
+            {providerModels.length === 0 && !isLoadingModels && (
+              <p className="text-[11px] text-slate-400">
+                {modelFetchError || 'Daftar model dari server kosong. Masukkan ID model secara manual atau ganti ke Google Gemini.'}
+              </p>
+            )}
           </div>
 
           {/* Storage & Auto Cleanup */}

@@ -1592,7 +1592,7 @@ def run_agnes_idea_job(job_id: str, params: Dict[str, Any]) -> None:
                 _persist_job_metadata(job_ctx)
                 return
 
-            job_ctx.transition_to(JobStatus.RUNNING, stage="rendering", progress=10)
+            job_ctx.transition_to(JobStatus.RUNNING, stage="submitting", progress=10)
             job_ctx.started_at = time.time()
             job_ctx.emit_log("[agnes] Mengirim prompt ide ke Agnes AI...")
             jobs[job_id] = job_ctx.to_dict()
@@ -1601,11 +1601,20 @@ def run_agnes_idea_job(job_id: str, params: Dict[str, Any]) -> None:
             filename = "short_1.mp4"
             dest_path = job_dir / filename
 
-            def on_status(_status: str, pct: Optional[int], message: str) -> None:
+            def on_status(status_name: str, pct: Optional[int], message: str) -> None:
                 job_ctx.emit_log(f"[agnes] {message}")
+                normalized = (status_name or "").strip().lower()
+                if normalized == "submitting":
+                    next_stage = "submitting"
+                elif normalized == "downloading":
+                    next_stage = "downloading"
+                else:
+                    next_stage = "rendering"
                 if pct is not None:
-                    mapped = max(20, min(92, int(pct)))
-                    job_ctx.transition_to(JobStatus.RUNNING, stage="rendering", progress=mapped)
+                    mapped = max(10, min(95, int(pct)))
+                    job_ctx.transition_to(JobStatus.RUNNING, stage=next_stage, progress=mapped)
+                else:
+                    job_ctx.transition_to(JobStatus.RUNNING, stage=next_stage)
                 jobs[job_id] = job_ctx.to_dict()
 
             gen_info = generate_video_to_file(
@@ -2047,6 +2056,7 @@ def get_job(job_id: str):
         raw_logs = "".join(job.get("logs", []))
         return jsonify({
             "job_id": job["job_id"],
+            "url": job.get("url"),
             "status": job.get("status", "running"),
             "stage": job.get("stage", "running"),
             "progress": job.get("progress", 0),

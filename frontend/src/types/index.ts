@@ -269,6 +269,7 @@ export type JobStatusType =
 
 export interface JobState {
   job_id: string;
+  url?: string;
   status: JobStatusType;
   stage?: string;
   progress?: number;
@@ -282,6 +283,7 @@ export interface JobState {
 export interface ActiveJobResponse {
   active: boolean;
   job_id?: string;
+  url?: string;
   status?: JobStatusType | 'none';
   stage?: string;
   progress?: number;

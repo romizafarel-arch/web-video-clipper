@@ -69,22 +69,81 @@ class TestAgnesClient(unittest.TestCase):
             reply = agnes_chat("test prompt", api_key="agnes-key")
         self.assertEqual(reply, '{"directions": []}')
 
-    def test_submit_video_raises_on_401(self):
-        mock_resp = MagicMock(status_code=401, text="Unauthorized")
-        mock_resp.json.return_value = {"error": {"message": "Invalid key"}}
-        with patch("shorts_generator.agnes.requests.post", return_value=mock_resp):
-            with self.assertRaises(AgnesAPIError):
-                submit_video("test", api_key="bad-key")
+    def test_submit_video_does_not_retry_on_401_or_403(self):
+        for code in (401, 403):
+            mock_resp = MagicMock(status_code=code, text="Forbidden")
+            mock_resp.json.return_value = {"error": {"code": "insufficient_user_quota", "message": "Quota empty"}}
+            with patch("shorts_generator.agnes.requests.post", return_value=mock_resp) as post_mock:
+                with self.assertRaises(AgnesAPIError):
+                    submit_video("test", api_key="bad-key")
+                self.assertEqual(post_mock.call_count, 1)
 
-    def test_build_video_prompt_combines_plan(self):
+    def test_submit_video_retries_503_queue_full_and_reports_status(self):
+        queue_resp = MagicMock(status_code=503, text='{"error":{"code":"video_queue_full"}}')
+        queue_resp.json.return_value = {"error": {"code": "video_queue_full", "message": "video queue is full"}}
+        ok_resp = MagicMock(status_code=200)
+        ok_resp.json.return_value = {"video_id": "vid_retry_ok"}
+        statuses = []
+
+        with (
+            patch("shorts_generator.agnes.requests.post", side_effect=[queue_resp, queue_resp, ok_resp]) as post_mock,
+            patch("shorts_generator.agnes.time.sleep") as sleep_mock,
+        ):
+            vid = submit_video(
+                "Kopi susu hangat",
+                api_key="agnes-key",
+                retries=12,
+                on_status=lambda st, pct, msg: statuses.append((st, pct, msg)),
+            )
+
+        self.assertEqual(vid, "vid_retry_ok")
+        self.assertEqual(post_mock.call_count, 3)
+        self.assertTrue(sleep_mock.called)
+        self.assertEqual(statuses[0][2], "Menunggu slot antrean Agnes AI (1/12)...")
+        self.assertEqual(statuses[1][2], "Menunggu slot antrean Agnes AI (2/12)...")
+
+    def test_submit_video_503_queue_full_respects_check_cancel(self):
+        queue_resp = MagicMock(status_code=503, text='{"error":{"code":"video_queue_full"}}')
+        queue_resp.json.return_value = {"error": {"code": "video_queue_full", "message": "video queue is full"}}
+        calls = {"n": 0}
+
+        def cancel_on_second_check():
+            calls["n"] += 1
+            if calls["n"] >= 2:
+                raise RuntimeError("cancelled by user")
+
+        with (
+            patch("shorts_generator.agnes.requests.post", return_value=queue_resp) as post_mock,
+            patch("shorts_generator.agnes.time.sleep"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "cancelled by user"):
+                submit_video("Kopi susu", api_key="agnes-key", retries=12, check_cancel=cancel_on_second_check)
+        self.assertEqual(post_mock.call_count, 1)
+
+    def test_submit_video_503_exhausts_12_retries(self):
+        queue_resp = MagicMock(status_code=503, text='{"error":{"code":"video_queue_full"}}')
+        queue_resp.json.return_value = {"error": {"code": "video_queue_full", "message": "video queue is full"}}
+        with (
+            patch("shorts_generator.agnes.requests.post", return_value=queue_resp) as post_mock,
+            patch("shorts_generator.agnes.time.sleep"),
+        ):
+            with self.assertRaises(AgnesAPIError):
+                submit_video("Kopi susu", api_key="agnes-key")
+        self.assertEqual(post_mock.call_count, 13)
+
+    def test_build_video_prompt_combines_plan_without_dialogue_or_arrows(self):
         prompt = build_video_prompt(
-            idea="Kopi susu anak kos",
+            idea="Kopi susu anak kos..",
             direction={"summary": "Pagi hari hemat di kos"},
-            hook="Cuma modal lima ribu",
-            plan={"scenes": [{"visual": "Tuang kopi ke gelas es"}, {"visual": "Aduk perlahan"}]},
+            hook='"Cuma modal lima ribu!"',
+            plan={"scenes": [{"visual": "Tuang kopi ke gelas es -> close up"}, {"visual": "Aduk perlahan"}]},
         )
         self.assertIn("Kopi susu anak kos", prompt)
         self.assertIn("Tuang kopi ke gelas es", prompt)
+        self.assertIn("9:16", prompt)
+        self.assertNotIn("->", prompt)
+        self.assertNotIn("..", prompt)
+        self.assertNotIn("Cuma modal lima ribu", prompt)
 
 
 class TestAgnesRoutes(unittest.TestCase):

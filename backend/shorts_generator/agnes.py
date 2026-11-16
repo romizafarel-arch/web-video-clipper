@@ -1,5 +1,7 @@
 """Agnes AI API client for idea-to-video generation and chat fallback."""
 from pathlib import Path
+import random
+import re
 import time
 from typing import Any, Callable, Dict, Optional
 
@@ -102,28 +104,64 @@ def agnes_chat(
     return content.strip()
 
 
+def _clean_visual_fragment(text: str) -> str:
+    cleaned = str(text or "").strip().strip("\"'“”‘’")
+    cleaned = cleaned.replace("->", ", ")
+    cleaned = re.sub(r"\.{2,}", ".", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" .,")
+    return cleaned
+
+
 def build_video_prompt(
     idea: str,
     direction: Optional[Dict[str, str]] = None,
     hook: str = "",
     plan: Optional[Dict[str, Any]] = None,
+    aspect_ratio: str = "9:16",
 ) -> str:
-    """Synthesize a concise visual video prompt from an idea and optional scene plan."""
-    parts = [idea.strip()]
+    """Synthesize a concise visual-only cinematic prompt from an idea and optional scene plan."""
+    _ = hook  # Spoken hook is intentionally excluded from visual-only text-to-video prompt.
+    parts = [_clean_visual_fragment(idea)]
     if isinstance(direction, dict) and direction.get("summary"):
-        parts.append(f"Concept: {str(direction['summary']).strip()}")
-    if hook.strip():
-        parts.append(f"Opening hook visual: {hook.strip()}")
+        summary = _clean_visual_fragment(str(direction["summary"]))
+        if summary:
+            parts.append(summary)
     if isinstance(plan, dict) and isinstance(plan.get("scenes"), list):
         visuals = [
-            str(scene.get("visual", "")).strip()
+            _clean_visual_fragment(str(scene.get("visual", "")))
             for scene in plan["scenes"]
-            if isinstance(scene, dict) and str(scene.get("visual", "")).strip()
+            if isinstance(scene, dict) and _clean_visual_fragment(str(scene.get("visual", "")))
         ]
         if visuals:
-            parts.append("Visual sequence: " + " -> ".join(visuals[:4]))
-    prompt = ". ".join(p.rstrip(".") for p in parts if p)
+            parts.append(", ".join(visuals[:4]))
+    framing = "vertikal 9:16" if aspect_ratio == "9:16" else f"rasio {aspect_ratio}"
+    parts.append(
+        f"Sinematik realistis, gerakan kamera halus dengan close-up subjek dan aksi jelas, "
+        f"pencahayaan hangat natural, suasana hidup, format {framing} tanpa teks atau dialog"
+    )
+    prompt = ". ".join(p for p in parts if p)
+    prompt = re.sub(r"\.{2,}", ".", prompt).strip()
     return prompt[:2000]
+
+
+def _sleep_with_cancel(delay: float, check_cancel: Optional[Callable[[], None]] = None) -> None:
+    remaining = max(0.0, float(delay))
+    while remaining > 0:
+        if check_cancel:
+            check_cancel()
+        chunk = min(0.5, remaining)
+        time.sleep(chunk)
+        remaining -= chunk
+    if check_cancel:
+        check_cancel()
+
+
+def _is_queue_full_503(resp: requests.Response) -> bool:
+    if resp.status_code != 503:
+        return False
+    body = (resp.text or "").lower()
+    detail = _extract_error_message(resp).lower()
+    return "video_queue_full" in body or "queue" in detail
 
 
 def submit_video(
@@ -134,8 +172,9 @@ def submit_video(
     size: str = "720P",
     api_key: Optional[str] = None,
     base_url: Optional[str] = None,
-    retries: int = 3,
+    retries: int = 12,
     check_cancel: Optional[Callable[[], None]] = None,
+    on_status: Optional[Callable[[str, Optional[int], str], None]] = None,
 ) -> str:
     """Submit a video generation task to Agnes AI and return its video_id."""
     clean_prompt = (prompt or "").strip()
@@ -161,16 +200,41 @@ def submit_video(
         "seconds": str(chosen_duration),
     }
 
-    last_err: Optional[Exception] = None
-    for attempt in range(max(1, retries)):
+    max_queue_retries = max(0, int(retries))
+    max_transient_retries = min(3, max_queue_retries)
+    queue_retry_count = 0
+    transient_retry_count = 0
+
+    while True:
         if check_cancel:
             check_cancel()
         try:
             resp = requests.post(url, json=payload, headers=_headers(api_key), timeout=60)
-            if resp.status_code in (429, 503) and attempt + 1 < retries:
-                last_err = _format_http_error(resp, "submit video")
-                time.sleep(2 * (attempt + 1))
-                continue
+            if resp.status_code in (401, 403):
+                raise _format_http_error(resp, "submit video")
+
+            if _is_queue_full_503(resp):
+                if queue_retry_count < max_queue_retries:
+                    queue_retry_count += 1
+                    if on_status:
+                        pct = min(22, 10 + queue_retry_count)
+                        on_status(
+                            "submitting",
+                            pct,
+                            f"Menunggu slot antrean Agnes AI ({queue_retry_count}/{max_queue_retries})...",
+                        )
+                    delay = random.uniform(8.0, 10.0) + random.uniform(0.0, 1.5)
+                    _sleep_with_cancel(delay, check_cancel)
+                    continue
+                raise _format_http_error(resp, "submit video")
+
+            if resp.status_code in (429, 503):
+                if transient_retry_count < max_transient_retries:
+                    transient_retry_count += 1
+                    _sleep_with_cancel(2.0 * transient_retry_count, check_cancel)
+                    continue
+                raise _format_http_error(resp, "submit video")
+
             if resp.status_code >= 400:
                 raise _format_http_error(resp, "submit video")
 
@@ -187,13 +251,11 @@ def submit_video(
                 raise AgnesAPIError(f"Agnes AI tidak mengembalikan video_id: {data}")
             return str(video_id)
         except (requests.Timeout, requests.ConnectionError) as exc:
-            last_err = exc
-            if attempt + 1 < retries:
-                time.sleep(2 * (attempt + 1))
+            if transient_retry_count < max_transient_retries:
+                transient_retry_count += 1
+                _sleep_with_cancel(2.0 * transient_retry_count, check_cancel)
                 continue
             raise AgnesAPIError(f"Gagal terhubung ke Agnes AI: {exc}") from exc
-
-    raise AgnesAPIError(str(last_err or "Gagal mengirim tugas video ke Agnes AI."))
 
 
 def fetch_video_status(
@@ -286,6 +348,7 @@ def generate_video_to_file(
         api_key=api_key,
         base_url=base_url,
         check_cancel=check_cancel,
+        on_status=on_status,
     )
     if on_status:
         on_status("queued", 25, f"Tugas Agnes AI dibuat (video_id={video_id})")
@@ -309,7 +372,7 @@ def generate_video_to_file(
             consecutive_errors += 1
             if consecutive_errors >= 5:
                 raise AgnesAPIError(f"Koneksi terputus saat memantau video Agnes AI: {exc}") from exc
-            time.sleep(poll_interval)
+            _sleep_with_cancel(poll_interval, check_cancel)
             continue
 
         status = info["status"]
@@ -335,6 +398,6 @@ def generate_video_to_file(
         if status in ("failed", "error"):
             raise AgnesAPIError(info.get("error") or "Pembuatan video di Agnes AI gagal.")
 
-        time.sleep(poll_interval)
+        _sleep_with_cancel(poll_interval, check_cancel)
 
     raise AgnesAPIError(f"Pembuatan video Agnes AI melewati batas waktu ({int(timeout)} detik).")

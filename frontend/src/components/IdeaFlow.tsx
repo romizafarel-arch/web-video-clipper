@@ -47,20 +47,57 @@ const DURATIONS = [15, 30, 45] as const;
 const AGNES_DURATIONS = [4, 6, 8, 10, 12] as const;
 const AGNES_RATIOS: AgnesAspectRatio[] = ['9:16', '16:9', '1:1', '3:4', '4:3'];
 
+function stripHookQuotes(text: string): string {
+  const trimmed = text.trim();
+  const stripped = trimmed.replace(/^["'“”‘’]+|["'“”‘’]+$/g, '').trim();
+  return stripped || trimmed;
+}
+
+function cleanVisualFragment(text: string): string {
+  return text
+    .trim()
+    .replace(/^["'“”‘’]+|["'“”‘’]+$/g, '')
+    .replace(/->/g, ', ')
+    .replace(/\.{2,}/g, '.')
+    .replace(/\s+/g, ' ')
+    .replace(/[.,\s]+$/, '')
+    .trim();
+}
+
 function buildDefaultVideoPrompt(
   idea: string,
   direction?: VideoIdeaDirection | null,
-  hook?: string,
+  _hook?: string,
   plan?: VideoIdeaPlan | null,
+  aspectRatio: AgnesAspectRatio = '9:16',
 ): string {
-  const parts = [idea.trim()];
-  if (direction?.summary) parts.push(`Concept: ${direction.summary.trim()}`);
-  if (hook?.trim()) parts.push(`Opening shot: ${hook.trim()}`);
-  if (plan?.scenes?.length) {
-    const visuals = plan.scenes.map((s) => s.visual.trim()).filter(Boolean).slice(0, 4);
-    if (visuals.length > 0) parts.push(`Visual sequence: ${visuals.join(' -> ')}`);
+  const parts: string[] = [];
+  const cleanIdea = cleanVisualFragment(idea);
+  if (cleanIdea) parts.push(cleanIdea);
+
+  if (direction?.summary) {
+    const cleanSummary = cleanVisualFragment(direction.summary);
+    if (cleanSummary) parts.push(cleanSummary);
   }
-  return parts.filter(Boolean).join('. ').slice(0, 2000);
+
+  if (plan?.scenes?.length) {
+    const visuals = plan.scenes
+      .map((s) => cleanVisualFragment(s.visual))
+      .filter(Boolean)
+      .slice(0, 4);
+    if (visuals.length > 0) parts.push(visuals.join(', '));
+  }
+
+  const framing = aspectRatio === '9:16' ? 'vertikal 9:16' : `rasio ${aspectRatio}`;
+  parts.push(
+    `Sinematik realistis, gerakan kamera halus dengan close-up subjek dan aksi jelas, pencahayaan hangat natural, suasana hidup, format ${framing} tanpa teks atau dialog`,
+  );
+
+  return parts
+    .filter(Boolean)
+    .join('. ')
+    .replace(/\.{2,}/g, '.')
+    .slice(0, 2000);
 }
 
 function formatPlanText(idea: string, direction: string, hook: string, plan: VideoIdeaPlan): string {
@@ -153,10 +190,12 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
     setModelNotice(null);
     try {
       const result = await fetchIdeaPlan({ ...request, direction: selectedDirection });
-      setPlan(result);
+      const cleanedHooks = result.hooks.map(stripHookQuotes);
+      const normalizedPlan = { ...result, hooks: cleanedHooks };
+      setPlan(normalizedPlan);
       setModelNotice(result.notice ?? null);
-      setSelectedHook(result.hooks[0]);
-      setVideoPrompt(buildDefaultVideoPrompt(idea, selectedDirection, result.hooks[0], result));
+      setSelectedHook(cleanedHooks[0] ?? '');
+      setVideoPrompt(buildDefaultVideoPrompt(idea, selectedDirection, cleanedHooks[0], normalizedPlan, videoRatio));
       setStep(3);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Panduan video belum berhasil dibuat. Coba lagi.');
@@ -168,7 +207,7 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
   const openVideoComposer = () => {
     setError(null);
     if (!videoPrompt.trim() && idea.trim()) {
-      setVideoPrompt(buildDefaultVideoPrompt(idea, selectedDirection, selectedHook, plan));
+      setVideoPrompt(buildDefaultVideoPrompt(idea, selectedDirection, selectedHook, plan, videoRatio));
     }
     setStep('video');
   };
@@ -188,7 +227,7 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
         prompt: cleanPrompt,
         title: selectedDirection?.title || idea.trim().slice(0, 80) || 'Video Ide Agnes AI',
         idea: idea.trim(),
-        hook: selectedHook || selectedDirection?.hook || '',
+        hook: stripHookQuotes(selectedHook || selectedDirection?.hook || ''),
         model: videoModel,
         duration: videoDuration,
         aspect_ratio: videoRatio,
@@ -339,7 +378,7 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
                     <span className="min-w-0 flex-1">
                       <span className="block font-headline text-base font-semibold text-white">{direction.title}</span>
                       <span className="mt-1 block text-sm leading-6 text-zinc-300">{direction.summary}</span>
-                      <span className="mt-3 block border-l-2 border-cyan-400/60 pl-3 text-sm leading-6 text-cyan-100">“{direction.hook}”</span>
+                      <span className="mt-3 block border-l-2 border-cyan-400/60 pl-3 text-sm leading-6 text-cyan-100">“{stripHookQuotes(direction.hook)}”</span>
                       <span className="mt-2 block text-xs leading-5 text-zinc-400">{direction.why}</span>
                     </span>
                   </span>
@@ -540,7 +579,12 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
             {isSubmittingVideo ? 'Mengirim ke Agnes AI...' : isJobActive ? 'Video sedang dibuat...' : 'Generate Video AI'}
           </Button>
 
-          {activeJob && (activeJob.status === 'running' || activeJob.status === 'queued' || activeJob.status === 'canceling' || activeJob.status === 'failed') && (
+          {activeJob &&
+            (activeJob.status === 'running' ||
+              activeJob.status === 'queued' ||
+              activeJob.status === 'canceling' ||
+              (Boolean(activeJob.url?.startsWith('agnes://')) &&
+                ['failed', 'timeout', 'canceled', 'cancelled', 'interrupted', 'completed'].includes(activeJob.status))) && (
             <div className="pt-2">
               <JobProgressCard
                 job={activeJob}

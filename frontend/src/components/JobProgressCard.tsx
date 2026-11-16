@@ -23,15 +23,44 @@ export const JobProgressCard: FC<JobProgressCardProps> = ({
 }) => {
   const [showLogs, setShowLogs] = useState(true);
 
-  const stages = [
-    { key: 'downloading', label: '1. Unduh Video' },
-    { key: 'transcribing', label: '2. Transkripsi Audio' },
-    { key: 'analyzing', label: '3. Seleksi AI Viral' },
-    { key: 'cropping', label: '4. Pemotongan & Render' },
-  ];
+  const isAgnesJob = Boolean(
+    job.url?.startsWith('agnes://') ||
+      job.stage === 'submitting' ||
+      job.stage === 'rendering',
+  );
 
-  const normalizedStage = job.stage === 'rendering' ? 'cropping' : job.stage;
+  const stages = isAgnesJob
+    ? [
+        { key: 'submitting', label: '1. Kirim Tugas' },
+        { key: 'rendering', label: '2. Antre / Render' },
+        { key: 'downloading', label: '3. Unduh MP4' },
+        { key: 'completed', label: '4. Siap di Studio' },
+      ]
+    : [
+        { key: 'downloading', label: '1. Unduh Video' },
+        { key: 'transcribing', label: '2. Transkripsi Audio' },
+        { key: 'analyzing', label: '3. Seleksi AI Viral' },
+        { key: 'cropping', label: '4. Pemotongan & Render' },
+      ];
+
+  const normalizeStage = (stage?: string): string | undefined => {
+    if (!stage) return isAgnesJob ? 'submitting' : undefined;
+    if (isAgnesJob) {
+      if (['queued', 'processing', 'pending', 'running'].includes(stage)) return 'rendering';
+      if (stage === 'initializing') return 'submitting';
+      return stage;
+    }
+    return stage === 'rendering' ? 'cropping' : stage;
+  };
+
+  const normalizedStage = normalizeStage(job.stage);
   const isTerminalSuccess = job.status === 'completed';
+  const isTerminalError =
+    job.status === 'failed' || job.status === 'timeout' || job.status === 'interrupted';
+  const isTerminalCanceled = job.status === 'canceled' || job.status === 'cancelled';
+  const isTerminal =
+    isTerminalSuccess || isTerminalError || isTerminalCanceled || job.status === 'partial';
+
   const currentStageIndex = isTerminalSuccess
     ? stages.length
     : stages.findIndex((s) => s.key === normalizedStage);
@@ -39,6 +68,60 @@ export const JobProgressCard: FC<JobProgressCardProps> = ({
   const progressPercent = typeof job.progress === 'number'
     ? Math.min(100, Math.max(0, job.progress))
     : 0;
+
+  const headerTitle = isTerminalError
+    ? job.status === 'timeout'
+      ? 'Pembuatan video melewati batas waktu'
+      : job.status === 'interrupted'
+      ? 'Pembuatan video terinterupsi'
+      : isAgnesJob
+      ? 'Pembuatan video gagal'
+      : 'Pipeline pembuatan klip gagal'
+    : isTerminalCanceled
+    ? 'Pembuatan video dibatalkan'
+    : isTerminalSuccess
+    ? isAgnesJob
+      ? 'Pembuatan video selesai'
+      : 'Pipeline Pembuatan Video Selesai'
+    : isAgnesJob
+    ? 'Pembuatan Video AI Berjalan'
+    : 'Pipeline Pembuatan Video Berjalan';
+
+  const stageLabel = isTerminalError
+    ? `Status: ${job.status === 'timeout' ? 'Batas Waktu Terlampaui' : job.status === 'interrupted' ? 'Terinterupsi' : 'Gagal'}`
+    : isTerminalCanceled
+    ? 'Status: Dibatalkan'
+    : isTerminalSuccess
+    ? 'Status: Selesai'
+    : isAgnesJob
+    ? `Tahap: ${
+        normalizedStage === 'submitting'
+          ? 'Kirim Tugas'
+          : normalizedStage === 'rendering'
+          ? 'Antre / Render'
+          : normalizedStage === 'downloading'
+          ? 'Unduh MP4'
+          : job.stage || 'Menyiapkan...'
+      }`
+    : job.stage
+    ? `Tahap: ${job.stage}`
+    : 'Menyiapkan Pipeline...';
+
+  const progressIndicatorClass = isTerminalError
+    ? '[&_[data-slot=progress-indicator]]:bg-none [&_[data-slot=progress-indicator]]:bg-rose-500 [&_[data-slot=progress-indicator]]:shadow-[0_0_12px_rgba(244,63,94,0.45)] [&_[data-slot=progress-indicator]]:after:hidden'
+    : isTerminalCanceled
+    ? '[&_[data-slot=progress-indicator]]:bg-none [&_[data-slot=progress-indicator]]:bg-amber-500 [&_[data-slot=progress-indicator]]:shadow-[0_0_12px_rgba(245,158,11,0.35)] [&_[data-slot=progress-indicator]]:after:hidden'
+    : isTerminalSuccess
+    ? '[&_[data-slot=progress-indicator]]:bg-none [&_[data-slot=progress-indicator]]:bg-emerald-500 [&_[data-slot=progress-indicator]]:shadow-[0_0_12px_rgba(16,185,129,0.35)] [&_[data-slot=progress-indicator]]:after:hidden'
+    : '';
+
+  const percentColorClass = isTerminalError
+    ? 'text-rose-400'
+    : isTerminalCanceled
+    ? 'text-amber-400'
+    : isTerminalSuccess
+    ? 'text-emerald-400'
+    : 'text-[#22D3EE]';
 
   const rawLogs = typeof job.logs === 'string'
     ? job.logs
@@ -96,11 +179,23 @@ export const JobProgressCard: FC<JobProgressCardProps> = ({
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8B5CF6] opacity-75 motion-reduce:animate-none" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#8B5CF6]" />
+              {!isTerminal && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#8B5CF6] opacity-75 motion-reduce:animate-none" />
+              )}
+              <span
+                className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                  isTerminalError
+                    ? 'bg-rose-500'
+                    : isTerminalCanceled
+                    ? 'bg-amber-400'
+                    : isTerminalSuccess
+                    ? 'bg-emerald-400'
+                    : 'bg-[#8B5CF6]'
+                }`}
+              />
             </span>
             <h3 className="font-bold text-sm sm:text-base text-white font-headline">
-              Pipeline Pembuatan Video Berjalan
+              {headerTitle}
             </h3>
             {getStatusBadge()}
           </div>
@@ -109,47 +204,59 @@ export const JobProgressCard: FC<JobProgressCardProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            onClick={onCancel}
-            disabled={isCanceling || job.status === 'canceling'}
-            className="cursor-pointer"
-          >
-            {isCanceling || job.status === 'canceling' ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Membatalkan...</span>
-              </>
-            ) : (
-              <>
-                <XCircle className="w-4 h-4" />
-                <span>Batalkan</span>
-              </>
-            )}
-          </Button>
-        </div>
+        {!isTerminal && (
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={onCancel}
+              disabled={isCanceling || job.status === 'canceling'}
+              className="min-h-[44px] cursor-pointer"
+            >
+              {isCanceling || job.status === 'canceling' ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Membatalkan...</span>
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-4 h-4" />
+                  <span>Batalkan</span>
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Progress Bar & Stage Info */}
       <div className="space-y-2">
         <div className="flex justify-between text-xs font-semibold">
           <span className="text-zinc-300 uppercase tracking-wider text-[11px]">
-            {job.stage ? `Tahap: ${job.stage}` : 'Menyiapkan Pipeline...'}
+            {stageLabel}
           </span>
-          <span className="text-[#22D3EE] font-mono font-bold">{progressPercent}%</span>
+          <span className={`${percentColorClass} font-mono font-bold`}>{progressPercent}%</span>
         </div>
 
-        <Progress value={progressPercent} className="w-full" />
+        <Progress value={progressPercent} className={`w-full ${progressIndicatorClass}`} />
       </div>
+
+      {isTerminalError && job.error && (
+        <div
+          role="alert"
+          className="flex items-start gap-2.5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-200 text-xs leading-relaxed"
+        >
+          <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+          <span>{job.error}</span>
+        </div>
+      )}
 
       {/* Pipeline Stepper */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {stages.map((stg, idx) => {
           const isDone = isTerminalSuccess || currentStageIndex > idx;
-          const isCurrent = !isTerminalSuccess && currentStageIndex === idx;
+          const isCurrent = !isTerminal && currentStageIndex === idx;
 
           return (
             <div

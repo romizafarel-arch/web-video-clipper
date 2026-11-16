@@ -299,6 +299,7 @@ class JobContext:
             elapsed = int((self.ended_at or now) - (self.started_at or self.created_at))
             return {
                 "job_id": self.job_id,
+                "url": self.url,
                 "status": self.status,
                 "stage": self.stage,
                 "progress": self.progress,

@@ -22,10 +22,16 @@ def _text(value: Any, field: str) -> str:
     return value.strip()
 
 
+def _clean_hook(value: Any, field: str) -> str:
+    text = _text(value, field)
+    stripped = text.strip(" \"'“”‘’")
+    return stripped or text
+
+
 def _string_list(value: Any, field: str, expected: int) -> list[str]:
     if not isinstance(value, list) or len(value) != expected:
         raise ValueError(f"Jawaban AI belum menyertakan {field} dengan lengkap.")
-    return [_text(item, field) for item in value]
+    return [_clean_hook(item, field) for item in value]
 
 
 def generate_directions(llm_call, idea: str, goal: str, tone: str, duration: int) -> Dict[str, Any]:
@@ -49,7 +55,7 @@ Durasi sasaran: {duration} detik"""
         normalized.append({
             "title": _text(item.get("title"), "judul"),
             "summary": _text(item.get("summary"), "inti cerita"),
-            "hook": _text(item.get("hook"), "contoh pembuka"),
+            "hook": _clean_hook(item.get("hook"), "contoh pembuka"),
             "why": _text(item.get("why"), "alasan"),
         })
     return {"directions": normalized}
