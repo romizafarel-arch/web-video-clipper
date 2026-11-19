@@ -1,5 +1,7 @@
 import type {
+  AllModelsResponse,
   AppConfig,
+  MuapiModelSchema,
   GeneratePayload,
   JobState,
   HistoryResponse,
@@ -182,6 +184,27 @@ export async function fetchModels(provider?: string, refresh: boolean = false): 
     throw new Error('Failed to fetch models');
   }
   return res.json();
+}
+
+export async function fetchAllModels(refresh: boolean = false): Promise<AllModelsResponse> {
+  const query = new URLSearchParams();
+  if (refresh) query.set('refresh', 'true');
+  const qs = query.toString();
+  const res = await fetch(`/api/models${qs ? `?${qs}` : ''}`);
+  if (!res.ok) {
+    throw new Error('Failed to fetch models');
+  }
+  return res.json() as Promise<AllModelsResponse>;
+}
+
+export async function fetchMuapiModelSchema(model: string): Promise<MuapiModelSchema> {
+  const query = new URLSearchParams({ provider: 'muapi', model });
+  const res = await fetch(`/api/models/schema?${query.toString()}`);
+  const data = await res.json();
+  if (!res.ok || data.error) {
+    throw new Error(data.error || 'Failed to fetch MuAPI model schema');
+  }
+  return (data.schema ?? {}) as MuapiModelSchema;
 }
 
 export async function testModel(provider: string, model: string): Promise<ModelTestResponse> {

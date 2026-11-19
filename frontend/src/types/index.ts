@@ -44,11 +44,15 @@ export interface VideoIdeaPlan {
   editing_note: string;
 }
 
+export type IdeaLlmProvider = 'gemini' | 'openai' | 'agnes';
+
 export interface VideoIdeaRequest {
   idea: string;
   goal: IdeaGoal;
   tone: IdeaTone;
   duration: 15 | 30 | 45;
+  llm_provider?: IdeaLlmProvider;
+  llm_model?: string;
 }
 
 export interface VideoIdeaGuide {
@@ -58,19 +62,36 @@ export interface VideoIdeaGuide {
   plan: VideoIdeaPlan;
 }
 
+export type VideoGenerationProvider = 'agnes' | 'muapi';
 export type AgnesVideoModel = 'agnes-video-2.5-flash' | 'agnes-video-2.5';
 export type AgnesAspectRatio = '9:16' | '16:9' | '1:1' | '3:4' | '4:3' | '21:9';
 export type AgnesVideoSize = '720P' | '1080P';
 
+export interface MuapiSchemaField<T = string | number> {
+  enum?: T[];
+  default?: T;
+  type?: string;
+}
+
+export interface MuapiModelSchema {
+  endpoint_url?: string;
+  input_fields?: string[];
+  aspect_ratio?: MuapiSchemaField<string>;
+  duration?: MuapiSchemaField<number>;
+  resolution?: MuapiSchemaField<string>;
+}
+
 export interface GenerateIdeaVideoPayload {
+  provider?: VideoGenerationProvider;
   prompt: string;
   title?: string;
   idea?: string;
   hook?: string;
-  model: AgnesVideoModel;
-  duration: number;
-  aspect_ratio: AgnesAspectRatio;
-  size: AgnesVideoSize;
+  model: string;
+  duration?: number;
+  aspect_ratio?: string;
+  size?: AgnesVideoSize;
+  resolution?: string;
 }
 
 export type FramingMode = 'podcast' | 'single' | 'center' | 'gaming' | 'dual';
@@ -173,6 +194,37 @@ export interface ModelOption {
   id: string;
   name: string;
   recommended?: boolean;
+  family?: string;
+  cost?: number | null;
+  description?: string;
+  input_fields?: string[];
+}
+
+export interface ProviderModelsBundle {
+  success?: boolean;
+  provider?: string;
+  error?: string;
+  models?: ModelOption[];
+  video_models?: ModelOption[];
+  raw_count?: number;
+}
+
+export interface AllModelsResponse {
+  gemini?: ProviderModelsBundle;
+  openai?: ProviderModelsBundle;
+  agnes?: ProviderModelsBundle;
+  muapi?: ProviderModelsBundle;
+  whisper?: ProviderModelsBundle;
+  active?: {
+    llm_provider: string;
+    gemini_model: string;
+    openai_model: string;
+    agnes_chat_model?: string;
+    agnes_video_model?: string;
+    transcriber_provider: string;
+    gemini_transcriber_model?: string;
+    whisper_model: string;
+  };
 }
 
 export interface ModelsResponse {

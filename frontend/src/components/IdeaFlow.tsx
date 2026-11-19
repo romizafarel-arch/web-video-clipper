@@ -1,19 +1,24 @@
-import { useState, type FC, type FormEvent } from 'react';
-import { ArrowLeft, Check, ClipboardCopy, Film, RotateCcw, Sparkles } from 'lucide-react';
+import { useEffect, useMemo, useState, type FC, type FormEvent } from 'react';
+import { ArrowLeft, Check, ClipboardCopy, Film, RefreshCw, RotateCcw, Sparkles } from 'lucide-react';
 import type {
   AgnesAspectRatio,
   AgnesVideoModel,
   AgnesVideoSize,
+  AllModelsResponse,
   AppConfig,
   IdeaGoal,
+  IdeaLlmProvider,
   IdeaTone,
   JobState,
+  ModelOption,
+  MuapiModelSchema,
+  VideoGenerationProvider,
   VideoIdeaDirection,
   VideoIdeaGuide,
   VideoIdeaPlan,
   VideoIdeaRequest,
 } from '../types';
-import { fetchIdeaDirections, fetchIdeaPlan, generateIdeaVideo } from '../lib/api';
+import { fetchAllModels, fetchIdeaDirections, fetchIdeaPlan, fetchMuapiModelSchema, generateIdeaVideo } from '../lib/api';
 import { Button } from './ui/button';
 import { JobProgressCard } from './JobProgressCard';
 
@@ -141,7 +146,24 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
   const [modelNotice, setModelNotice] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Agnes AI Video Generation state
+  // LLM Provider & Model selection (from configured APIs in Reef Clipper)
+  const [allModels, setAllModels] = useState<AllModelsResponse | null>(null);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [llmProvider, setLlmProvider] = useState<IdeaLlmProvider>(() => {
+    if (config?.llm_provider === 'openai' && config.has_openai_key) return 'openai';
+    if (config?.has_gemini_key) return 'gemini';
+    if (config?.has_openai_key) return 'openai';
+    if (config?.has_agnes_key) return 'agnes';
+    return config?.llm_provider === 'openai' ? 'openai' : 'gemini';
+  });
+  const [llmModel, setLlmModel] = useState<string>('');
+
+  // Video Generation state (Agnes AI & MuAPI)
+  const [videoProvider, setVideoProvider] = useState<VideoGenerationProvider>(() => {
+    if (config?.has_agnes_key) return 'agnes';
+    if (config?.has_muapi_key) return 'muapi';
+    return 'agnes';
+  });
   const [videoPrompt, setVideoPrompt] = useState('');
   const [videoModel, setVideoModel] = useState<AgnesVideoModel>(
     config?.agnes_video_model === 'agnes-video-2.5' ? 'agnes-video-2.5' : 'agnes-video-2.5-flash',
@@ -149,13 +171,149 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
   const [videoRatio, setVideoRatio] = useState<AgnesAspectRatio>('9:16');
   const [videoDuration, setVideoDuration] = useState<number>(6);
   const [videoSize, setVideoSize] = useState<AgnesVideoSize>('720P');
+  const [muapiModelFilter, setMuapiModelFilter] = useState('');
+  const [muapiModel, setMuapiModel] = useState('');
+  const [muapiSchema, setMuapiSchema] = useState<MuapiModelSchema | null>(null);
+  const [isLoadingMuapiSchema, setIsLoadingMuapiSchema] = useState(false);
+  const [muapiRatio, setMuapiRatio] = useState('9:16');
+  const [muapiDuration, setMuapiDuration] = useState<number>(5);
+  const [muapiResolution, setMuapiResolution] = useState('720p');
   const [isSubmittingVideo, setIsSubmittingVideo] = useState(false);
 
-  const request: VideoIdeaRequest = { idea: idea.trim(), goal, tone, duration };
+  const loadModels = async (refresh: boolean = false) => {
+    setIsLoadingModels(true);
+    try {
+      const data = await fetchAllModels(refresh);
+      setAllModels(data);
+    } catch {
+      // Keep fallback options if /api/models fails
+    } finally {
+      setIsLoadingModels(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadModels(false);
+  }, [config?.has_gemini_key, config?.has_openai_key, config?.has_agnes_key, config?.has_muapi_key]);
+
+  const currentLlmModels: ModelOption[] =
+    llmProvider === 'openai'
+      ? (allModels?.openai?.models ?? [])
+      : llmProvider === 'agnes'
+      ? (allModels?.agnes?.models ?? [])
+      : (allModels?.gemini?.models ?? []);
+
+  useEffect(() => {
+    if (currentLlmModels.length === 0) return;
+    if (llmModel && currentLlmModels.some((m) => m.id === llmModel)) return;
+    const activeDefault =
+      llmProvider === 'openai'
+        ? allModels?.active?.openai_model
+        : llmProvider === 'agnes'
+        ? allModels?.active?.agnes_chat_model
+        : allModels?.active?.gemini_model;
+    const matched = activeDefault && currentLlmModels.find((m) => m.id === activeDefault);
+    setLlmModel(matched ? matched.id : currentLlmModels[0].id);
+  }, [llmProvider, currentLlmModels, allModels, llmModel]);
+
+  const agnesVideoModels: ModelOption[] =
+    allModels?.agnes?.video_models && allModels.agnes.video_models.length > 0
+      ? allModels.agnes.video_models
+      : [
+          { id: 'agnes-video-2.5-flash', name: 'agnes-video-2.5-flash (Cepat · 720P)' },
+          { id: 'agnes-video-2.5', name: 'agnes-video-2.5 (HD · 720P / 1080P)' },
+        ];
+
+  const muapiVideoModels: ModelOption[] = useMemo(
+    () => allModels?.muapi?.video_models ?? [],
+    [allModels],
+  );
+
+  const filteredMuapiModels = useMemo(() => {
+    const q = muapiModelFilter.trim().toLowerCase();
+    if (!q) return muapiVideoModels;
+    return muapiVideoModels.filter(
+      (m) =>
+        m.id.toLowerCase().includes(q) ||
+        (m.family || '').toLowerCase().includes(q) ||
+        (m.description || '').toLowerCase().includes(q),
+    );
+  }, [muapiVideoModels, muapiModelFilter]);
+
+  const groupedMuapiModels = useMemo(() => {
+    const groups = new Map<string, ModelOption[]>();
+    for (const m of filteredMuapiModels) {
+      const fam = (m.family || 'lainnya').toUpperCase();
+      const bucket = groups.get(fam);
+      if (bucket) bucket.push(m);
+      else groups.set(fam, [m]);
+    }
+    return Array.from(groups.entries());
+  }, [filteredMuapiModels]);
+
+  useEffect(() => {
+    if (muapiVideoModels.length === 0) return;
+    if (muapiModel && muapiVideoModels.some((m) => m.id === muapiModel)) return;
+    const preferred =
+      muapiVideoModels.find((m) => m.id === 'veo3.1-fast-text-to-video') ||
+      muapiVideoModels.find((m) => m.recommended) ||
+      muapiVideoModels[0];
+    setMuapiModel(preferred.id);
+  }, [muapiVideoModels, muapiModel]);
+
+  useEffect(() => {
+    if (videoProvider !== 'muapi' || !muapiModel) return;
+    let cancelled = false;
+    setIsLoadingMuapiSchema(true);
+    fetchMuapiModelSchema(muapiModel)
+      .then((schema) => {
+        if (cancelled) return;
+        setMuapiSchema(schema);
+        const ratios = schema.aspect_ratio?.enum;
+        if (ratios && ratios.length > 0) {
+          setMuapiRatio(ratios.includes('9:16') ? '9:16' : String(schema.aspect_ratio?.default ?? ratios[0]));
+        }
+        const durations = schema.duration?.enum;
+        if (durations && durations.length > 0) {
+          setMuapiDuration(Number(schema.duration?.default ?? durations[0]));
+        } else if (schema.duration?.default !== undefined) {
+          setMuapiDuration(Number(schema.duration.default));
+        }
+        const resolutions = schema.resolution?.enum;
+        if (resolutions && resolutions.length > 0) {
+          setMuapiResolution(String(schema.resolution?.default ?? resolutions[0]));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setMuapiSchema(null);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingMuapiSchema(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [videoProvider, muapiModel]);
+
+  const selectedMuapiMeta = useMemo(
+    () => muapiVideoModels.find((m) => m.id === muapiModel) ?? null,
+    [muapiVideoModels, muapiModel],
+  );
+
+  const request: VideoIdeaRequest = {
+    idea: idea.trim(),
+    goal,
+    tone,
+    duration,
+    llm_provider: llmProvider,
+    llm_model: llmModel || undefined,
+  };
   const hasConfiguredKey = config
     ? (config.llm_provider === 'openai' ? config.has_openai_key : config.has_gemini_key) || Boolean(config.has_agnes_key)
     : true;
   const hasAgnesKey = config ? Boolean(config.has_agnes_key) : true;
+  const hasMuapiKey = config ? Boolean(config.has_muapi_key) : true;
+  const hasSelectedVideoKey = videoProvider === 'muapi' ? hasMuapiKey : hasAgnesKey;
   const isJobActive = Boolean(
     activeJob && (activeJob.status === 'running' || activeJob.status === 'queued' || activeJob.status === 'canceling'),
   );
@@ -216,26 +374,46 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
     event.preventDefault();
     const cleanPrompt = videoPrompt.trim();
     if (!cleanPrompt) {
-      setError('Tulis dulu deskripsi visual video untuk Agnes AI.');
+      setError('Tulis dulu deskripsi visual video.');
+      return;
+    }
+    if (videoProvider === 'muapi' && !muapiModel) {
+      setError('Pilih model video MuAPI terlebih dahulu.');
       return;
     }
     setIsSubmittingVideo(true);
     setError(null);
     try {
-      const effectiveSize: AgnesVideoSize = videoModel === 'agnes-video-2.5-flash' ? '720P' : videoSize;
-      const res = await generateIdeaVideo({
-        prompt: cleanPrompt,
-        title: selectedDirection?.title || idea.trim().slice(0, 80) || 'Video Ide Agnes AI',
-        idea: idea.trim(),
-        hook: stripHookQuotes(selectedHook || selectedDirection?.hook || ''),
-        model: videoModel,
-        duration: videoDuration,
-        aspect_ratio: videoRatio,
-        size: effectiveSize,
-      });
-      onVideoJobStarted(res.job_id);
+      if (videoProvider === 'muapi') {
+        const res = await generateIdeaVideo({
+          provider: 'muapi',
+          prompt: cleanPrompt,
+          title: selectedDirection?.title || idea.trim().slice(0, 80) || 'Video Ide MuAPI',
+          idea: idea.trim(),
+          hook: stripHookQuotes(selectedHook || selectedDirection?.hook || ''),
+          model: muapiModel,
+          duration: muapiDuration,
+          aspect_ratio: muapiRatio,
+          resolution: muapiResolution,
+        });
+        onVideoJobStarted(res.job_id);
+      } else {
+        const effectiveSize: AgnesVideoSize = videoModel === 'agnes-video-2.5-flash' ? '720P' : videoSize;
+        const res = await generateIdeaVideo({
+          provider: 'agnes',
+          prompt: cleanPrompt,
+          title: selectedDirection?.title || idea.trim().slice(0, 80) || 'Video Ide Agnes AI',
+          idea: idea.trim(),
+          hook: stripHookQuotes(selectedHook || selectedDirection?.hook || ''),
+          model: videoModel,
+          duration: videoDuration,
+          aspect_ratio: videoRatio,
+          size: effectiveSize,
+        });
+        onVideoJobStarted(res.job_id);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Belum berhasil memulai pembuatan video Agnes AI.');
+      setError(err instanceof Error ? err.message : 'Belum berhasil memulai pembuatan video AI.');
     } finally {
       setIsSubmittingVideo(false);
     }
@@ -343,6 +521,65 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
             </fieldset>
           </div>
 
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="block text-sm font-medium text-zinc-200" htmlFor="idea-llm-provider">
+              API AI (Ide &amp; Naskah)
+              <select
+                id="idea-llm-provider"
+                value={llmProvider}
+                onChange={(event) => {
+                  setLlmProvider(event.target.value as IdeaLlmProvider);
+                  setLlmModel('');
+                }}
+                className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+              >
+                <option value="gemini" disabled={Boolean(config && !config.has_gemini_key)}>
+                  Gemini {config && !config.has_gemini_key ? '(Belum disetel)' : ''}
+                </option>
+                <option value="openai" disabled={Boolean(config && !config.has_openai_key)}>
+                  OpenAI / Proxy {config && !config.has_openai_key ? '(Belum disetel)' : ''}
+                </option>
+                <option value="agnes" disabled={Boolean(config && !config.has_agnes_key)}>
+                  Agnes AI {config && !config.has_agnes_key ? '(Belum disetel)' : ''}
+                </option>
+              </select>
+            </label>
+
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <label className="block text-sm font-medium text-zinc-200" htmlFor="idea-llm-model">
+                  Model AI
+                </label>
+                <button
+                  type="button"
+                  onClick={() => void loadModels(true)}
+                  disabled={isLoadingModels}
+                  className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-200 disabled:opacity-50"
+                >
+                  <RefreshCw aria-hidden="true" className={`h-3 w-3 ${isLoadingModels ? 'animate-spin' : ''}`} />
+                  Muat ulang
+                </button>
+              </div>
+              <select
+                id="idea-llm-model"
+                value={llmModel}
+                onChange={(event) => setLlmModel(event.target.value)}
+                disabled={currentLlmModels.length === 0}
+                className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white disabled:opacity-60 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+              >
+                {currentLlmModels.length === 0 ? (
+                  <option value="">{isLoadingModels ? 'Memuat model...' : 'Belum ada model'}</option>
+                ) : (
+                  currentLlmModels.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name || m.id}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+          </div>
+
           {error && <div role="alert" className="rounded-md border border-rose-500/40 bg-rose-950/30 p-3 text-sm leading-5 text-rose-200">{error}</div>}
           {!hasConfiguredKey && (
             <div className="flex flex-col gap-3 border-l-2 border-amber-400 pl-3 text-sm text-amber-100 sm:flex-row sm:items-center sm:justify-between">
@@ -356,7 +593,7 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
             </Button>
             <Button type="button" variant="outline" disabled={isLoading || !idea.trim()} onClick={openVideoComposer} className="min-h-12 w-full sm:w-auto">
               <Sparkles aria-hidden="true" className="h-4 w-4 text-amber-400" />
-              Langsung jadi video (Agnes AI)
+              Langsung jadi video AI
             </Button>
           </div>
         </form>
@@ -451,7 +688,7 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Button type="button" onClick={openVideoComposer} className="min-h-11">
               <Film aria-hidden="true" className="h-4 w-4" />
-              Buat Video AI (Agnes)
+              Buat Video AI
             </Button>
             <Button type="button" variant="outline" onClick={() => void handleCopy()} className="min-h-11">
               {copied ? <Check aria-hidden="true" /> : <ClipboardCopy aria-hidden="true" />}
@@ -461,7 +698,7 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
               Saya sudah punya video
             </Button>
           </div>
-          <p className="text-xs leading-5 text-zinc-500">Render langsung jadi video dengan Agnes AI, atau lanjutkan ke pemotong jika sudah punya rekaman sendiri.</p>
+          <p className="text-xs leading-5 text-zinc-500">Render langsung jadi video AI (Agnes AI / MuAPI), atau lanjutkan ke pemotong jika sudah punya rekaman sendiri.</p>
         </div>
       )}
 
@@ -469,14 +706,42 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
         <form onSubmit={handleGenerateVideo} className="space-y-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="font-headline text-2xl font-semibold text-white sm:text-3xl">Buat video dari ide (Agnes AI)</h1>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">Sesuaikan prompt visual di bawah, lalu render otomatis ke MP4 siap putar di Studio.</p>
+              <h1 className="font-headline text-2xl font-semibold text-white sm:text-3xl">Buat video dari ide</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">Pilih API dan model video AI dari Reef Clipper, sesuaikan prompt, lalu render otomatis ke MP4.</p>
             </div>
             <Button type="button" variant="outline" onClick={goBack} className="min-h-11 self-start sm:self-auto">
               <ArrowLeft aria-hidden="true" />
               {plan ? 'Kembali ke panduan' : 'Ubah ide'}
             </Button>
           </div>
+
+          <fieldset>
+            <legend className="mb-2 text-sm font-medium text-zinc-200">API Video AI</legend>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                aria-pressed={videoProvider === 'agnes'}
+                onClick={() => setVideoProvider('agnes')}
+                className={`min-h-11 rounded-md border px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${videoProvider === 'agnes' ? 'border-violet-400 bg-violet-500/15 text-white' : 'border-zinc-700 bg-zinc-900/50 text-zinc-300 hover:border-zinc-500'}`}
+              >
+                <span className="block font-medium">Agnes AI</span>
+                <span className="block text-xs text-zinc-400">
+                  {agnesVideoModels.length} model {hasAgnesKey ? '· Tersambung' : '· Belum disetel'}
+                </span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={videoProvider === 'muapi'}
+                onClick={() => setVideoProvider('muapi')}
+                className={`min-h-11 rounded-md border px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${videoProvider === 'muapi' ? 'border-violet-400 bg-violet-500/15 text-white' : 'border-zinc-700 bg-zinc-900/50 text-zinc-300 hover:border-zinc-500'}`}
+              >
+                <span className="block font-medium">MuAPI (Veo, Sora, Kling, Wan, dll)</span>
+                <span className="block text-xs text-zinc-400">
+                  {muapiVideoModels.length > 0 ? `${muapiVideoModels.length} model aktif` : isLoadingModels ? 'Memuat model...' : 'Belum ada model'} {hasMuapiKey ? '· Tersambung' : '· Belum disetel'}
+                </span>
+              </button>
+            </div>
+          </fieldset>
 
           <div>
             <label htmlFor="agnes-video-prompt" className="mb-2 block text-sm font-medium text-zinc-200">Prompt visual video</label>
@@ -496,94 +761,249 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
             </div>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <label className="block text-sm font-medium text-zinc-200" htmlFor="agnes-model-select">
-              Model Agnes AI
-              <select
-                id="agnes-model-select"
-                value={videoModel}
-                onChange={(event) => {
-                  const nextModel = event.target.value as AgnesVideoModel;
-                  setVideoModel(nextModel);
-                  if (nextModel === 'agnes-video-2.5-flash') setVideoSize('720P');
-                }}
-                className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
-              >
-                <option value="agnes-video-2.5-flash">agnes-video-2.5-flash (Cepat · 720P)</option>
-                <option value="agnes-video-2.5">agnes-video-2.5 (HD · 720P / 1080P)</option>
-              </select>
-            </label>
-
-            <label className="block text-sm font-medium text-zinc-200" htmlFor="agnes-size-select">
-              Resolusi
-              <select
-                id="agnes-size-select"
-                value={videoModel === 'agnes-video-2.5-flash' ? '720P' : videoSize}
-                disabled={videoModel === 'agnes-video-2.5-flash'}
-                onChange={(event) => setVideoSize(event.target.value as AgnesVideoSize)}
-                className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white disabled:opacity-60 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
-              >
-                <option value="720P">720P</option>
-                {videoModel === 'agnes-video-2.5' && <option value="1080P">1080P</option>}
-              </select>
-            </label>
-          </div>
-
-          <div className="grid gap-5 sm:grid-cols-2">
-            <fieldset>
-              <legend className="mb-2 text-sm font-medium text-zinc-200">Rasio aspek</legend>
-              <div className="grid grid-cols-5 gap-2">
-                {AGNES_RATIOS.map((ratio) => (
-                  <button
-                    key={ratio}
-                    type="button"
-                    aria-pressed={videoRatio === ratio}
-                    onClick={() => setVideoRatio(ratio)}
-                    className={`min-h-11 rounded-md border px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${videoRatio === ratio ? 'border-violet-400 bg-violet-500/15 text-white' : 'border-zinc-700 bg-zinc-900/50 text-zinc-300 hover:border-zinc-500'}`}
+          {videoProvider === 'agnes' ? (
+            <>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <label className="block text-sm font-medium text-zinc-200" htmlFor="agnes-model-select">
+                  Model Video AI (Agnes AI)
+                  <select
+                    id="agnes-model-select"
+                    value={videoModel}
+                    onChange={(event) => {
+                      const nextModel = event.target.value as AgnesVideoModel;
+                      setVideoModel(nextModel);
+                      if (nextModel === 'agnes-video-2.5-flash') setVideoSize('720P');
+                    }}
+                    className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
                   >
-                    {ratio}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
+                    {agnesVideoModels.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name || m.id}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-            <fieldset>
-              <legend className="mb-2 text-sm font-medium text-zinc-200">Durasi klip (Agnes AI)</legend>
-              <div className="grid grid-cols-5 gap-2">
-                {AGNES_DURATIONS.map((sec) => (
-                  <button
-                    key={sec}
-                    type="button"
-                    aria-pressed={videoDuration === sec}
-                    onClick={() => setVideoDuration(sec)}
-                    className={`min-h-11 rounded-md border px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${videoDuration === sec ? 'border-violet-400 bg-violet-500/15 text-white' : 'border-zinc-700 bg-zinc-900/50 text-zinc-300 hover:border-zinc-500'}`}
+                <label className="block text-sm font-medium text-zinc-200" htmlFor="agnes-size-select">
+                  Resolusi
+                  <select
+                    id="agnes-size-select"
+                    value={videoModel === 'agnes-video-2.5-flash' ? '720P' : videoSize}
+                    disabled={videoModel === 'agnes-video-2.5-flash'}
+                    onChange={(event) => setVideoSize(event.target.value as AgnesVideoSize)}
+                    className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white disabled:opacity-60 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
                   >
-                    {sec}d
-                  </button>
-                ))}
+                    <option value="720P">720P</option>
+                    {videoModel === 'agnes-video-2.5' && <option value="1080P">1080P</option>}
+                  </select>
+                </label>
               </div>
-            </fieldset>
-          </div>
 
-          {!hasAgnesKey && (
+              <div className="grid gap-5 sm:grid-cols-2">
+                <fieldset>
+                  <legend className="mb-2 text-sm font-medium text-zinc-200">Rasio aspek</legend>
+                  <div className="grid grid-cols-5 gap-2">
+                    {AGNES_RATIOS.map((ratio) => (
+                      <button
+                        key={ratio}
+                        type="button"
+                        aria-pressed={videoRatio === ratio}
+                        onClick={() => setVideoRatio(ratio)}
+                        className={`min-h-11 rounded-md border px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${videoRatio === ratio ? 'border-violet-400 bg-violet-500/15 text-white' : 'border-zinc-700 bg-zinc-900/50 text-zinc-300 hover:border-zinc-500'}`}
+                      >
+                        {ratio}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+
+                <fieldset>
+                  <legend className="mb-2 text-sm font-medium text-zinc-200">Durasi klip (Agnes AI)</legend>
+                  <div className="grid grid-cols-5 gap-2">
+                    {AGNES_DURATIONS.map((sec) => (
+                      <button
+                        key={sec}
+                        type="button"
+                        aria-pressed={videoDuration === sec}
+                        onClick={() => setVideoDuration(sec)}
+                        className={`min-h-11 rounded-md border px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${videoDuration === sec ? 'border-violet-400 bg-violet-500/15 text-white' : 'border-zinc-700 bg-zinc-900/50 text-zinc-300 hover:border-zinc-500'}`}
+                      >
+                        {sec}d
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-5">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block text-sm font-medium text-zinc-200" htmlFor="muapi-model-filter">
+                  Cari model MuAPI
+                  <input
+                    id="muapi-model-filter"
+                    type="search"
+                    value={muapiModelFilter}
+                    onChange={(event) => setMuapiModelFilter(event.target.value)}
+                    placeholder="Ketik veo, sora, kling, wan, seedance, grok..."
+                    className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white placeholder:text-zinc-500 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+                  />
+                </label>
+
+                <div>
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="block text-sm font-medium text-zinc-200" htmlFor="muapi-model-select">
+                      Model Video MuAPI ({filteredMuapiModels.length})
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => void loadModels(true)}
+                      disabled={isLoadingModels}
+                      className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-200 disabled:opacity-50"
+                    >
+                      <RefreshCw aria-hidden="true" className={`h-3 w-3 ${isLoadingModels ? 'animate-spin' : ''}`} />
+                      Muat ulang
+                    </button>
+                  </div>
+                  <select
+                    id="muapi-model-select"
+                    value={muapiModel}
+                    onChange={(event) => setMuapiModel(event.target.value)}
+                    disabled={filteredMuapiModels.length === 0}
+                    className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white disabled:opacity-60 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+                  >
+                    {groupedMuapiModels.length === 0 ? (
+                      <option value="">{isLoadingModels ? 'Memuat model MuAPI...' : 'Model tidak ditemukan'}</option>
+                    ) : (
+                      groupedMuapiModels.map(([family, items]) => (
+                        <optgroup key={family} label={family}>
+                          {items.map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.name || m.id}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              {selectedMuapiMeta?.description && (
+                <p className="text-xs leading-5 text-zinc-400">{selectedMuapiMeta.description}</p>
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                {(!muapiSchema || muapiSchema.aspect_ratio) && (
+                  <label className="block text-sm font-medium text-zinc-200" htmlFor="muapi-ratio-select">
+                    Rasio aspek
+                    <select
+                      id="muapi-ratio-select"
+                      value={muapiRatio}
+                      disabled={isLoadingMuapiSchema}
+                      onChange={(event) => setMuapiRatio(event.target.value)}
+                      className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white disabled:opacity-60 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+                    >
+                      {(muapiSchema?.aspect_ratio?.enum ?? ['9:16', '16:9', '1:1']).map((ratio) => (
+                        <option key={ratio} value={ratio}>
+                          {ratio}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+
+                {(!muapiSchema || muapiSchema.duration) && (
+                  <label className="block text-sm font-medium text-zinc-200" htmlFor="muapi-duration-select">
+                    Durasi
+                    {muapiSchema?.duration?.enum && muapiSchema.duration.enum.length > 0 ? (
+                      <select
+                        id="muapi-duration-select"
+                        value={muapiDuration}
+                        disabled={isLoadingMuapiSchema}
+                        onChange={(event) => setMuapiDuration(Number(event.target.value))}
+                        className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white disabled:opacity-60 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+                      >
+                        {muapiSchema.duration.enum.map((sec) => (
+                          <option key={sec} value={sec}>
+                            {sec} detik
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        id="muapi-duration-select"
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={muapiDuration}
+                        disabled={isLoadingMuapiSchema}
+                        onChange={(event) => setMuapiDuration(Math.max(1, Number(event.target.value) || 5))}
+                        className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white disabled:opacity-60 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+                      />
+                    )}
+                  </label>
+                )}
+
+                {(!muapiSchema || muapiSchema.resolution) && (
+                  <label className="block text-sm font-medium text-zinc-200" htmlFor="muapi-resolution-select">
+                    Resolusi
+                    <select
+                      id="muapi-resolution-select"
+                      value={muapiResolution}
+                      disabled={isLoadingMuapiSchema}
+                      onChange={(event) => setMuapiResolution(event.target.value)}
+                      className="mt-2 h-11 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white disabled:opacity-60 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-400/30"
+                    >
+                      {(muapiSchema?.resolution?.enum ?? ['480p', '720p', '1080p']).map((res) => (
+                        <option key={res} value={res}>
+                          {res}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+              </div>
+            </div>
+          )}
+
+          {!hasSelectedVideoKey && (
             <div className="flex flex-col gap-3 border-l-2 border-amber-400 pl-3 text-sm text-amber-100 sm:flex-row sm:items-center sm:justify-between">
-              <span>AGNES_API_KEY belum terpasang. Masukkan kunci Agnes AI di Pengaturan untuk generate video.</span>
+              <span>
+                {videoProvider === 'muapi'
+                  ? 'MUAPI_API_KEY belum terpasang. Masukkan kunci MuAPI di Pengaturan untuk generate video.'
+                  : 'AGNES_API_KEY belum terpasang. Masukkan kunci Agnes AI di Pengaturan untuk generate video.'}
+              </span>
               <Button type="button" variant="outline" onClick={onOpenSettings} className="min-h-11">Buka Pengaturan</Button>
             </div>
           )}
 
           {error && <div role="alert" className="rounded-md border border-rose-500/40 bg-rose-950/30 p-3 text-sm leading-5 text-rose-200">{error}</div>}
 
-          <Button type="submit" disabled={isSubmittingVideo || isJobActive || !videoPrompt.trim() || !hasAgnesKey} className="min-h-12 w-full sm:w-auto">
+          <Button
+            type="submit"
+            disabled={
+              isSubmittingVideo ||
+              isJobActive ||
+              !videoPrompt.trim() ||
+              !hasSelectedVideoKey ||
+              (videoProvider === 'muapi' && !muapiModel)
+            }
+            className="min-h-12 w-full sm:w-auto"
+          >
             <Film aria-hidden="true" className="h-4 w-4" />
-            {isSubmittingVideo ? 'Mengirim ke Agnes AI...' : isJobActive ? 'Video sedang dibuat...' : 'Generate Video AI'}
+            {isSubmittingVideo
+              ? `Mengirim ke ${videoProvider === 'muapi' ? 'MuAPI' : 'Agnes AI'}...`
+              : isJobActive
+              ? 'Video sedang dibuat...'
+              : 'Generate Video AI'}
           </Button>
 
           {activeJob &&
             (activeJob.status === 'running' ||
               activeJob.status === 'queued' ||
               activeJob.status === 'canceling' ||
-              (Boolean(activeJob.url?.startsWith('agnes://')) &&
+              ((Boolean(activeJob.url?.startsWith('agnes://')) || Boolean(activeJob.url?.startsWith('muapi://'))) &&
                 ['failed', 'timeout', 'canceled', 'cancelled', 'interrupted', 'completed'].includes(activeJob.status))) && (
             <div className="pt-2">
               <JobProgressCard

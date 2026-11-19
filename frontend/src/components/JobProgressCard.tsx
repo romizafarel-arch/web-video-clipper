@@ -25,6 +25,7 @@ export const JobProgressCard: FC<JobProgressCardProps> = ({
 
   const isAgnesJob = Boolean(
     job.url?.startsWith('agnes://') ||
+      job.url?.startsWith('muapi://') ||
       job.stage === 'submitting' ||
       job.stage === 'rendering',
   );
