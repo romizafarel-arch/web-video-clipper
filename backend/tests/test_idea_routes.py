@@ -138,6 +138,7 @@ class TestIdeaRoutes(unittest.TestCase):
             patch("web_app.get_muapi_video_models", return_value=fake_muapi),
             patch("web_app.get_muapi_model_schema", return_value=fake_schema),
             patch("web_app.get_active_job", return_value=None),
+            patch.object(web_app.job_manager, "get_active_job", return_value=None),
             patch("web_app.threading.Thread") as thread_cls,
         ):
             resp = self.client.post(
@@ -170,6 +171,26 @@ class TestIdeaRoutes(unittest.TestCase):
                 self.client.delete(f"/api/history/session/{job_ctx.session_folder}")
             web_app.job_manager._jobs.pop(job_id, None)
             web_app.jobs.pop(job_id, None)
+
+    def test_generate_video_returns_409_on_job_conflict(self):
+        with (
+            patch.object(web_app.cfg, "AGNES_API_KEY", "agnes-test-key"),
+            patch("web_app.get_active_job", return_value=None),
+            patch.object(web_app.job_manager, "admit_job", side_effect=web_app.JobConflictError("Sudah ada job aktif")),
+        ):
+            resp = self.client.post(
+                "/api/ideas/generate-video",
+                json={
+                    "provider": "agnes",
+                    "prompt": "Kopi susu hangat pagi hari",
+                    "model": "agnes-video-2.5-flash",
+                    "aspect_ratio": "9:16",
+                    "duration": 6,
+                    "size": "720P",
+                },
+            )
+        self.assertEqual(resp.status_code, 409)
+        self.assertIn("job aktif", resp.get_json()["error"].lower())
 
 
 if __name__ == "__main__":

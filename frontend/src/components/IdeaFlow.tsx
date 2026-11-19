@@ -196,12 +196,15 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
     void loadModels(false);
   }, [config?.has_gemini_key, config?.has_openai_key, config?.has_agnes_key, config?.has_muapi_key]);
 
-  const currentLlmModels: ModelOption[] =
-    llmProvider === 'openai'
-      ? (allModels?.openai?.models ?? [])
-      : llmProvider === 'agnes'
-      ? (allModels?.agnes?.models ?? [])
-      : (allModels?.gemini?.models ?? []);
+  const currentLlmModels: ModelOption[] = useMemo(
+    () =>
+      llmProvider === 'openai'
+        ? (allModels?.openai?.models ?? [])
+        : llmProvider === 'agnes'
+        ? (allModels?.agnes?.models ?? [])
+        : (allModels?.gemini?.models ?? []),
+    [llmProvider, allModels],
+  );
 
   useEffect(() => {
     if (currentLlmModels.length === 0) return;
@@ -309,7 +312,7 @@ export const IdeaFlow: FC<IdeaFlowProps> = ({
     llm_model: llmModel || undefined,
   };
   const hasConfiguredKey = config
-    ? (config.llm_provider === 'openai' ? config.has_openai_key : config.has_gemini_key) || Boolean(config.has_agnes_key)
+    ? Boolean(config.has_gemini_key || config.has_openai_key || config.has_agnes_key)
     : true;
   const hasAgnesKey = config ? Boolean(config.has_agnes_key) : true;
   const hasMuapiKey = config ? Boolean(config.has_muapi_key) : true;

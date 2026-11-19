@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from shorts_generator.audio_peaks import (
     boost_highlights_with_audio_peaks,
@@ -88,7 +89,7 @@ class TestGamingStreamClipper(unittest.TestCase):
         self.assertIn("[0:v]split=3[raw_top][raw_mid][raw_bot]", filter_str)
         self.assertIn(f"scale={CANVAS_WIDTH}:340:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:340[v_top]", filter_str)
         self.assertIn(f"scale={CANVAS_WIDTH}:1100:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:1100[v_mid]", filter_str)
-        self.assertIn(f"scale={CANVAS_WIDTH}:480:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:480[v_bot]", filter_str)
+        self.assertIn(f"scale={CANVAS_WIDTH}:480:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:480:(in_w-out_w)/2:max(0\\,(in_h-out_h)*0.15)[v_bot]", filter_str)
         self.assertIn("[v_top][v_mid][v_bot]vstack=inputs=3[v_stacked]", filter_str)
         self.assertIn("[v_stacked]null[v_out]", filter_str)
 
@@ -223,16 +224,17 @@ class TestGamingStreamClipper(unittest.TestCase):
         client = app.test_client()
 
         # Test generate validation with gaming mode and custom preset
-        resp = client.post("/api/generate", json={
-            "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-            "framing_mode": "gaming",
-            "gaming_preset": "discord_left_cam_top_right",
-            "gaming_custom_box": {
-                "top": {"x": 0, "y": 0, "w": 500, "h": 200},
-                "mid": {"x": 200, "y": 50, "w": 1400, "h": 900},
-                "bottom": {"x": 1400, "y": 0, "w": 500, "h": 350},
-            },
-        })
+        with patch("web_app.threading.Thread"):
+            resp = client.post("/api/generate", json={
+                "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                "framing_mode": "gaming",
+                "gaming_preset": "discord_left_cam_top_right",
+                "gaming_custom_box": {
+                    "top": {"x": 0, "y": 0, "w": 500, "h": 200},
+                    "mid": {"x": 200, "y": 50, "w": 1400, "h": 900},
+                    "bottom": {"x": 1400, "y": 0, "w": 500, "h": 350},
+                },
+            })
         # If job admitted or already active (409), parameters are accepted
         self.assertIn(resp.status_code, (200, 409))
         if resp.status_code == 200:
@@ -261,7 +263,7 @@ class TestGamingStreamClipper(unittest.TestCase):
         filter_str = build_gaming_filter_complex(None, mid, bot, ass_path=None)
         self.assertIn("[0:v]split=2[raw_mid][raw_bot]", filter_str)
         self.assertIn(f"scale={CANVAS_WIDTH}:{GAMEPLAY_2L_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{GAMEPLAY_2L_HEIGHT}[v_mid]", filter_str)
-        self.assertIn(f"scale={CANVAS_WIDTH}:{BOTTOM_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{BOTTOM_HEIGHT}[v_bot]", filter_str)
+        self.assertIn(f"scale={CANVAS_WIDTH}:{BOTTOM_HEIGHT}:force_original_aspect_ratio=increase,crop={CANVAS_WIDTH}:{BOTTOM_HEIGHT}:(in_w-out_w)/2:max(0\\,(in_h-out_h)*0.15)[v_bot]", filter_str)
         self.assertIn("[v_bot][v_mid]vstack=inputs=2[v_stacked]", filter_str)
         self.assertIn("[v_stacked]null[v_out]", filter_str)
 

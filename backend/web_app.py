@@ -2082,12 +2082,15 @@ def api_idea_generate_video():
         (OUTPUT_DIR / session_folder).mkdir(parents=True, exist_ok=True)
         job_params["session_folder"] = session_folder
 
-        job_ctx = job_manager.admit_job(
-            job_id=job_id,
-            url=job_url,
-            params=job_params,
-            timeout_seconds=getattr(cfg, "JOB_TIMEOUT_SECONDS", 1800.0),
-        )
+        try:
+            job_ctx = job_manager.admit_job(
+                job_id=job_id,
+                url=job_url,
+                params=job_params,
+                timeout_seconds=getattr(cfg, "JOB_TIMEOUT_SECONDS", 1800.0),
+            )
+        except JobConflictError as exc:
+            return jsonify({"error": str(exc)}), 409
         job_ctx.session_folder = session_folder
         jobs[job_id] = job_ctx.to_dict()
         try:
@@ -2311,12 +2314,15 @@ def api_generate():
             "enable_sfx": bool(data.get("enable_sfx", True)),
             "remove_silence": bool(data.get("remove_silence", False)),
         }
-        job_ctx = job_manager.admit_job(
-            job_id=job_id,
-            url=url,
-            params=job_params,
-            timeout_seconds=getattr(cfg, "JOB_TIMEOUT_SECONDS", 1800.0),
-        )
+        try:
+            job_ctx = job_manager.admit_job(
+                job_id=job_id,
+                url=url,
+                params=job_params,
+                timeout_seconds=getattr(cfg, "JOB_TIMEOUT_SECONDS", 1800.0),
+            )
+        except JobConflictError as exc:
+            return jsonify({"error": str(exc)}), 409
         job_ctx.session_folder = session_folder
         jobs[job_id] = job_ctx.to_dict()
         try:
