@@ -1,7 +1,6 @@
 import type {
   AllModelsResponse,
   AppConfig,
-  MuapiModelSchema,
   GeneratePayload,
   JobState,
   HistoryResponse,
@@ -11,49 +10,8 @@ import type {
   ModelTestResponse,
   EditClipPayload,
   EditClipResponse,
-  GenerateIdeaVideoPayload,
-  VideoIdeaDirection,
-  VideoIdeaPlan,
-  VideoIdeaRequest,
+  ClipTranscriptResponse,
 } from '../types';
-
-async function postIdeaRequest<T>(path: string, payload: VideoIdeaRequest & { direction?: VideoIdeaDirection }): Promise<T> {
-  const res = await fetch(path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok || data.error) {
-    throw new Error(data.error || 'Belum berhasil memproses ide. Coba lagi.');
-  }
-  return data as T;
-}
-
-export async function fetchIdeaDirections(payload: VideoIdeaRequest): Promise<{ directions: VideoIdeaDirection[]; notice?: string }> {
-  return postIdeaRequest('/api/ideas/directions', payload);
-}
-
-export async function fetchIdeaPlan(
-  payload: VideoIdeaRequest & { direction: VideoIdeaDirection },
-): Promise<VideoIdeaPlan & { notice?: string }> {
-  return postIdeaRequest('/api/ideas/plan', payload);
-}
-
-export async function generateIdeaVideo(
-  payload: GenerateIdeaVideoPayload,
-): Promise<{ job_id: string; status: string }> {
-  const res = await fetch('/api/ideas/generate-video', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok || data.error) {
-    throw new Error(data.error || 'Belum berhasil memulai pembuatan video Agnes AI.');
-  }
-  return data;
-}
 
 export async function fetchConfig(): Promise<AppConfig> {
   const res = await fetch('/api/config');
@@ -197,16 +155,6 @@ export async function fetchAllModels(refresh: boolean = false): Promise<AllModel
   return res.json() as Promise<AllModelsResponse>;
 }
 
-export async function fetchMuapiModelSchema(model: string): Promise<MuapiModelSchema> {
-  const query = new URLSearchParams({ provider: 'muapi', model });
-  const res = await fetch(`/api/models/schema?${query.toString()}`);
-  const data = await res.json();
-  if (!res.ok || data.error) {
-    throw new Error(data.error || 'Failed to fetch MuAPI model schema');
-  }
-  return (data.schema ?? {}) as MuapiModelSchema;
-}
-
 export async function testModel(provider: string, model: string): Promise<ModelTestResponse> {
   const res = await fetch('/api/models/test', {
     method: 'POST',
@@ -229,6 +177,22 @@ export async function editClip(payload: EditClipPayload): Promise<EditClipRespon
   const data = await res.json();
   if (!res.ok || data.error) {
     throw new Error(data.error || 'Gagal merender ulang klip video.');
+  }
+  return data;
+}
+
+export async function fetchClipTranscript(
+  sessionFolder: string,
+  clipIndex: number,
+  startTime: number,
+  endTime: number,
+  signal?: AbortSignal
+): Promise<ClipTranscriptResponse> {
+  const qs = new URLSearchParams({ start: String(startTime), end: String(endTime) });
+  const res = await fetch(`/api/clip-transcript/${encodeURIComponent(sessionFolder)}/${clipIndex}?${qs}`, { signal });
+  const data = await res.json();
+  if (!res.ok || data.error) {
+    throw new Error(data.error || 'Gagal memuat transkrip klip.');
   }
   return data;
 }

@@ -58,7 +58,6 @@ def mask_sensitive_keys(data: Any) -> Any:
         "gemini_api_key",
         "openai_api_key",
         "muapi_api_key",
-        "agnes_api_key",
         "reef_flow_api_key",
         "api_key",
         "password",

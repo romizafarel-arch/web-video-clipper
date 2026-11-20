@@ -23,34 +23,15 @@ export const JobProgressCard: FC<JobProgressCardProps> = ({
 }) => {
   const [showLogs, setShowLogs] = useState(true);
 
-  const isAgnesJob = Boolean(
-    job.url?.startsWith('agnes://') ||
-      job.url?.startsWith('muapi://') ||
-      job.stage === 'submitting' ||
-      job.stage === 'rendering',
-  );
-
-  const stages = isAgnesJob
-    ? [
-        { key: 'submitting', label: '1. Kirim Tugas' },
-        { key: 'rendering', label: '2. Antre / Render' },
-        { key: 'downloading', label: '3. Unduh MP4' },
-        { key: 'completed', label: '4. Siap di Studio' },
-      ]
-    : [
-        { key: 'downloading', label: '1. Unduh Video' },
-        { key: 'transcribing', label: '2. Transkripsi Audio' },
-        { key: 'analyzing', label: '3. Seleksi AI Viral' },
-        { key: 'cropping', label: '4. Pemotongan & Render' },
-      ];
+  const stages = [
+    { key: 'downloading', label: '1. Unduh Video' },
+    { key: 'transcribing', label: '2. Transkripsi Audio' },
+    { key: 'analyzing', label: '3. Seleksi AI Viral' },
+    { key: 'cropping', label: '4. Pemotongan & Render' },
+  ];
 
   const normalizeStage = (stage?: string): string | undefined => {
-    if (!stage) return isAgnesJob ? 'submitting' : undefined;
-    if (isAgnesJob) {
-      if (['queued', 'processing', 'pending', 'running'].includes(stage)) return 'rendering';
-      if (stage === 'initializing') return 'submitting';
-      return stage;
-    }
+    if (!stage) return undefined;
     return stage === 'rendering' ? 'cropping' : stage;
   };
 
@@ -75,17 +56,11 @@ export const JobProgressCard: FC<JobProgressCardProps> = ({
       ? 'Pembuatan video melewati batas waktu'
       : job.status === 'interrupted'
       ? 'Pembuatan video terinterupsi'
-      : isAgnesJob
-      ? 'Pembuatan video gagal'
       : 'Pipeline pembuatan klip gagal'
     : isTerminalCanceled
     ? 'Pembuatan video dibatalkan'
     : isTerminalSuccess
-    ? isAgnesJob
-      ? 'Pembuatan video selesai'
-      : 'Pipeline Pembuatan Video Selesai'
-    : isAgnesJob
-    ? 'Pembuatan Video AI Berjalan'
+    ? 'Pipeline Pembuatan Video Selesai'
     : 'Pipeline Pembuatan Video Berjalan';
 
   const stageLabel = isTerminalError
@@ -94,16 +69,6 @@ export const JobProgressCard: FC<JobProgressCardProps> = ({
     ? 'Status: Dibatalkan'
     : isTerminalSuccess
     ? 'Status: Selesai'
-    : isAgnesJob
-    ? `Tahap: ${
-        normalizedStage === 'submitting'
-          ? 'Kirim Tugas'
-          : normalizedStage === 'rendering'
-          ? 'Antre / Render'
-          : normalizedStage === 'downloading'
-          ? 'Unduh MP4'
-          : job.stage || 'Menyiapkan...'
-      }`
     : job.stage
     ? `Tahap: ${job.stage}`
     : 'Menyiapkan Pipeline...';

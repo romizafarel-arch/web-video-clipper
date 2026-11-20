@@ -12,86 +12,9 @@ export interface AppConfig {
   has_gemini_key: boolean;
   has_openai_key: boolean;
   has_muapi_key: boolean;
-  has_agnes_key?: boolean;
-  agnes_base_url?: string;
-  agnes_video_model?: string;
   gemini_key_masked?: string;
   openai_key_masked?: string;
   muapi_key_masked?: string;
-  agnes_key_masked?: string;
-}
-
-export type IdeaGoal = 'hiburan' | 'informasi' | 'promosi';
-export type IdeaTone = 'santai' | 'lucu' | 'serius' | 'meyakinkan';
-
-export interface VideoIdeaDirection {
-  title: string;
-  summary: string;
-  hook: string;
-  why: string;
-}
-
-export interface VideoIdeaScene {
-  visual: string;
-  spoken: string;
-  onscreen: string;
-}
-
-export interface VideoIdeaPlan {
-  hooks: string[];
-  scenes: VideoIdeaScene[];
-  closing: string;
-  editing_note: string;
-}
-
-export type IdeaLlmProvider = 'gemini' | 'openai' | 'agnes';
-
-export interface VideoIdeaRequest {
-  idea: string;
-  goal: IdeaGoal;
-  tone: IdeaTone;
-  duration: 15 | 30 | 45;
-  llm_provider?: IdeaLlmProvider;
-  llm_model?: string;
-}
-
-export interface VideoIdeaGuide {
-  idea: string;
-  directionTitle: string;
-  selectedHook: string;
-  plan: VideoIdeaPlan;
-}
-
-export type VideoGenerationProvider = 'agnes' | 'muapi';
-export type AgnesVideoModel = 'agnes-video-2.5-flash' | 'agnes-video-2.5';
-export type AgnesAspectRatio = '9:16' | '16:9' | '1:1' | '3:4' | '4:3' | '21:9';
-export type AgnesVideoSize = '720P' | '1080P';
-
-export interface MuapiSchemaField<T = string | number> {
-  enum?: T[];
-  default?: T;
-  type?: string;
-}
-
-export interface MuapiModelSchema {
-  endpoint_url?: string;
-  input_fields?: string[];
-  aspect_ratio?: MuapiSchemaField<string>;
-  duration?: MuapiSchemaField<number>;
-  resolution?: MuapiSchemaField<string>;
-}
-
-export interface GenerateIdeaVideoPayload {
-  provider?: VideoGenerationProvider;
-  prompt: string;
-  title?: string;
-  idea?: string;
-  hook?: string;
-  model: string;
-  duration?: number;
-  aspect_ratio?: string;
-  size?: AgnesVideoSize;
-  resolution?: string;
 }
 
 export type FramingMode = 'podcast' | 'single' | 'center' | 'gaming' | 'dual';
@@ -147,12 +70,41 @@ export type LLMProvider = 'gemini' | 'openai';
 export type TranscriberProvider = 'whisper' | 'gemini';
 export type ProcessingMode = 'local' | 'api';
 
+/** Where each point of a clip's virality score came from (see backend viewer_signals.py). */
+export interface ScoreBreakdown {
+  /** The LLM's own score before any evidence-based adjustment. */
+  base: number;
+  /** Points from audio energy peaks (screams, laughter). */
+  audio: number;
+  /** Points from YouTube "Most replayed" heatmap. */
+  replay: number;
+  /** Points from timestamped viewer comments. */
+  comments: number;
+  final: number;
+  /** True when base + boosts exceeded 100 and was clamped. */
+  capped: boolean;
+  hook: string;
+  reason: string;
+  evidence: {
+    audio_peak_db?: number | null;
+    audio_spikes?: number | null;
+    replay_avg?: number | null;
+    replay_peak?: number | null;
+    comment_mentions: number;
+    top_comment?: string | null;
+    top_comment_likes?: number | null;
+  };
+  /** Replay intensity (0-1) across the clip, evenly binned. */
+  replay_profile: number[];
+}
+
 export interface HistoryShort {
   title?: string;
   hook_sentence?: string;
   enable_sfx?: boolean;
   remove_silence?: boolean;
   score?: number | null;
+  score_breakdown?: ScoreBreakdown | null;
   web_url: string;
   vtt_url?: string | null;
   filename: string;
@@ -205,22 +157,18 @@ export interface ProviderModelsBundle {
   provider?: string;
   error?: string;
   models?: ModelOption[];
-  video_models?: ModelOption[];
   raw_count?: number;
 }
 
 export interface AllModelsResponse {
   gemini?: ProviderModelsBundle;
   openai?: ProviderModelsBundle;
-  agnes?: ProviderModelsBundle;
   muapi?: ProviderModelsBundle;
   whisper?: ProviderModelsBundle;
   active?: {
     llm_provider: string;
     gemini_model: string;
     openai_model: string;
-    agnes_chat_model?: string;
-    agnes_video_model?: string;
     transcriber_provider: string;
     gemini_transcriber_model?: string;
     whisper_model: string;
@@ -278,6 +226,7 @@ export interface GeneratePayload {
 export interface GeneratedShort {
   title?: string;
   score?: number;
+  score_breakdown?: ScoreBreakdown | null;
   web_url?: string;
   clip_url?: string;
   vtt_url?: string;
@@ -363,11 +312,39 @@ export interface SubtitleCue {
   }>;
 }
 
+/** A span of source time (seconds) to delete from a clip. */
+export interface CutRange {
+  start: number;
+  end: number;
+}
+
+export interface ClipTranscriptWord {
+  i: number;
+  word: string;
+  start: number;
+  end: number;
+  /** True for hesitation sounds like "eee", "anu", "um". */
+  filler: boolean;
+}
+
+export interface ClipTranscriptResponse {
+  start_time: number;
+  end_time: number;
+  words: ClipTranscriptWord[];
+  has_word_timestamps: boolean;
+  /** Cuts already applied to the current render of this clip. */
+  cut_ranges: CutRange[];
+  source_available: boolean;
+  error?: string;
+}
+
 export interface EditClipPayload {
   session_folder: string;
   clip_index: number;
   start_time: number;
   end_time: number;
+  /** Source-time ranges removed via the transcript editor. When set, subtitles are rebuilt server-side. */
+  cut_ranges?: CutRange[];
   segments?: Array<{ start: number; end: number; text: string }>;
   subtitles?: Array<{ start: number; end: number; text: string }>;
   aspect_ratio?: string;

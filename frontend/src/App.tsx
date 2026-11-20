@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Toaster, toast } from 'sonner';
-import { ArrowLeft, Film } from 'lucide-react';
+import { Film } from 'lucide-react';
 import { Header } from './components/Header';
 import { StudioVideoPlayer } from './components/StudioVideoPlayer';
 import { GeneratorForm } from './components/GeneratorForm';
@@ -9,10 +9,8 @@ import { ResultsGallery } from './components/ResultsGallery';
 import { HistoryModal } from './components/HistoryModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ClipEditorModal } from './components/ClipEditorModal';
-import { StartPage } from './components/StartPage';
-import { IdeaFlow } from './components/IdeaFlow';
 import { Button } from './components/ui/button';
-import type { AppConfig, GeneratePayload, JobState, JobResult, GeneratedShort, HistoryShort, SubtitleStyle, EditableClip, EditClipResponse, FramingMode, VideoIdeaGuide } from './types';
+import type { AppConfig, GeneratePayload, JobState, JobResult, GeneratedShort, HistoryShort, SubtitleStyle, EditableClip, EditClipResponse, FramingMode } from './types';
 import { fetchConfig, submitGenerate, fetchJob, cancelJob, fetchActiveJob, fetchHistory } from './lib/api';
 
 const TERMINAL_STATUSES = new Set([
@@ -37,8 +35,6 @@ export function App() {
   const [isCanceling, setIsCanceling] = useState<boolean>(false);
   const [pollingError, setPollingError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'clipper' | 'studio'>('clipper');
-  const [workspace, setWorkspace] = useState<'start' | 'ideas' | 'clipper'>('start');
-  const [ideaGuide, setIdeaGuide] = useState<VideoIdeaGuide | null>(null);
 
   // Studio Player Sync States
   const [selectedClip, setSelectedClip] = useState<GeneratedShort | HistoryShort | null>(null);
@@ -96,7 +92,6 @@ export function App() {
                   setPreviewSubtitleText(job.result.shorts[0].title);
                 }
                 setViewMode('studio');
-                setWorkspace('clipper');
               }
             }
             fetchHistory().then((h) => setHistoryCount(h.total_videos)).catch(() => {});
@@ -112,7 +107,6 @@ export function App() {
                   setPreviewSubtitleText(job.result.shorts[0].title);
                 }
                 setViewMode('studio');
-                setWorkspace('clipper');
               }
               toast.warning(
                 job.error || `Selesai sebagian: ${successClips} klip berhasil dibuat, ${failedCount} klip gagal.`
@@ -132,7 +126,6 @@ export function App() {
                 setPreviewSubtitleText(job.result.shorts[0].title);
               }
               setViewMode('studio');
-              setWorkspace('clipper');
               toast.info(`Pekerjaan dibatalkan. ${job.result.shorts.length} klip tersimpan.`);
               fetchHistory().then((h) => setHistoryCount(h.total_videos)).catch(() => {});
             } else {
@@ -147,7 +140,6 @@ export function App() {
                 setPreviewSubtitleText(job.result.shorts[0].title);
               }
               setViewMode('studio');
-              setWorkspace('clipper');
               fetchHistory().then((h) => setHistoryCount(h.total_videos)).catch(() => {});
             }
             toast.error(job.error || 'Pekerjaan melampaui batas waktu pengerjaan.');
@@ -359,70 +351,9 @@ export function App() {
       />
 
       <main className="flex-1 w-full max-w-[1536px] mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-6">
-        {workspace === 'start' ? (
-          <StartPage
-            onStartIdeas={() => setWorkspace('ideas')}
-            onStartClipping={() => {
-              setWorkspace('clipper');
-              setViewMode('clipper');
-            }}
-          />
-        ) : workspace === 'ideas' ? (
-          <IdeaFlow
-            config={config}
-            activeJob={activeJob}
-            isCanceling={isCanceling}
-            pollingError={pollingError}
-            onCancelJob={handleCancel}
-            onRetryPolling={handleRetryPolling}
-            onVideoJobStarted={(jobId) => {
-              setJobResult(null);
-              toast.info('Tugas video dikirim ke Agnes AI...');
-              startPolling(jobId);
-            }}
-            onBack={() => setWorkspace('start')}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            onUseFootage={(guide) => {
-              setIdeaGuide(guide);
-              setWorkspace('clipper');
-              setViewMode('clipper');
-            }}
-          />
-        ) : viewMode === 'clipper' ? (
+        {viewMode === 'clipper' ? (
           /* Mode 1: Clipper (1 kolom luas, max-w-7xl mx-auto) */
           <div className="w-full max-w-7xl mx-auto space-y-6 animate-in fade-in duration-200">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setWorkspace('start')}
-              className="min-h-11 px-2 text-sm text-zinc-300 hover:text-white"
-            >
-              <ArrowLeft aria-hidden="true" />
-              Kembali ke Mulai
-            </Button>
-            {ideaGuide && (
-              <details className="rounded-lg border border-violet-400/30 bg-violet-950/15 px-4 py-3 text-sm">
-                <summary className="min-h-9 cursor-pointer py-1 font-medium text-violet-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
-                  Panduan ide: {ideaGuide.directionTitle}
-                </summary>
-                <div className="mt-3 space-y-3 border-t border-violet-400/15 pt-3">
-                  <p className="text-zinc-300">Pembuka: <span className="text-white">{ideaGuide.selectedHook}</span></p>
-                  <ol className="space-y-3">
-                    {ideaGuide.plan.scenes.map((scene, index) => (
-                      <li key={`${scene.visual}-${index}`} className="grid gap-1 border-b border-zinc-800/80 pb-3 sm:grid-cols-3 sm:gap-4">
-                        <span className="text-xs text-violet-200">Adegan {index + 1}: {scene.visual}</span>
-                        <span className="text-xs leading-5 text-zinc-300">{scene.spoken}</span>
-                        <span className="text-xs leading-5 text-zinc-400">Teks layar: {scene.onscreen}</span>
-                      </li>
-                    ))}
-                  </ol>
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-400">
-                    <span>Penutup: {ideaGuide.plan.closing}</span>
-                    <button type="button" onClick={() => setIdeaGuide(null)} className="min-h-11 rounded-md px-3 text-zinc-300 underline underline-offset-4 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">Tutup panduan</button>
-                  </div>
-                </div>
-              </details>
-            )}
             <GeneratorForm
               config={config}
               isLoading={isLoading}
@@ -570,7 +501,6 @@ export function App() {
           }
           if (clip.title) setPreviewSubtitleText(clip.title);
           setViewMode('studio');
-          setWorkspace('clipper');
         }}
       />
 

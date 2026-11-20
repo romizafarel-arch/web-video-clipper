@@ -30,6 +30,12 @@ if hasattr(sys.stderr, "reconfigure"):
 
 import shorts_generator.config as cfg
 from shorts_generator import cleanup_source_video, generate_shorts, muapi, report_error_to_reef_flow
+from shorts_generator.transcript_edit import (
+    MIN_KEPT_SECONDS,
+    collect_words,
+    parse_cut_ranges,
+    total_cut,
+)
 from shorts_generator.job_manager import (
     JobConflictError,
     JobCancelledException,
@@ -39,15 +45,6 @@ from shorts_generator.job_manager import (
     job_manager,
     mask_sensitive_keys,
 )
-from shorts_generator.agnes import (
-    AGNES_ASPECT_RATIOS,
-    AGNES_SIZES,
-    AGNES_VIDEO_MODELS,
-    agnes_chat,
-    generate_video_to_file,
-)
-from shorts_generator.idea_planner import generate_directions, generate_plan
-from shorts_generator.local.llm import call_gemini_llm, call_local_llm, call_openai_llm
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
@@ -1011,13 +1008,9 @@ def get_config():
         "has_gemini_key": bool(cfg.GEMINI_API_KEY and cfg.GEMINI_API_KEY != "your_gemini_key_here"),
         "has_openai_key": bool(cfg.OPENAI_API_KEY and cfg.OPENAI_API_KEY != "your_openai_key_here" and cfg.OPENAI_API_KEY != "your_apmix_or_openai_key_here"),
         "has_muapi_key": bool(cfg.MUAPI_API_KEY and cfg.MUAPI_API_KEY != "your_muapi_key_here"),
-        "has_agnes_key": bool(cfg.AGNES_API_KEY and cfg.AGNES_API_KEY != "your_agnes_key_here"),
-        "agnes_base_url": getattr(cfg, "AGNES_BASE_URL", "https://apihub.agnes-ai.com"),
-        "agnes_video_model": getattr(cfg, "AGNES_VIDEO_MODEL", "agnes-video-2.5-flash"),
         "gemini_key_masked": mask_key(cfg.GEMINI_API_KEY),
         "openai_key_masked": mask_key(cfg.OPENAI_API_KEY),
         "muapi_key_masked": mask_key(cfg.MUAPI_API_KEY),
-        "agnes_key_masked": mask_key(cfg.AGNES_API_KEY),
     })
 
 
@@ -1199,149 +1192,9 @@ def get_whisper_models() -> Dict[str, Any]:
     }
 
 
-def get_agnes_models(force_refresh: bool = False) -> Dict[str, Any]:
-    global _models_cache
-    if not force_refresh and "agnes" in _models_cache:
-        return _models_cache["agnes"]
-
-    fallback_chat = [
-        {"id": getattr(cfg, "AGNES_CHAT_MODEL", "agnes-2.5-flash") or "agnes-2.5-flash", "name": "agnes-2.5-flash", "recommended": True},
-    ]
-    fallback_video = [
-        {
-            "id": m,
-            "name": f"{m} (Cepat · 720P)" if m == "agnes-video-2.5-flash" else f"{m} (HD · 720P / 1080P)",
-            "recommended": m == "agnes-video-2.5-flash",
-        }
-        for m in AGNES_VIDEO_MODELS
-    ]
-
-    key = getattr(cfg, "AGNES_API_KEY", "")
-    if not _has_usable_key(key, "your_agnes_key_here"):
-        return {
-            "success": False,
-            "error": "AGNES_API_KEY belum disetel. Silakan isi API key di menu Pengaturan.",
-            "models": fallback_chat,
-            "video_models": fallback_video,
-            "raw_count": 0,
-        }
-
-    try:
-        import requests
-        from shorts_generator.agnes import normalize_base_url
-
-        root = normalize_base_url(getattr(cfg, "AGNES_BASE_URL", None))
-        resp = requests.get(
-            f"{root}/v1/models",
-            headers={"Authorization": f"Bearer {key.strip()}"},
-            timeout=10,
-        )
-        if resp.status_code >= 400:
-            raise RuntimeError(f"HTTP {resp.status_code}")
-
-        raw_list = resp.json().get("data", [])
-        chat_models = []
-        video_models = []
-        for item in raw_list:
-            model_id = str(item.get("id") or "").strip() if isinstance(item, dict) else ""
-            if not model_id:
-                continue
-            lower = model_id.lower()
-            if model_id in AGNES_VIDEO_MODELS:
-                video_models.append({
-                    "id": model_id,
-                    "name": f"{model_id} (Cepat · 720P)" if model_id == "agnes-video-2.5-flash" else f"{model_id} (HD · 720P / 1080P)",
-                    "recommended": model_id == "agnes-video-2.5-flash",
-                })
-            elif not lower.startswith("agnes-video-") and not lower.startswith("agnes-image-"):
-                chat_models.append({
-                    "id": model_id,
-                    "name": model_id,
-                    "recommended": model_id in ("agnes-2.5-flash", "agnes-3.0-flash"),
-                })
-
-        if not chat_models:
-            chat_models = fallback_chat
-        if not video_models:
-            video_models = fallback_video
-
-        chat_models.sort(key=lambda x: (not x.get("recommended", False), x["id"]))
-        video_models.sort(key=lambda x: (not x.get("recommended", False), x["id"]))
-
-        result = {
-            "success": True,
-            "provider": "agnes",
-            "models": chat_models,
-            "video_models": video_models,
-            "raw_count": len(raw_list),
-        }
-        _models_cache["agnes"] = result
-        return result
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "models": fallback_chat,
-            "video_models": fallback_video,
-            "raw_count": 0,
-        }
-
-
-def get_muapi_video_models(force_refresh: bool = False) -> Dict[str, Any]:
-    global _models_cache
-    if not force_refresh and "muapi" in _models_cache:
-        return _models_cache["muapi"]
-
-    key = getattr(cfg, "MUAPI_API_KEY", "")
-    if not _has_usable_key(key, "your_muapi_key_here"):
-        return {
-            "success": False,
-            "error": "MUAPI_API_KEY belum disetel. Silakan isi API key di menu Pengaturan.",
-            "models": [],
-            "video_models": [],
-            "raw_count": 0,
-        }
-
-    try:
-        video_models = muapi.list_text_to_video_models(
-            api_key=key,
-            base_url=getattr(cfg, "MUAPI_BASE_URL", None),
-        )
-        result = {
-            "success": True,
-            "provider": "muapi",
-            "models": video_models,
-            "video_models": video_models,
-            "raw_count": len(video_models),
-        }
-        _models_cache["muapi"] = result
-        return result
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "models": [],
-            "video_models": [],
-            "raw_count": 0,
-        }
-
-
-def get_muapi_model_schema(model_id: str, force_refresh: bool = False) -> Dict[str, Any]:
-    cache_key = f"muapi_schema:{model_id}"
-    if not force_refresh and cache_key in _models_cache:
-        return _models_cache[cache_key]
-    schema = muapi.get_model_input_schema(
-        model_id,
-        api_key=getattr(cfg, "MUAPI_API_KEY", None),
-        base_url=getattr(cfg, "MUAPI_BASE_URL", None),
-    )
-    _models_cache[cache_key] = schema
-    return schema
-
-
 @app.route("/api/models", methods=["GET"])
 def api_get_models():
-    """Retrieve available models from API for Gemini, OpenAI, Agnes, MuAPI, or Whisper."""
+    """Retrieve available models from API for Gemini, OpenAI, or Whisper."""
     provider = request.args.get("provider", "").strip().lower()
     refresh = request.args.get("refresh", "false").strip().lower() == "true"
 
@@ -1349,10 +1202,6 @@ def api_get_models():
         return jsonify(get_gemini_models(force_refresh=refresh))
     elif provider == "openai":
         return jsonify(get_openai_models(force_refresh=refresh))
-    elif provider == "agnes":
-        return jsonify(get_agnes_models(force_refresh=refresh))
-    elif provider == "muapi":
-        return jsonify(get_muapi_video_models(force_refresh=refresh))
     elif provider == "whisper":
         return jsonify(get_whisper_models())
     else:
@@ -1360,38 +1209,16 @@ def api_get_models():
         return jsonify({
             "gemini": get_gemini_models(force_refresh=refresh),
             "openai": get_openai_models(force_refresh=refresh),
-            "agnes": get_agnes_models(force_refresh=refresh),
-            "muapi": get_muapi_video_models(force_refresh=refresh),
             "whisper": get_whisper_models(),
             "active": {
                 "llm_provider": cfg.LLM_PROVIDER,
                 "gemini_model": cfg.GEMINI_MODEL,
                 "openai_model": cfg.OPENAI_MODEL,
-                "agnes_chat_model": getattr(cfg, "AGNES_CHAT_MODEL", "agnes-2.5-flash"),
-                "agnes_video_model": getattr(cfg, "AGNES_VIDEO_MODEL", "agnes-video-2.5-flash"),
                 "transcriber_provider": cfg.TRANSCRIBER_PROVIDER,
                 "gemini_transcriber_model": getattr(cfg, "GEMINI_TRANSCRIBER_MODEL", "gemini-3.5-transcribe"),
                 "whisper_model": cfg.LOCAL_WHISPER_MODEL,
             },
         })
-
-
-@app.route("/api/models/schema", methods=["GET"])
-def api_get_model_schema():
-    """Retrieve dynamic parameter schema (aspect_ratio, duration, resolution) for a MuAPI model."""
-    provider = request.args.get("provider", "muapi").strip().lower()
-    model_id = request.args.get("model", "").strip()
-    refresh = request.args.get("refresh", "false").strip().lower() == "true"
-
-    if provider != "muapi" or not model_id:
-        return jsonify({"error": "Parameter provider=muapi dan model wajib diisi."}), 400
-    if not _has_usable_key(getattr(cfg, "MUAPI_API_KEY", ""), "your_muapi_key_here"):
-        return jsonify({"error": "MUAPI_API_KEY belum disetel."}), 503
-    try:
-        schema = get_muapi_model_schema(model_id, force_refresh=refresh)
-        return jsonify({"success": True, "provider": "muapi", "model": model_id, "schema": schema})
-    except Exception as exc:
-        return jsonify({"success": False, "error": str(exc)}), 502
 
 
 @app.route("/api/models/test", methods=["POST"])
@@ -1523,9 +1350,6 @@ def update_config():
         "TRANSCRIBER_PROVIDER",
         "LOCAL_WHISPER_MODEL",
         "MUAPI_API_KEY",
-        "AGNES_API_KEY",
-        "AGNES_BASE_URL",
-        "AGNES_VIDEO_MODEL",
         "JOB_TIMEOUT_SECONDS",
         "AUTO_DELETE_SOURCE_VIDEO",
     ]
@@ -1588,8 +1412,6 @@ def update_config():
     cfg.OPENAI_MODEL = os.getenv("OPENAI_MODEL", getattr(cfg, "OPENAI_MODEL", "gpt-4o-mini")).strip()
     cfg.LOCAL_WHISPER_MODEL = os.getenv("LOCAL_WHISPER_MODEL", getattr(cfg, "LOCAL_WHISPER_MODEL", "base")).strip()
     cfg.OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "").strip() or None
-    cfg.AGNES_BASE_URL = (os.getenv("AGNES_BASE_URL", getattr(cfg, "AGNES_BASE_URL", "https://apihub.agnes-ai.com")) or "https://apihub.agnes-ai.com").strip().rstrip("/")
-    cfg.AGNES_VIDEO_MODEL = (os.getenv("AGNES_VIDEO_MODEL", getattr(cfg, "AGNES_VIDEO_MODEL", "agnes-video-2.5-flash")) or "agnes-video-2.5-flash").strip()
     try:
         cfg.JOB_TIMEOUT_SECONDS = float(os.getenv("JOB_TIMEOUT_SECONDS", getattr(cfg, "JOB_TIMEOUT_SECONDS", 7200.0)))
     except (ValueError, TypeError):
@@ -1600,509 +1422,6 @@ def update_config():
     _models_cache.clear()
 
     return jsonify({"success": True, "message": "Pengaturan & pilihan model berhasil disimpan!"})
-
-
-def _idea_request_data():
-    data = request.get_json(silent=True)
-    if not isinstance(data, dict):
-        return None, (jsonify({"error": "Isi permintaan tidak terbaca."}), 400)
-
-    idea = data.get("idea")
-    goal = data.get("goal", "informasi")
-    tone = data.get("tone", "santai")
-    duration = data.get("duration", 30)
-    if not isinstance(idea, str) or not idea.strip() or len(idea.strip()) > 1000:
-        return None, (jsonify({"error": "Tulis ide maksimal 1.000 karakter."}), 400)
-    if goal not in ("hiburan", "informasi", "promosi"):
-        return None, (jsonify({"error": "Pilih tujuan video yang tersedia."}), 400)
-    if tone not in ("santai", "lucu", "serius", "meyakinkan"):
-        return None, (jsonify({"error": "Pilih gaya bicara yang tersedia."}), 400)
-    if duration not in (15, 30, 45):
-        return None, (jsonify({"error": "Durasi harus 15, 30, atau 45 detik."}), 400)
-
-    raw_provider = data.get("llm_provider")
-    llm_provider: Optional[str] = None
-    if isinstance(raw_provider, str) and raw_provider.strip():
-        candidate_provider = raw_provider.strip().lower()
-        if candidate_provider not in ("gemini", "openai", "agnes"):
-            return None, (jsonify({"error": "Provider AI untuk ide tidak valid."}), 400)
-        llm_provider = candidate_provider
-
-    raw_model = data.get("llm_model")
-    llm_model = raw_model.strip() if isinstance(raw_model, str) and raw_model.strip() else None
-
-    return {
-        "idea": idea.strip(),
-        "goal": goal,
-        "tone": tone,
-        "duration": duration,
-        "llm_provider": llm_provider,
-        "llm_model": llm_model,
-    }, None
-
-
-def _has_usable_key(value: Optional[str], *placeholders: str) -> bool:
-    cleaned = (value or "").strip()
-    return bool(cleaned and cleaned not in placeholders)
-
-
-def _idea_llm_call(provider_override: Optional[str] = None, model_override: Optional[str] = None):
-    """Use selected or configured model when available; fall back across Gemini/Agnes/OpenAI on runtime errors."""
-    provider = str(provider_override or cfg.LLM_PROVIDER or "gemini").strip().lower()
-    selected_model = (model_override or "").strip() or None
-    has_gemini = _has_usable_key(cfg.GEMINI_API_KEY, "your_gemini_key_here")
-    has_openai = _has_usable_key(cfg.OPENAI_API_KEY, "your_openai_key_here", "your_apmix_or_openai_key_here")
-    has_agnes = _has_usable_key(getattr(cfg, "AGNES_API_KEY", ""), "your_agnes_key_here")
-
-    primary_fn = call_local_llm
-    notice: Optional[str] = None
-
-    if provider == "agnes":
-        if has_agnes:
-            primary_fn = lambda prompt, _m=selected_model: agnes_chat(prompt, model=_m)
-        elif has_gemini:
-            notice = "Agnes AI belum disetel; menyusun ide memakai Gemini."
-            primary_fn = call_gemini_llm
-        elif has_openai:
-            notice = "Agnes AI belum disetel; menyusun ide memakai OpenAI."
-            primary_fn = call_openai_llm
-        else:
-            primary_fn = lambda prompt, _m=selected_model: agnes_chat(prompt, model=_m)
-    elif provider != "openai":
-        if not has_gemini and has_agnes:
-            return agnes_chat, "Gemini belum disetel; menyusun ide memakai Agnes AI."
-        if selected_model:
-            primary_fn = lambda prompt, _m=selected_model: call_gemini_llm(prompt, model=_m)
-        elif provider_override == "gemini":
-            primary_fn = call_gemini_llm
-    else:
-        if not has_openai and has_agnes:
-            return agnes_chat, "OpenAI belum disetel; menyusun ide memakai Agnes AI."
-        if selected_model:
-            primary_fn = lambda prompt, _m=selected_model: call_openai_llm(prompt, model=_m)
-        else:
-            model_response = get_openai_models()
-            if model_response.get("success") is True:
-                available = model_response.get("models", [])
-                model_ids = [item.get("id") for item in available if isinstance(item, dict) and item.get("id")]
-                configured_model = str(cfg.OPENAI_MODEL or "").strip()
-                if model_ids and configured_model not in model_ids:
-                    fallback_model = model_ids[0]
-                    notice = f"Model {configured_model or 'aktif'} tidak tersedia; untuk ide ini dipakai {fallback_model}."
-                    app.logger.warning(notice)
-                    primary_fn = lambda prompt, _m=fallback_model: call_openai_llm(prompt, model=_m)
-            elif provider_override == "openai":
-                primary_fn = call_openai_llm
-
-    fallbacks = []
-    if provider == "agnes":
-        if has_gemini:
-            fallbacks.append(("gemini", call_gemini_llm))
-        if has_openai:
-            fallbacks.append(("openai", call_openai_llm))
-    elif provider == "openai":
-        if has_gemini:
-            fallbacks.append(("gemini", call_gemini_llm))
-        if has_agnes:
-            fallbacks.append(("agnes", agnes_chat))
-    else:
-        if has_agnes:
-            fallbacks.append(("agnes", agnes_chat))
-        if has_openai:
-            fallbacks.append(("openai", call_openai_llm))
-
-    if not fallbacks:
-        return primary_fn, notice
-
-    def runner(prompt: str) -> str:
-        try:
-            return primary_fn(prompt)
-        except Exception as exc:
-            last_err = exc
-            app.logger.warning("Idea LLM primary (%s) failed: %s. Mencoba fallback...", provider, exc)
-            for name, fn in fallbacks:
-                try:
-                    return fn(prompt)
-                except Exception as fb_exc:
-                    last_err = fb_exc
-                    app.logger.warning("Idea LLM fallback (%s) failed: %s", name, fb_exc)
-            raise last_err
-
-    return runner, notice
-
-
-def _idea_error_response(exc: Exception, task: str):
-    detail = str(exc).lower()
-    if "api_key" in detail and ("not set" in detail or "belum disetel" in detail):
-        return jsonify({"error": "Sambungkan AI dulu lewat Pengaturan sebelum membuat panduan."}), 503
-    if "model_not_found" in detail or "unknown model" in detail:
-        return jsonify({"error": "Model AI yang dipilih tidak tersedia. Buka Pengaturan dan pilih model yang tersedia."}), 502
-    if "connection error" in detail or "connecterror" in detail:
-        return jsonify({"error": "Tidak bisa terhubung ke layanan AI. Periksa koneksi atau alamat AI di Pengaturan."}), 502
-    app.logger.exception("Idea %s generation failed", task)
-    label = "Arah cerita" if task == "direction" else "Panduan video"
-    return jsonify({"error": f"{label} belum berhasil dibuat. Coba lagi sebentar."}), 502
-
-
-@app.route("/api/ideas/directions", methods=["POST"])
-def api_idea_directions():
-    data, error = _idea_request_data()
-    if error:
-        return error
-    llm_provider = data.pop("llm_provider", None)
-    llm_model = data.pop("llm_model", None)
-    try:
-        llm_call, notice = _idea_llm_call(llm_provider, llm_model)
-        result = generate_directions(llm_call, **data)
-        if notice:
-            result["notice"] = notice
-        return jsonify(result)
-    except Exception as exc:
-        return _idea_error_response(exc, "direction")
-
-
-@app.route("/api/ideas/plan", methods=["POST"])
-def api_idea_plan():
-    data, error = _idea_request_data()
-    if error:
-        return error
-    llm_provider = data.pop("llm_provider", None)
-    llm_model = data.pop("llm_model", None)
-    direction = request.get_json(silent=True).get("direction")
-    if not isinstance(direction, dict) or any(
-        not isinstance(direction.get(key), str) or not direction[key].strip()
-        for key in ("title", "summary", "hook", "why")
-    ):
-        return jsonify({"error": "Pilih salah satu arah cerita terlebih dahulu."}), 400
-    try:
-        llm_call, notice = _idea_llm_call(llm_provider, llm_model)
-        result = generate_plan(llm_call, direction=direction, **data)
-        if notice:
-            result["notice"] = notice
-        return jsonify(result)
-    except Exception as exc:
-        return _idea_error_response(exc, "plan")
-
-
-def run_idea_video_job(job_id: str, params: Dict[str, Any]) -> None:
-    """Background worker to generate a video from an idea using Agnes AI or MuAPI."""
-    provider = str(params.get("provider") or "agnes").strip().lower()
-    provider_label = "MuAPI" if provider == "muapi" else "Agnes AI"
-    with generation_lock:
-        job_ctx = job_manager.get_job(job_id)
-        if not job_ctx:
-            job_ctx = JobContext(job_id=job_id, url=params.get("url", f"idea://{provider}"), params=params)
-            job_manager._jobs[job_id] = job_ctx
-
-        job_ctx.worker_thread = threading.current_thread()
-        session_folder = params.get("session_folder") or job_ctx.session_folder
-        if not session_folder:
-            session_folder = f"idea_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{job_id}"
-        job_ctx.session_folder = session_folder
-        job_dir = OUTPUT_DIR / session_folder
-        result: Optional[Dict[str, Any]] = None
-
-        try:
-            job_dir.mkdir(parents=True, exist_ok=True)
-            if job_ctx.status == JobStatus.CANCELED:
-                jobs[job_id] = job_ctx.to_dict()
-                _persist_job_metadata(job_ctx)
-                return
-
-            job_ctx.transition_to(JobStatus.RUNNING, stage="submitting", progress=10)
-            job_ctx.started_at = time.time()
-            job_ctx.emit_log(f"[{provider}] Mengirim prompt ide ke {provider_label}...")
-            jobs[job_id] = job_ctx.to_dict()
-            _persist_job_metadata(job_ctx)
-
-            filename = "short_1.mp4"
-            dest_path = job_dir / filename
-
-            def on_status(status_name: str, pct: Optional[int], message: str) -> None:
-                job_ctx.emit_log(f"[{provider}] {message}")
-                normalized = (status_name or "").strip().lower()
-                if normalized == "submitting":
-                    next_stage = "submitting"
-                elif normalized == "downloading":
-                    next_stage = "downloading"
-                else:
-                    next_stage = "rendering"
-                if pct is not None:
-                    mapped = max(10, min(95, int(pct)))
-                    job_ctx.transition_to(JobStatus.RUNNING, stage=next_stage, progress=mapped)
-                else:
-                    job_ctx.transition_to(JobStatus.RUNNING, stage=next_stage)
-                jobs[job_id] = job_ctx.to_dict()
-
-            if provider == "muapi":
-                gen_info = muapi.generate_video_to_file(
-                    prompt=params["prompt"],
-                    dest_path=dest_path,
-                    endpoint_url=params["endpoint_url"],
-                    payload_options=params.get("payload_options") or {},
-                    api_key=params.get("api_key"),
-                    base_url=params.get("base_url"),
-                    check_cancel=job_ctx.check_cancellation_or_timeout,
-                    on_status=on_status,
-                )
-            else:
-                gen_info = generate_video_to_file(
-                    prompt=params["prompt"],
-                    dest_path=dest_path,
-                    model=params.get("model"),
-                    duration=params.get("duration", 6),
-                    aspect_ratio=params.get("aspect_ratio", "9:16"),
-                    size=params.get("size", "720P"),
-                    api_key=params.get("api_key"),
-                    base_url=params.get("base_url"),
-                    check_cancel=job_ctx.check_cancellation_or_timeout,
-                    on_status=on_status,
-                )
-
-            title = (params.get("title") or f"Video Ide {provider_label}").strip()[:120]
-            aspect_ratio = params.get("aspect_ratio", "9:16")
-            duration = float(params.get("duration", 6))
-            short_entry = {
-                "title": title,
-                "hook_sentence": params.get("hook") or params["prompt"][:140],
-                "score": 95,
-                "clip_index": 1,
-                "filename": filename,
-                "folder_name": session_folder,
-                "web_url": f"/output/{session_folder}/{filename}",
-                "clip_url": str(dest_path),
-                "aspect_ratio": aspect_ratio,
-                "start_time": 0,
-                "end_time": duration,
-                "summary": params["prompt"],
-                "video_provider": provider,
-                "agnes_video_id": gen_info.get("video_id") or gen_info.get("request_id"),
-                "agnes_model": gen_info.get("model"),
-            }
-            result = {
-                "session_folder": session_folder,
-                "video_title": title,
-                "aspect_ratio": aspect_ratio,
-                "shorts": [short_entry],
-                "stats": {"total": 1, "success": 1, "failed": 0},
-            }
-            job_ctx.emit_log(f"[{provider}] Video selesai disimpan: {filename}")
-            job_ctx.transition_to(JobStatus.COMPLETED, stage="completed", progress=100, result=result)
-
-        except JobCancelledException as exc:
-            job_ctx.emit_log(f"[INFO] Generasi video {provider_label} dibatalkan: {exc}")
-            job_ctx.transition_to(
-                JobStatus.CANCELED,
-                stage="canceled",
-                progress=100,
-                error=str(exc),
-                result={"shorts": [], "stats": {"total": 1, "success": 0, "failed": 0}},
-            )
-        except JobTimeoutException as exc:
-            job_ctx.emit_log(f"[ERROR] Batas waktu {provider_label} terlampaui: {exc}")
-            job_ctx.transition_to(
-                JobStatus.TIMEOUT,
-                stage="timeout",
-                progress=100,
-                error=str(exc),
-                result={"shorts": [], "stats": {"total": 1, "success": 0, "failed": 0}},
-            )
-        except Exception as exc:
-            job_ctx.emit_log(f"[ERROR] {provider_label} gagal: {exc}")
-            job_ctx.transition_to(JobStatus.FAILED, stage="failed", progress=100, error=str(exc), result=result)
-        finally:
-            if session_folder:
-                try:
-                    _persist_job_metadata(job_ctx)
-                except Exception:
-                    pass
-            jobs[job_id] = job_ctx.to_dict()
-
-
-run_agnes_idea_job = run_idea_video_job
-
-
-def _build_muapi_video_options(data: Dict[str, Any], schema: Dict[str, Any], model_meta: Dict[str, Any]) -> Tuple[Dict[str, Any], str, float]:
-    """Normalize optional aspect_ratio, duration, and resolution against the MuAPI model schema."""
-    allowed_fields = set(schema.get("input_fields") or model_meta.get("input_fields") or [])
-    options: Dict[str, Any] = {}
-
-    raw_ratio = str(data.get("aspect_ratio") or "").strip()
-    ratio_prop = schema.get("aspect_ratio") if isinstance(schema.get("aspect_ratio"), dict) else {}
-    ratio_enum = ratio_prop.get("enum") if isinstance(ratio_prop.get("enum"), list) else None
-    effective_ratio = raw_ratio or str(ratio_prop.get("default") or "9:16")
-    if "aspect_ratio" in allowed_fields:
-        if ratio_enum and effective_ratio not in ratio_enum:
-            effective_ratio = str(ratio_prop.get("default") or ratio_enum[0])
-        options["aspect_ratio"] = effective_ratio
-
-    raw_dur = data.get("duration")
-    dur_prop = schema.get("duration") if isinstance(schema.get("duration"), dict) else {}
-    dur_enum = dur_prop.get("enum") if isinstance(dur_prop.get("enum"), list) else None
-    effective_dur: float = 5.0
-    if raw_dur is not None and raw_dur != "":
-        try:
-            effective_dur = float(raw_dur)
-        except (TypeError, ValueError):
-            effective_dur = float(dur_prop.get("default") or 5)
-    elif dur_prop.get("default") is not None:
-        effective_dur = float(dur_prop["default"])
-    if "duration" in allowed_fields:
-        if dur_enum:
-            if effective_dur not in dur_enum and int(effective_dur) not in dur_enum:
-                chosen = dur_prop.get("default") if dur_prop.get("default") in dur_enum else dur_enum[0]
-                options["duration"] = chosen
-                effective_dur = float(chosen)
-            else:
-                options["duration"] = int(effective_dur) if effective_dur.is_integer() else effective_dur
-        else:
-            options["duration"] = int(effective_dur) if effective_dur.is_integer() else effective_dur
-
-    raw_res = str(data.get("resolution") or data.get("size") or "").strip()
-    res_prop = schema.get("resolution") if isinstance(schema.get("resolution"), dict) else {}
-    res_enum = res_prop.get("enum") if isinstance(res_prop.get("enum"), list) else None
-    if "resolution" in allowed_fields:
-        candidate = raw_res
-        if res_enum:
-            lower_map = {str(v).lower(): v for v in res_enum}
-            if candidate.lower() in lower_map:
-                options["resolution"] = lower_map[candidate.lower()]
-            else:
-                options["resolution"] = res_prop.get("default") if res_prop.get("default") in res_enum else res_enum[0]
-        elif candidate:
-            options["resolution"] = candidate.lower()
-
-    return options, effective_ratio, effective_dur
-
-
-@app.route("/api/ideas/generate-video", methods=["POST"])
-def api_idea_generate_video():
-    """Generate a video from an idea prompt via Agnes AI or MuAPI in a background job."""
-    data = request.get_json(silent=True)
-    if not isinstance(data, dict):
-        return jsonify({"error": "Payload harus berupa objek JSON yang valid."}), 400
-
-    provider = str(data.get("provider") or "agnes").strip().lower()
-    if provider not in ("agnes", "muapi"):
-        return jsonify({"error": "Provider video AI tidak valid. Pilihan: agnes, muapi."}), 400
-
-    prompt = data.get("prompt")
-    if not isinstance(prompt, str) or not prompt.strip() or len(prompt.strip()) > 2000:
-        return jsonify({"error": "Prompt video wajib diisi (maksimal 2.000 karakter)."}), 400
-
-    title = str(data.get("title") or data.get("idea") or f"Video Ide {'MuAPI' if provider == 'muapi' else 'Agnes AI'}").strip()
-    hook = str(data.get("hook") or "").strip()
-
-    if provider == "muapi":
-        if not _has_usable_key(getattr(cfg, "MUAPI_API_KEY", ""), "your_muapi_key_here"):
-            return jsonify({"error": "Sambungkan MUAPI_API_KEY dulu lewat Pengaturan sebelum membuat video."}), 503
-
-        model = str(data.get("model") or "").strip()
-        if not model:
-            return jsonify({"error": "Pilih model video MuAPI terlebih dahulu."}), 400
-
-        models_bundle = get_muapi_video_models()
-        available_models = models_bundle.get("video_models") or []
-        matched_meta = next((m for m in available_models if m.get("id") == model or m.get("endpoint_url") == model), None)
-        if not matched_meta:
-            return jsonify({"error": f"Model MuAPI '{model}' tidak tersedia di daftar Text-to-Video aktif."}), 400
-
-        try:
-            schema = get_muapi_model_schema(matched_meta["id"])
-        except Exception:
-            schema = {"endpoint_url": matched_meta["endpoint_url"], "input_fields": matched_meta.get("input_fields", [])}
-
-        payload_options, aspect_ratio, duration = _build_muapi_video_options(data, schema, matched_meta)
-        job_url = f"muapi://{matched_meta['id']}"
-        job_params = {
-            "provider": "muapi",
-            "prompt": prompt.strip(),
-            "title": title,
-            "hook": hook,
-            "model": matched_meta["id"],
-            "endpoint_url": schema.get("endpoint_url") or matched_meta["endpoint_url"],
-            "payload_options": payload_options,
-            "duration": duration,
-            "aspect_ratio": aspect_ratio,
-            "api_key": cfg.MUAPI_API_KEY,
-            "base_url": getattr(cfg, "MUAPI_BASE_URL", "https://api.muapi.ai/api/v1"),
-        }
-    else:
-        if not _has_usable_key(getattr(cfg, "AGNES_API_KEY", ""), "your_agnes_key_here"):
-            return jsonify({"error": "Sambungkan AGNES_API_KEY dulu lewat Pengaturan sebelum membuat video."}), 503
-
-        model = str(data.get("model") or getattr(cfg, "AGNES_VIDEO_MODEL", "agnes-video-2.5-flash")).strip()
-        if model not in AGNES_VIDEO_MODELS:
-            return jsonify({"error": f"Model Agnes tidak valid. Pilihan: {', '.join(AGNES_VIDEO_MODELS)}"}), 400
-
-        aspect_ratio = str(data.get("aspect_ratio") or "9:16").strip()
-        if aspect_ratio not in AGNES_ASPECT_RATIOS:
-            return jsonify({"error": f"Rasio aspek tidak valid. Pilihan: {', '.join(AGNES_ASPECT_RATIOS)}"}), 400
-
-        raw_duration = data.get("duration", 6)
-        try:
-            duration = int(raw_duration)
-        except (TypeError, ValueError):
-            return jsonify({"error": "Durasi video Agnes AI harus berupa angka 4 sampai 12 detik."}), 400
-        if not 4 <= duration <= 12:
-            return jsonify({"error": "Durasi video Agnes AI harus antara 4 sampai 12 detik."}), 400
-
-        size = str(data.get("size") or "720P").strip().upper()
-        if size not in AGNES_SIZES:
-            return jsonify({"error": f"Resolusi tidak valid. Pilihan: {', '.join(AGNES_SIZES)}"}), 400
-
-        job_url = f"agnes://{model}"
-        job_params = {
-            "provider": "agnes",
-            "prompt": prompt.strip(),
-            "title": title,
-            "hook": hook,
-            "model": model,
-            "duration": duration,
-            "aspect_ratio": aspect_ratio,
-            "size": size,
-            "api_key": cfg.AGNES_API_KEY,
-            "base_url": getattr(cfg, "AGNES_BASE_URL", "https://apihub.agnes-ai.com"),
-            "config": {
-                "agnes_api_key": cfg.AGNES_API_KEY,
-                "agnes_base_url": getattr(cfg, "AGNES_BASE_URL", "https://apihub.agnes-ai.com"),
-                "agnes_video_model": model,
-            },
-        }
-
-    with job_manager._admission_lock:
-        active_job = get_active_job()
-        if active_job:
-            return jsonify({
-                "error": f"Sedang ada proses generasi yang aktif (Job ID: {active_job['job_id']}). Harap tunggu hingga selesai atau batalkan pekerjaan tersebut."
-            }), 409
-
-        job_id = str(uuid.uuid4())[:8]
-        session_folder = f"idea_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{job_id}"
-        (OUTPUT_DIR / session_folder).mkdir(parents=True, exist_ok=True)
-        job_params["session_folder"] = session_folder
-
-        try:
-            job_ctx = job_manager.admit_job(
-                job_id=job_id,
-                url=job_url,
-                params=job_params,
-                timeout_seconds=getattr(cfg, "JOB_TIMEOUT_SECONDS", 1800.0),
-            )
-        except JobConflictError as exc:
-            return jsonify({"error": str(exc)}), 409
-        job_ctx.session_folder = session_folder
-        jobs[job_id] = job_ctx.to_dict()
-        try:
-            _persist_job_metadata(job_ctx)
-        except Exception:
-            pass
-
-    thread = threading.Thread(target=run_idea_video_job, args=(job_id, job_params), daemon=True)
-    job_ctx.worker_thread = thread
-    thread.start()
-
-    return jsonify({"job_id": job_id, "status": "started"})
 
 
 @app.route("/api/generate", methods=["POST"])
@@ -2496,6 +1815,7 @@ def get_history():
                         "title": s.get("title") or fn,
                         "hook_sentence": s.get("hook_sentence") or "",
                         "score": s.get("score") or 0,
+                        "score_breakdown": s.get("score_breakdown"),
                         "web_url": f"/output/{folder_name}/{fn}{rev_query}",
                         "vtt_url": f"/output/{folder_name}/{vtt_name}{rev_query}" if has_vtt else None,
                         "filename": fn,
@@ -2591,6 +1911,7 @@ def get_history():
                                 "title": short.get("title") or fn,
                                 "hook_sentence": short.get("hook_sentence") or "",
                                 "score": short.get("score") or 0,
+                                "score_breakdown": short.get("score_breakdown"),
                                 "web_url": f"/output/{fn}",
                                 "vtt_url": f"/output/{vtt_name}" if has_vtt else None,
                                 "filename": fn,
@@ -2835,6 +2156,52 @@ def download_session_zip(folder_name: str):
         return jsonify({"error": f"Gagal membuat arsip ZIP: {str(e)}"}), 500
 
 
+@app.route("/api/clip-transcript/<folder_name>/<int:clip_index>", methods=["GET"])
+def api_clip_transcript(folder_name: str, clip_index: int):
+    """Word-level transcript for one clip (source time), used by the transcript-cut editor."""
+    source_path, job_data, error_msg = resolve_session_source(folder_name)
+    if job_data is None:
+        return jsonify({"error": error_msg or "Metadata sesi tidak ditemukan."}), 404
+
+    result_dict = job_data.get("result") if isinstance(job_data.get("result"), dict) else {}
+    shorts = result_dict.get("shorts") or []
+    short = next(
+        (
+            s for idx, s in enumerate(shorts, 1)
+            if isinstance(s, dict) and (s.get("clip_index") if isinstance(s.get("clip_index"), int) else idx) == clip_index
+        ),
+        None,
+    )
+    if short is None:
+        return jsonify({"error": f"Klip #{clip_index} tidak ditemukan di sesi ini."}), 404
+
+    def _qfloat(name: str, default: Optional[float]) -> Optional[float]:
+        raw = request.args.get(name)
+        if raw is None:
+            return default
+        try:
+            val = float(raw)
+        except ValueError:
+            return default
+        return val if math.isfinite(val) and val >= 0 else default
+
+    start = _qfloat("start", short.get("start_time"))
+    end = _qfloat("end", short.get("end_time"))
+    if start is None or end is None or end <= start:
+        return jsonify({"error": "Rentang waktu klip tidak valid."}), 400
+
+    transcript = result_dict.get("transcript") if isinstance(result_dict.get("transcript"), dict) else {}
+    words = collect_words(transcript.get("segments") or [], start, end)
+    return jsonify({
+        "start_time": start,
+        "end_time": end,
+        "words": words,
+        "has_word_timestamps": bool(words),
+        "cut_ranges": short.get("cut_ranges") or [],
+        "source_available": error_msg is None,
+    })
+
+
 @app.route("/api/edit-clip", methods=["POST"])
 def api_edit_clip():
     """Re-cut and re-frame a specific clip with custom in/out timestamps, caption, and framing."""
@@ -2950,6 +2317,15 @@ def api_edit_clip():
     if effective_duration < 0.5:
         return jsonify({"error": "Durasi rentang klip efektif terlalu pendek (minimal 0.5 detik)."}), 400
 
+    # Transcript-based cuts (deleted words / fillers) — source-time ranges inside the clip window.
+    try:
+        cut_ranges = parse_cut_ranges(data.get("cut_ranges"), start_time, effective_end_time)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    rendered_duration = effective_duration - total_cut(cut_ranges)
+    if cut_ranges and rendered_duration < MIN_KEPT_SECONDS:
+        return jsonify({"error": "Hasil potongan transkrip terlalu pendek (minimal 0.4 detik tersisa)."}), 400
+
     aspect_ratio = str(data.get("aspect_ratio") or "9:16").strip()
     if aspect_ratio not in ("9:16", "1:1", "16:9"):
         aspect_ratio = "9:16"
@@ -3043,6 +2419,10 @@ def api_edit_clip():
         custom_segments = data.get("segments")
         if custom_segments is None:
             custom_segments = data.get("subtitles")
+        if cut_ranges:
+            # Cue timings from the editor refer to the previous render; with cuts the
+            # subtitles must be rebuilt from word-level transcript timing instead.
+            custom_segments = None
         if isinstance(custom_segments, list) and len(custom_segments) > 0:
             parsed_custom = []
             for seg in custom_segments:
@@ -3087,10 +2467,11 @@ def api_edit_clip():
             gaming_layout=gaming_layout,
             enable_sfx=bool(data.get("enable_sfx", True)),
             remove_silence=bool(data.get("remove_silence", False)),
+            cut_ranges=cut_ranges or None,
         )
 
         # 5. Staging Verification (Finding A-05): Check decodable media and duration match
-        verify_rendered_video(staged_out_path, expected_duration=effective_duration, min_duration=0.4)
+        verify_rendered_video(staged_out_path, expected_duration=rendered_duration, min_duration=0.4)
 
         has_new_vtt = staged_vtt_path.exists() and staged_vtt_path.stat().st_size > 0
 
@@ -3116,6 +2497,7 @@ def api_edit_clip():
                 "start_time": start_time,
                 "end_time": effective_end_time,
                 "score": data.get("score"),
+                "cut_ranges": [{"start": s, "end": e} for s, e in cut_ranges],
                 "aspect_ratio": aspect_ratio,
                 "framing_mode": framing_mode,
                 "subtitle_style": subtitle_style,
